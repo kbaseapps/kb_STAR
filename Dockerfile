@@ -32,7 +32,7 @@ RUN \
   wget https://github.com/alexdobin/STAR/archive/2.5.3a.tar.gz && \
   tar -zxf 2.5.3a.tar.gz && \
   ln -s STAR-2.5.3a STAR && \
-  rm -f 2.5.2b.tar.gz && \
+  rm -rf 2.5.3a.tar.gz && \
   cd STAR/source && \
   make && \
   cp STAR /kb/deployment/bin/.  
@@ -41,13 +41,13 @@ RUN \
 # This directory has to be created (with mkdir) before STAR run
 # and needs to have writing permissions. 
 # The file system needs to have at least 100GB of disk space available for a typical mammalian genome. 
+#RUN mkdir -p /kb/module/STAR_genome_directory
 WORKDIR /kb/module
 RUN \
   mkdir /STAR_genome_directory && \
   chmod -R a+rw /STAR_genome_directory
 
 # -----------------------------------------
-
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work
 RUN chmod -R a+rw /kb/module
