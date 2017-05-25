@@ -56,6 +56,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 
 <h4>The basic options to run a mapping job are as follows</h4>
 <p>
+
 --runThreadN NumberOfThreads
 --genomeDir /path/to/genomeDir
 --readFilesIn /path/to/read1 [/path/to/read2 ]
