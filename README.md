@@ -21,12 +21,13 @@ For more help on how to modify, register and deploy the example to KBase, see th
 <h3>STAR 2.5.3a</h3>
 <h4>Basic STAR workflow consists of 2 steps</h4>
 <p>
-  -  1. Generating genome indexes files
-	- In this step user supplied the reference genome sequences (FASTA files) and annotations GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination. A limited collection of STAR genomes is available from http://labshare.cshl.edu/shares/gingeraslab/www-data/dobin/STAR/STARgenomes/, however, it is strongly recommended that users generate their own genome indexes with most up-to-date assemblies and annotations.
+  -  1. Generating genome indexes filesi
 
+	- In this step user supplied the reference genome sequences (FASTA files) and annotations GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination. A limited collection of STAR genomes is available from http://labshare.cshl.edu/shares/gingeraslab/www-data/dobin/STAR/STARgenomes/, however, it is strongly recommended that users generate their own genome indexes with most up-to-date assemblies and annotations.
 	- Indexes generating is controlled by a variety of input parameters (Basic or Advanced options).
 
   -  2. Mapping reads to the genome
+
 	- In this step user supplies the genome files generated in the 1st step, as well as the RNA-seq reads (sequences) in the form of FASTA or FASTQ files. STAR maps the reads to the genome, and writes several output files, such as alignments (SAM/BAM), mapping summary statistics, splice junctions, unmapped reads, signal (wiggle) tracks etc. 
 	- Output files: Log files, .sam files, .bam files, splice junctions, etc.
 	STAR produces multiple output files. All files have standard name, however, you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix. By default, this parameter is ./, i.e. all output files are written in the current directory. 
