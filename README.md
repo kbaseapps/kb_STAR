@@ -22,6 +22,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 <h4>Basic STAR workflow consists of 2 steps</h4>
 <p>
   -  1. Generating genome indexes filesi
+
 	- In this step user supplied the reference genome sequences (FASTA files) and annotations GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination. A limited collection of STAR genomes is available from http://labshare.cshl.edu/shares/gingeraslab/www-data/dobin/STAR/STARgenomes/, however, it is strongly recommended that users generate their own genome indexes with most up-to-date assemblies and annotations.
 	- Indexes generating is controlled by a variety of input parameters (Basic or Advanced options).
 </p>
@@ -42,12 +43,13 @@ For more help on how to modify, register and deploy the example to KBase, see th
 
 <h4>The basic options to generate genome indexes are as follows</h4>
 <p>
-  -  --runThreadN NumberOfThreads
-  -  --runMode genomeGenerate
-  -  --genomeDir /path/to/genomeDir
-  -  --genomeFastaFiles /path/to/genome/fasta1 /path/to/genome/fasta2 ...
-  -  --sjdbGTFfile /path/to/annotations.gtf
-  -  --sjdbOverhang ReadLength-1
+
+    --runThreadN NumberOfThreads
+    --runMode genomeGenerate
+    --genomeDir /path/to/genomeDir
+    --genomeFastaFiles /path/to/genome/fasta1 /path/to/genome/fasta2 ...
+    --sjdbGTFfile /path/to/annotations.gtf
+    --sjdbOverhang ReadLength-1
 </p>
 
 
