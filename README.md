@@ -37,6 +37,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 </p>
 <p>
   -  STAR command line has the following format:
+
 	- STAR --option1-name option1-value(s)--option2-name option2-value(s) ...
 	If an option can accept multiple values, they are separated by spaces, and in a few cases - by commas.
 </p>
