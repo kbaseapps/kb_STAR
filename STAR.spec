@@ -32,13 +32,6 @@ module STAR {
 			chain file(s) from -genomeChainFiles.
 	int runThreadN: default: 1
 		number of threads to run STAR
-	string runDirPerm: default: User RWX
-		permissions for the directories created at the run-time.
-		User RWX => user-read/write/execute
-		All RWX => all-read/write/execute (same as chmod 777)
-	string genomeDir: default: ./GenomeDir/
-		path to the directory where genome files are stored (if runMode!=generateGenome) 
-		or will be generated (if runMode==generateGenome)
 	list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
 		Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
 	string sjdbGTFfile: default: -; path to the GTF file with annotations
@@ -49,8 +42,6 @@ ideally = (mate length - 1)
         string workspace_name;
 	string runMode;
 	int runThreadN;
-	string runDirPerm;
-	string genomeDir;
 	list<string> genomeFastaFiles;
 	string sjdbGTFfile;
 	int sjdbOverhang;
@@ -82,16 +73,12 @@ ideally = (mate length - 1)
 
 	int runThreadN: default: 1
 		number of threads to run STAR
-	string genomeDir: default: ./GenomeDir/
-		path to the directory where genome files are stored (if runMode!=generateGenome) 
-		or will be generated (if runMode==generateGenome)
 	list<string> readFilesIn: default: Read1 Read2
 		paths to files that contain input read1 (and, if needed, read2)
     */
     typedef structure {
         string workspace_name;
 	int runThreadN;
-	string genomeDir;
 	list<string> readFilesIn;
     } MappingParams;
 

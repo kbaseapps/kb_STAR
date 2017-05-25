@@ -16,8 +16,12 @@ import us.kbase.common.service.UnauthorizedException;
 /**
  * <p>Original spec-file module name: STAR</p>
  * <pre>
- * A KBase module: STAR
- * This KBase module wrapps the free open source software STAR: ultrafast universal RNA-seq aligner.
+ * Name of module: STAR
+ * This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
+ * STAR-2.5.3a
+ * References:
+ * https://github.com/alexdobin/STAR/
+ * https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
  * </pre>
  */
 public class STARClient {
@@ -164,23 +168,44 @@ public class STARClient {
     }
 
     /**
-     * <p>Original spec-file function name: star_align</p>
+     * <p>Original spec-file function name: star_generate_indexes</p>
      * <pre>
      * The actual function is declared using 'funcdef' to specify the name
      * and input/return arguments to the function.  For all typical KBase
      * Apps that run in the Narrative, your function should have the 
      * 'authentication required' modifier.
      * </pre>
-     * @param   params   instance of type {@link us.kbase.star.STARalignParams STARalignParams}
-     * @return   parameter "output" of type {@link us.kbase.star.STARalignResults STARalignResults}
+     * @param   params   instance of type {@link us.kbase.star.GenerateIndexesParams GenerateIndexesParams}
+     * @return   parameter "output" of type {@link us.kbase.star.STARResults STARResults}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public STARalignResults starAlign(STARalignParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public STARResults starGenerateIndexes(GenerateIndexesParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<STARalignResults>> retType = new TypeReference<List<STARalignResults>>() {};
-        List<STARalignResults> res = caller.jsonrpcCall("STAR.star_align", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        TypeReference<List<STARResults>> retType = new TypeReference<List<STARResults>>() {};
+        List<STARResults> res = caller.jsonrpcCall("STAR.star_generate_indexes", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: star_mapping</p>
+     * <pre>
+     * The actual function is declared using 'funcdef' to specify the name
+     * and input/return arguments to the function.  For all typical KBase
+     * Apps that run in the Narrative, your function should have the 
+     * 'authentication required' modifier.
+     * </pre>
+     * @param   params   instance of type {@link us.kbase.star.MappingParams MappingParams}
+     * @return   parameter "output" of type {@link us.kbase.star.STARResults STARResults}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public STARResults starMapping(MappingParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(params);
+        TypeReference<List<STARResults>> retType = new TypeReference<List<STARResults>>() {};
+        List<STARResults> res = caller.jsonrpcCall("STAR.star_mapping", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 

@@ -33,45 +33,65 @@ class STAR(object):
             trust_all_ssl_certificates=trust_all_ssl_certificates,
             auth_svc=auth_svc)
 
-    def star_align(self, params, context=None):
+    def star_generate_indexes(self, params, context=None):
         """
         The actual function is declared using 'funcdef' to specify the name
         and input/return arguments to the function.  For all typical KBase
         Apps that run in the Narrative, your function should have the 
         'authentication required' modifier.
-        :param params: instance of type "STARalignParams" (A 'typedef' can
-           also be used to define compound or container objects, like lists,
-           maps, and structures.  The standard KBase convention is to use
-           structures, as shown here, to define the input and output of your
-           function.  Here the input is a reference to the Assembly data
-           object, a workspace to save output, and a length threshold for
-           filtering. To define lists and maps, use a syntax similar to C++
-           templates to indicate the type contained in the list or map.  For
-           example: list <string> list_of_strings; mapping <string, int>
-           map_of_ints;) -> structure: parameter "assembly_input_ref" of type
-           "assembly_ref" (A 'typedef' allows you to provide a more specific
-           name for a type.  Built-in primitive types include 'string',
-           'int', 'float'.  Here we define a type named assembly_ref to
-           indicate a string that should be set to a KBase ID reference to an
-           Assembly data object.), parameter "workspace_name" of String,
-           parameter "min_length" of Long
-        :returns: instance of type "STARalignResults" (Here is the definition
-           of the output of the function.  The output can be used by other
-           SDK modules which call your code, or the output visualizations in
-           the Narrative.  'report_name' and 'report_ref' are special output
+        :param params: instance of type "GenerateIndexesParams" (Arguments
+           for star_generate_indexes string runMode: default: alignReads type
+           of the run: alignReads => map reads genomeGenerate => generate
+           genome files inputAlignmentsFromBAM => input alignments from BAM.
+           Presently only works with -outWigType and -bamRemoveDuplicates.
+           liftOver => lift-over of GTF files (-sjdbGTFfile) between genome
+           assemblies using chain file(s) from -genomeChainFiles. int
+           runThreadN: default: 1 number of threads to run STAR list<string>
+           genomeFastaFiles: path(s) to the fasta files with genomic
+           sequences for genome generation. Only used if
+           runMode==genomeGenerate.These files should be plain text FASTA
+           files, they *cannot* be zipped. string sjdbGTFfile: default: -;
+           path to the GTF file with annotations int sjdbOverhang: default:
+           100; int>0: length of the donor/acceptor sequence on each side of
+           the junctions, ideally = (mate length - 1)) -> structure:
+           parameter "workspace_name" of String, parameter "runMode" of
+           String, parameter "runThreadN" of Long, parameter
+           "genomeFastaFiles" of list of String, parameter "sjdbGTFfile" of
+           String, parameter "sjdbOverhang" of Long
+        :returns: instance of type "STARResults" (Here is the definition of
+           the output of the function.  The output can be used by other SDK
+           modules which call your code, or the output visualizations in the
+           Narrative.  'report_name' and 'report_ref' are special output
            fields- if defined, the Narrative can automatically render your
            Report.) -> structure: parameter "report_name" of String,
-           parameter "report_ref" of String, parameter "assembly_output" of
-           type "assembly_ref" (A 'typedef' allows you to provide a more
-           specific name for a type.  Built-in primitive types include
-           'string', 'int', 'float'.  Here we define a type named
-           assembly_ref to indicate a string that should be set to a KBase ID
-           reference to an Assembly data object.), parameter
-           "n_initial_contigs" of Long, parameter "n_contigs_removed" of
-           Long, parameter "n_contigs_remaining" of Long
+           parameter "report_ref" of String
         """
         return self._client.call_method(
-            'STAR.star_align',
+            'STAR.star_generate_indexes',
+            [params], self._service_ver, context)
+
+    def star_mapping(self, params, context=None):
+        """
+        The actual function is declared using 'funcdef' to specify the name
+        and input/return arguments to the function.  For all typical KBase
+        Apps that run in the Narrative, your function should have the 
+        'authentication required' modifier.
+        :param params: instance of type "MappingParams" (Arguments for
+           star_mapping int runThreadN: default: 1 number of threads to run
+           STAR list<string> readFilesIn: default: Read1 Read2 paths to files
+           that contain input read1 (and, if needed, read2)) -> structure:
+           parameter "workspace_name" of String, parameter "runThreadN" of
+           Long, parameter "readFilesIn" of list of String
+        :returns: instance of type "STARResults" (Here is the definition of
+           the output of the function.  The output can be used by other SDK
+           modules which call your code, or the output visualizations in the
+           Narrative.  'report_name' and 'report_ref' are special output
+           fields- if defined, the Narrative can automatically render your
+           Report.) -> structure: parameter "report_name" of String,
+           parameter "report_ref" of String
+        """
+        return self._client.call_method(
+            'STAR.star_mapping',
             [params], self._service_ver, context)
 
     def status(self, context=None):

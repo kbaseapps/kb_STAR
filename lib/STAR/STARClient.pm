@@ -26,8 +26,14 @@ STAR::STARClient
 =head1 DESCRIPTION
 
 
-A KBase module: STAR
-This KBase module wrapps the free open source software STAR: ultrafast universal RNA-seq aligner.
+Name of module: STAR
+
+This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
+STAR-2.5.3a
+
+References:
+https://github.com/alexdobin/STAR/
+https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
 
 =cut
@@ -109,9 +115,9 @@ sub new
 
 
 
-=head2 star_align
+=head2 star_generate_indexes
 
-  $output = $obj->star_align($params)
+  $output = $obj->star_generate_indexes($params)
 
 =over 4
 
@@ -120,20 +126,18 @@ sub new
 =begin html
 
 <pre>
-$params is a STAR.STARalignParams
-$output is a STAR.STARalignResults
-STARalignParams is a reference to a hash where the following keys are defined:
-	assembly_input_ref has a value which is a STAR.assembly_ref
+$params is a STAR.GenerateIndexesParams
+$output is a STAR.STARResults
+GenerateIndexesParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	min_length has a value which is an int
-assembly_ref is a string
-STARalignResults is a reference to a hash where the following keys are defined:
+	runMode has a value which is a string
+	runThreadN has a value which is an int
+	genomeFastaFiles has a value which is a reference to a list where each element is a string
+	sjdbGTFfile has a value which is a string
+	sjdbOverhang has a value which is an int
+STARResults is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
-	assembly_output has a value which is a STAR.assembly_ref
-	n_initial_contigs has a value which is an int
-	n_contigs_removed has a value which is an int
-	n_contigs_remaining has a value which is an int
 
 </pre>
 
@@ -141,20 +145,18 @@ STARalignResults is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a STAR.STARalignParams
-$output is a STAR.STARalignResults
-STARalignParams is a reference to a hash where the following keys are defined:
-	assembly_input_ref has a value which is a STAR.assembly_ref
+$params is a STAR.GenerateIndexesParams
+$output is a STAR.STARResults
+GenerateIndexesParams is a reference to a hash where the following keys are defined:
 	workspace_name has a value which is a string
-	min_length has a value which is an int
-assembly_ref is a string
-STARalignResults is a reference to a hash where the following keys are defined:
+	runMode has a value which is a string
+	runThreadN has a value which is an int
+	genomeFastaFiles has a value which is a reference to a list where each element is a string
+	sjdbGTFfile has a value which is a string
+	sjdbOverhang has a value which is an int
+STARResults is a reference to a hash where the following keys are defined:
 	report_name has a value which is a string
 	report_ref has a value which is a string
-	assembly_output has a value which is a STAR.assembly_ref
-	n_initial_contigs has a value which is an int
-	n_contigs_removed has a value which is an int
-	n_contigs_remaining has a value which is an int
 
 
 =end text
@@ -170,7 +172,7 @@ Apps that run in the Narrative, your function should have the
 
 =cut
 
- sub star_align
+ sub star_generate_indexes
 {
     my($self, @args) = @_;
 
@@ -179,7 +181,7 @@ Apps that run in the Narrative, your function should have the
     if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function star_align (received $n, expecting 1)");
+							       "Invalid argument count for function star_generate_indexes (received $n, expecting 1)");
     }
     {
 	my($params) = @args;
@@ -187,31 +189,130 @@ Apps that run in the Narrative, your function should have the
 	my @_bad_arguments;
         (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
         if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to star_align:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    my $msg = "Invalid arguments passed to star_generate_indexes:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'star_align');
+								   method_name => 'star_generate_indexes');
 	}
     }
 
     my $url = $self->{url};
     my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "STAR.star_align",
+	    method => "STAR.star_generate_indexes",
 	    params => \@args,
     });
     if ($result) {
 	if ($result->is_error) {
 	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
 					       code => $result->content->{error}->{code},
-					       method_name => 'star_align',
+					       method_name => 'star_generate_indexes',
 					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
 					      );
 	} else {
 	    return wantarray ? @{$result->result} : $result->result->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method star_align",
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method star_generate_indexes",
 					    status_line => $self->{client}->status_line,
-					    method_name => 'star_align',
+					    method_name => 'star_generate_indexes',
+				       );
+    }
+}
+ 
+
+
+=head2 star_mapping
+
+  $output = $obj->star_mapping($params)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$params is a STAR.MappingParams
+$output is a STAR.STARResults
+MappingParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
+	runThreadN has a value which is an int
+	readFilesIn has a value which is a reference to a list where each element is a string
+STARResults is a reference to a hash where the following keys are defined:
+	report_name has a value which is a string
+	report_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$params is a STAR.MappingParams
+$output is a STAR.STARResults
+MappingParams is a reference to a hash where the following keys are defined:
+	workspace_name has a value which is a string
+	runThreadN has a value which is an int
+	readFilesIn has a value which is a reference to a list where each element is a string
+STARResults is a reference to a hash where the following keys are defined:
+	report_name has a value which is a string
+	report_ref has a value which is a string
+
+
+=end text
+
+=item Description
+
+The actual function is declared using 'funcdef' to specify the name
+and input/return arguments to the function.  For all typical KBase
+Apps that run in the Narrative, your function should have the 
+'authentication required' modifier.
+
+=back
+
+=cut
+
+ sub star_mapping
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function star_mapping (received $n, expecting 1)");
+    }
+    {
+	my($params) = @args;
+
+	my @_bad_arguments;
+        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to star_mapping:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'star_mapping');
+	}
+    }
+
+    my $url = $self->{url};
+    my $result = $self->{client}->call($url, $self->{headers}, {
+	    method => "STAR.star_mapping",
+	    params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'star_mapping',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method star_mapping",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'star_mapping',
 				       );
     }
 }
@@ -259,16 +360,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'star_align',
+                method_name => 'star_mapping',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method star_align",
+            error => "Error invoking method star_mapping",
             status_line => $self->{client}->status_line,
-            method_name => 'star_align',
+            method_name => 'star_mapping',
         );
     }
 }
@@ -340,7 +441,7 @@ a string
 
 
 
-=head2 STARalignParams
+=head2 GenerateIndexesParams
 
 =over 4
 
@@ -348,18 +449,23 @@ a string
 
 =item Description
 
-A 'typedef' can also be used to define compound or container
-objects, like lists, maps, and structures.  The standard KBase
-convention is to use structures, as shown here, to define the
-input and output of your function.  Here the input is a
-reference to the Assembly data object, a workspace to save
-output, and a length threshold for filtering.
+Arguments for star_generate_indexes
 
-To define lists and maps, use a syntax similar to C++ templates
-to indicate the type contained in the list or map.  For example:
-
-    list <string> list_of_strings;
-    mapping <string, int> map_of_ints;
+string runMode: default: alignReads
+        type of the run:
+        alignReads => map reads
+        genomeGenerate => generate genome files
+        inputAlignmentsFromBAM => input alignments from BAM. Presently only works with -outWigType
+                and -bamRemoveDuplicates.
+        liftOver => lift-over of GTF files (-sjdbGTFfile) between genome assemblies using
+                chain file(s) from -genomeChainFiles.
+int runThreadN: default: 1
+        number of threads to run STAR
+list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
+        Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
+string sjdbGTFfile: default: -; path to the GTF file with annotations
+int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
+ideally = (mate length - 1)
 
 
 =item Definition
@@ -368,9 +474,12 @@ to indicate the type contained in the list or map.  For example:
 
 <pre>
 a reference to a hash where the following keys are defined:
-assembly_input_ref has a value which is a STAR.assembly_ref
 workspace_name has a value which is a string
-min_length has a value which is an int
+runMode has a value which is a string
+runThreadN has a value which is an int
+genomeFastaFiles has a value which is a reference to a list where each element is a string
+sjdbGTFfile has a value which is a string
+sjdbOverhang has a value which is an int
 
 </pre>
 
@@ -379,9 +488,12 @@ min_length has a value which is an int
 =begin text
 
 a reference to a hash where the following keys are defined:
-assembly_input_ref has a value which is a STAR.assembly_ref
 workspace_name has a value which is a string
-min_length has a value which is an int
+runMode has a value which is a string
+runThreadN has a value which is an int
+genomeFastaFiles has a value which is a reference to a list where each element is a string
+sjdbGTFfile has a value which is a string
+sjdbOverhang has a value which is an int
 
 
 =end text
@@ -390,7 +502,7 @@ min_length has a value which is an int
 
 
 
-=head2 STARalignResults
+=head2 STARResults
 
 =over 4
 
@@ -413,10 +525,6 @@ render your Report.
 a reference to a hash where the following keys are defined:
 report_name has a value which is a string
 report_ref has a value which is a string
-assembly_output has a value which is a STAR.assembly_ref
-n_initial_contigs has a value which is an int
-n_contigs_removed has a value which is an int
-n_contigs_remaining has a value which is an int
 
 </pre>
 
@@ -427,10 +535,50 @@ n_contigs_remaining has a value which is an int
 a reference to a hash where the following keys are defined:
 report_name has a value which is a string
 report_ref has a value which is a string
-assembly_output has a value which is a STAR.assembly_ref
-n_initial_contigs has a value which is an int
-n_contigs_removed has a value which is an int
-n_contigs_remaining has a value which is an int
+
+
+=end text
+
+=back
+
+
+
+=head2 MappingParams
+
+=over 4
+
+
+
+=item Description
+
+Arguments for star_mapping
+
+int runThreadN: default: 1
+        number of threads to run STAR
+list<string> readFilesIn: default: Read1 Read2
+        paths to files that contain input read1 (and, if needed, read2)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
+runThreadN has a value which is an int
+readFilesIn has a value which is a reference to a list where each element is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+workspace_name has a value which is a string
+runThreadN has a value which is an int
+readFilesIn has a value which is a reference to a list where each element is a string
 
 
 =end text
