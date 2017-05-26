@@ -72,13 +72,13 @@ For more help on how to modify, register and deploy the example to KBase, see th
   e.g.,
   STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn Experiment1.fastq --outFileNamePrefix Experiment1Star
 
-  (for paried-end data):
+  e.g.(for paried-end data),
   STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn read1.fastq read2.fastq --outFileNamePrefix Experiment1Star 
 </p>
 
 <h4>STAR will create several output files</h4>
 <p>
 
-The most important of which is the "*.Aligned.out.sam" - you will likely want to convert this to a bam file and sort it to use it with other programs.  The default output is a SAM file.
+The most important of which is the "*.Aligned.out.sam". The default output is a SAM file.
 </p>
 
