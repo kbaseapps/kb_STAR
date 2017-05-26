@@ -72,7 +72,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
   e.g.,
   STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn Experiment1.fastq --outFileNamePrefix Experiment1Star
 
-  # paried-end data:
+  (for paried-end data):
   STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn read1.fastq read2.fastq --outFileNamePrefix Experiment1Star 
 </p>
 
