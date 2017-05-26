@@ -168,44 +168,23 @@ public class STARClient {
     }
 
     /**
-     * <p>Original spec-file function name: star_generate_indexes</p>
+     * <p>Original spec-file function name: run_star</p>
      * <pre>
      * The actual function is declared using 'funcdef' to specify the name
      * and input/return arguments to the function.  For all typical KBase
      * Apps that run in the Narrative, your function should have the 
      * 'authentication required' modifier.
      * </pre>
-     * @param   params   instance of type {@link us.kbase.star.GenerateIndexesParams GenerateIndexesParams}
-     * @return   parameter "output" of type {@link us.kbase.star.STARResults STARResults}
+     * @param   params   instance of type {@link us.kbase.star.AlignReadsParams AlignReadsParams}
+     * @return   parameter "output" of type {@link us.kbase.star.AlignReadsResults AlignReadsResults}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public STARResults starGenerateIndexes(GenerateIndexesParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public AlignReadsResults runStar(AlignReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<STARResults>> retType = new TypeReference<List<STARResults>>() {};
-        List<STARResults> res = caller.jsonrpcCall("STAR.star_generate_indexes", args, retType, true, true, jsonRpcContext, this.serviceVersion);
-        return res.get(0);
-    }
-
-    /**
-     * <p>Original spec-file function name: star_mapping</p>
-     * <pre>
-     * The actual function is declared using 'funcdef' to specify the name
-     * and input/return arguments to the function.  For all typical KBase
-     * Apps that run in the Narrative, your function should have the 
-     * 'authentication required' modifier.
-     * </pre>
-     * @param   params   instance of type {@link us.kbase.star.MappingParams MappingParams}
-     * @return   parameter "output" of type {@link us.kbase.star.STARResults STARResults}
-     * @throws IOException if an IO exception occurs
-     * @throws JsonClientException if a JSON RPC exception occurs
-     */
-    public STARResults starMapping(MappingParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
-        List<Object> args = new ArrayList<Object>();
-        args.add(params);
-        TypeReference<List<STARResults>> retType = new TypeReference<List<STARResults>>() {};
-        List<STARResults> res = caller.jsonrpcCall("STAR.star_mapping", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        TypeReference<List<AlignReadsResults>> retType = new TypeReference<List<AlignReadsResults>>() {};
+        List<AlignReadsResults> res = caller.jsonrpcCall("STAR.run_star", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 

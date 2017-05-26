@@ -115,9 +115,9 @@ sub new
 
 
 
-=head2 star_generate_indexes
+=head2 run_star
 
-  $output = $obj->star_generate_indexes($params)
+  $output = $obj->run_star($params)
 
 =over 4
 
@@ -126,16 +126,22 @@ sub new
 =begin html
 
 <pre>
-$params is a STAR.GenerateIndexesParams
-$output is a STAR.STARResults
-GenerateIndexesParams is a reference to a hash where the following keys are defined:
+$params is a STAR.AlignReadsParams
+$output is a STAR.AlignReadsResults
+AlignReadsParams is a reference to a hash where the following keys are defined:
+	reads_ref has a value which is a string
+	assembly_ref has a value which is a string
+	genome_ref has a value which is a string
 	workspace_name has a value which is a string
 	runMode has a value which is a string
 	runThreadN has a value which is an int
 	genomeFastaFiles has a value which is a reference to a list where each element is a string
 	sjdbGTFfile has a value which is a string
 	sjdbOverhang has a value which is an int
-STARResults is a reference to a hash where the following keys are defined:
+	readFilesIn has a value which is a reference to a list where each element is a string
+	outFileNamePrefix has a value which is a string
+AlignReadsResults is a reference to a hash where the following keys are defined:
+	reads_alignment_ref has a value which is a string
 	report_name has a value which is a string
 	report_ref has a value which is a string
 
@@ -145,16 +151,22 @@ STARResults is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a STAR.GenerateIndexesParams
-$output is a STAR.STARResults
-GenerateIndexesParams is a reference to a hash where the following keys are defined:
+$params is a STAR.AlignReadsParams
+$output is a STAR.AlignReadsResults
+AlignReadsParams is a reference to a hash where the following keys are defined:
+	reads_ref has a value which is a string
+	assembly_ref has a value which is a string
+	genome_ref has a value which is a string
 	workspace_name has a value which is a string
 	runMode has a value which is a string
 	runThreadN has a value which is an int
 	genomeFastaFiles has a value which is a reference to a list where each element is a string
 	sjdbGTFfile has a value which is a string
 	sjdbOverhang has a value which is an int
-STARResults is a reference to a hash where the following keys are defined:
+	readFilesIn has a value which is a reference to a list where each element is a string
+	outFileNamePrefix has a value which is a string
+AlignReadsResults is a reference to a hash where the following keys are defined:
+	reads_alignment_ref has a value which is a string
 	report_name has a value which is a string
 	report_ref has a value which is a string
 
@@ -172,7 +184,7 @@ Apps that run in the Narrative, your function should have the
 
 =cut
 
- sub star_generate_indexes
+ sub run_star
 {
     my($self, @args) = @_;
 
@@ -181,7 +193,7 @@ Apps that run in the Narrative, your function should have the
     if ((my $n = @args) != 1)
     {
 	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function star_generate_indexes (received $n, expecting 1)");
+							       "Invalid argument count for function run_star (received $n, expecting 1)");
     }
     {
 	my($params) = @args;
@@ -189,130 +201,31 @@ Apps that run in the Narrative, your function should have the
 	my @_bad_arguments;
         (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
         if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to star_generate_indexes:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    my $msg = "Invalid arguments passed to run_star:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'star_generate_indexes');
+								   method_name => 'run_star');
 	}
     }
 
     my $url = $self->{url};
     my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "STAR.star_generate_indexes",
+	    method => "STAR.run_star",
 	    params => \@args,
     });
     if ($result) {
 	if ($result->is_error) {
 	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
 					       code => $result->content->{error}->{code},
-					       method_name => 'star_generate_indexes',
+					       method_name => 'run_star',
 					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
 					      );
 	} else {
 	    return wantarray ? @{$result->result} : $result->result->[0];
 	}
     } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method star_generate_indexes",
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method run_star",
 					    status_line => $self->{client}->status_line,
-					    method_name => 'star_generate_indexes',
-				       );
-    }
-}
- 
-
-
-=head2 star_mapping
-
-  $output = $obj->star_mapping($params)
-
-=over 4
-
-=item Parameter and return types
-
-=begin html
-
-<pre>
-$params is a STAR.MappingParams
-$output is a STAR.STARResults
-MappingParams is a reference to a hash where the following keys are defined:
-	workspace_name has a value which is a string
-	runThreadN has a value which is an int
-	readFilesIn has a value which is a reference to a list where each element is a string
-STARResults is a reference to a hash where the following keys are defined:
-	report_name has a value which is a string
-	report_ref has a value which is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-$params is a STAR.MappingParams
-$output is a STAR.STARResults
-MappingParams is a reference to a hash where the following keys are defined:
-	workspace_name has a value which is a string
-	runThreadN has a value which is an int
-	readFilesIn has a value which is a reference to a list where each element is a string
-STARResults is a reference to a hash where the following keys are defined:
-	report_name has a value which is a string
-	report_ref has a value which is a string
-
-
-=end text
-
-=item Description
-
-The actual function is declared using 'funcdef' to specify the name
-and input/return arguments to the function.  For all typical KBase
-Apps that run in the Narrative, your function should have the 
-'authentication required' modifier.
-
-=back
-
-=cut
-
- sub star_mapping
-{
-    my($self, @args) = @_;
-
-# Authentication: required
-
-    if ((my $n = @args) != 1)
-    {
-	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
-							       "Invalid argument count for function star_mapping (received $n, expecting 1)");
-    }
-    {
-	my($params) = @args;
-
-	my @_bad_arguments;
-        (ref($params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"params\" (value was \"$params\")");
-        if (@_bad_arguments) {
-	    my $msg = "Invalid arguments passed to star_mapping:\n" . join("", map { "\t$_\n" } @_bad_arguments);
-	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
-								   method_name => 'star_mapping');
-	}
-    }
-
-    my $url = $self->{url};
-    my $result = $self->{client}->call($url, $self->{headers}, {
-	    method => "STAR.star_mapping",
-	    params => \@args,
-    });
-    if ($result) {
-	if ($result->is_error) {
-	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
-					       code => $result->content->{error}->{code},
-					       method_name => 'star_mapping',
-					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
-					      );
-	} else {
-	    return wantarray ? @{$result->result} : $result->result->[0];
-	}
-    } else {
-        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method star_mapping",
-					    status_line => $self->{client}->status_line,
-					    method_name => 'star_mapping',
+					    method_name => 'run_star',
 				       );
     }
 }
@@ -360,16 +273,16 @@ sub version {
             Bio::KBase::Exceptions::JSONRPC->throw(
                 error => $result->error_message,
                 code => $result->content->{code},
-                method_name => 'star_mapping',
+                method_name => 'run_star',
             );
         } else {
             return wantarray ? @{$result->result} : $result->result->[0];
         }
     } else {
         Bio::KBase::Exceptions::HTTP->throw(
-            error => "Error invoking method star_mapping",
+            error => "Error invoking method run_star",
             status_line => $self->{client}->status_line,
-            method_name => 'star_mapping',
+            method_name => 'run_star',
         );
     }
 }
@@ -441,7 +354,7 @@ a string
 
 
 
-=head2 GenerateIndexesParams
+=head2 AlignReadsParams
 
 =over 4
 
@@ -465,7 +378,9 @@ list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences
         Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
 string sjdbGTFfile: default: -; path to the GTF file with annotations
 int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
-ideally = (mate length - 1)
+        ideally = (mate length - 1)
+list<string> readFilesIn: default: Read1 Read2
+        paths to files that contain input read1 (and, if needed, read2)
 
 
 =item Definition
@@ -474,12 +389,17 @@ ideally = (mate length - 1)
 
 <pre>
 a reference to a hash where the following keys are defined:
+reads_ref has a value which is a string
+assembly_ref has a value which is a string
+genome_ref has a value which is a string
 workspace_name has a value which is a string
 runMode has a value which is a string
 runThreadN has a value which is an int
 genomeFastaFiles has a value which is a reference to a list where each element is a string
 sjdbGTFfile has a value which is a string
 sjdbOverhang has a value which is an int
+readFilesIn has a value which is a reference to a list where each element is a string
+outFileNamePrefix has a value which is a string
 
 </pre>
 
@@ -488,12 +408,17 @@ sjdbOverhang has a value which is an int
 =begin text
 
 a reference to a hash where the following keys are defined:
+reads_ref has a value which is a string
+assembly_ref has a value which is a string
+genome_ref has a value which is a string
 workspace_name has a value which is a string
 runMode has a value which is a string
 runThreadN has a value which is an int
 genomeFastaFiles has a value which is a reference to a list where each element is a string
 sjdbGTFfile has a value which is a string
 sjdbOverhang has a value which is an int
+readFilesIn has a value which is a reference to a list where each element is a string
+outFileNamePrefix has a value which is a string
 
 
 =end text
@@ -502,7 +427,7 @@ sjdbOverhang has a value which is an int
 
 
 
-=head2 STARResults
+=head2 AlignReadsResults
 
 =over 4
 
@@ -523,6 +448,7 @@ render your Report.
 
 <pre>
 a reference to a hash where the following keys are defined:
+reads_alignment_ref has a value which is a string
 report_name has a value which is a string
 report_ref has a value which is a string
 
@@ -533,52 +459,9 @@ report_ref has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
+reads_alignment_ref has a value which is a string
 report_name has a value which is a string
 report_ref has a value which is a string
-
-
-=end text
-
-=back
-
-
-
-=head2 MappingParams
-
-=over 4
-
-
-
-=item Description
-
-Arguments for star_mapping
-
-int runThreadN: default: 1
-        number of threads to run STAR
-list<string> readFilesIn: default: Read1 Read2
-        paths to files that contain input read1 (and, if needed, read2)
-
-
-=item Definition
-
-=begin html
-
-<pre>
-a reference to a hash where the following keys are defined:
-workspace_name has a value which is a string
-runThreadN has a value which is an int
-readFilesIn has a value which is a reference to a list where each element is a string
-
-</pre>
-
-=end html
-
-=begin text
-
-a reference to a hash where the following keys are defined:
-workspace_name has a value which is a string
-runThreadN has a value which is an int
-readFilesIn has a value which is a reference to a list where each element is a string
 
 
 =end text

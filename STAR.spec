@@ -36,16 +36,25 @@ module STAR {
 		Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
 	string sjdbGTFfile: default: -; path to the GTF file with annotations
 	int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
-ideally = (mate length - 1)
+		ideally = (mate length - 1)
+	list<string> readFilesIn: default: Read1 Read2
+		paths to files that contain input read1 (and, if needed, read2)
     */
     typedef structure {
+        string reads_ref;
+        string assembly_ref;
+        string genome_ref;
+
         string workspace_name;
 	string runMode;
 	int runThreadN;
 	list<string> genomeFastaFiles;
 	string sjdbGTFfile;
 	int sjdbOverhang;
-    } GenerateIndexesParams;
+	
+	list<string> readFilesIn;
+        string outFileNamePrefix;
+    } AlignReadsParams;
 
     /*
         Here is the definition of the output of the function.  The output
@@ -55,9 +64,11 @@ ideally = (mate length - 1)
         render your Report.
     */
     typedef structure {
+	string reads_alignment_ref;
+
         string report_name;
         string report_ref;
-    } STARResults;
+    } AlignReadsResults;
     
     /*
         The actual function is declared using 'funcdef' to specify the name
@@ -65,30 +76,7 @@ ideally = (mate length - 1)
         Apps that run in the Narrative, your function should have the 
         'authentication required' modifier.
     */
-    funcdef star_generate_indexes(GenerateIndexesParams params)
-        returns (STARResults output) authentication required;
-
-    /*
-	Arguments for star_mapping
-
-	int runThreadN: default: 1
-		number of threads to run STAR
-	list<string> readFilesIn: default: Read1 Read2
-		paths to files that contain input read1 (and, if needed, read2)
-    */
-    typedef structure {
-        string workspace_name;
-	int runThreadN;
-	list<string> readFilesIn;
-    } MappingParams;
-
-    /*
-        The actual function is declared using 'funcdef' to specify the name
-        and input/return arguments to the function.  For all typical KBase
-        Apps that run in the Narrative, your function should have the 
-        'authentication required' modifier.
-    */
-    funcdef star_mapping(MappingParams params)
-        returns (STARResults output) authentication required;
+    funcdef run_star(AlignReadsParams params)
+        returns (AlignReadsResults output) authentication required;
 
 };

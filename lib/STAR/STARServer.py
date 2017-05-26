@@ -333,14 +333,10 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_STAR.star_generate_indexes,
-                             name='STAR.star_generate_indexes',
+        self.rpc_service.add(impl_STAR.run_star,
+                             name='STAR.run_star',
                              types=[dict])
-        self.method_authentication['STAR.star_generate_indexes'] = 'required'  # noqa
-        self.rpc_service.add(impl_STAR.star_mapping,
-                             name='STAR.star_mapping',
-                             types=[dict])
-        self.method_authentication['STAR.star_mapping'] = 'required'  # noqa
+        self.method_authentication['STAR.run_star'] = 'required'  # noqa
         self.rpc_service.add(impl_STAR.status,
                              name='STAR.status',
                              types=[dict])
