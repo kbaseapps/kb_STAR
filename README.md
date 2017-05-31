@@ -57,6 +57,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 
    e.g.,
    qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_directory/ --genomeFastaFiles testReads/test_long.fa
+   
 May 31 23:18:10 ..... started STAR run
 May 31 23:18:10 ... starting to generate Genome files
 May 31 23:18:12 ... starting to sort Suffix Array. This may take a long time...
@@ -71,6 +72,7 @@ May 31 23:18:18 ... writing SAindex to disk
 May 31 23:18:19 ..... finished successfully
 
 qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
+
 total 2044944
 drwxrwxrwx  2 root root       4096 May 31 23:18 .
 drwxrwxrwx 28 root root       4096 May 31 23:18 ..
@@ -97,6 +99,7 @@ drwxrwxrwx 28 root root       4096 May 31 23:18 ..
   
   e.g.,
   qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
+  
 May 31 23:22:16 ..... started STAR run
 May 31 23:22:16 ..... loading genome
 May 31 23:22:17 ..... started mapping
@@ -104,6 +107,7 @@ May 31 23:22:19 ..... finished successfully
 
   e.g.(for paried-end data),
   qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
+  
 May 31 23:23:27 ..... started STAR run
 May 31 23:23:27 ..... loading genome
 May 31 23:23:28 ..... started mapping
