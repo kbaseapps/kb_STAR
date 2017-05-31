@@ -58,32 +58,32 @@ For more help on how to modify, register and deploy the example to KBase, see th
    e.g.,
    qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_directory/ --genomeFastaFiles testReads/test_long.fa
    
-May 31 23:18:10 ..... started STAR run
-May 31 23:18:10 ... starting to generate Genome files
-May 31 23:18:12 ... starting to sort Suffix Array. This may take a long time...
-May 31 23:18:13 ... sorting Suffix Array chunks and saving them to disk...
-May 31 23:18:14 ... loading chunks from disk, packing SA...
-May 31 23:18:15 ... finished generating suffix array
-May 31 23:18:15 ... generating Suffix Array index
-May 31 23:18:17 ... completed Suffix Array index
-May 31 23:18:17 ... writing Genome to disk ...
-May 31 23:18:18 ... writing Suffix Array to disk ...
-May 31 23:18:18 ... writing SAindex to disk
-May 31 23:18:19 ..... finished successfully
+    May 31 23:18:10 ..... started STAR run
+    May 31 23:18:10 ... starting to generate Genome files
+    May 31 23:18:12 ... starting to sort Suffix Array. This may take a long time...
+    May 31 23:18:13 ... sorting Suffix Array chunks and saving them to disk...
+    May 31 23:18:14 ... loading chunks from disk, packing SA...
+    May 31 23:18:15 ... finished generating suffix array
+    May 31 23:18:15 ... generating Suffix Array index
+    May 31 23:18:17 ... completed Suffix Array index
+    May 31 23:18:17 ... writing Genome to disk ...
+    May 31 23:18:18 ... writing Suffix Array to disk ...
+    May 31 23:18:18 ... writing SAindex to disk
+    May 31 23:18:19 ..... finished successfully
 
 qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
 
-total 2044944
-drwxrwxrwx  2 root root       4096 May 31 23:18 .
-drwxrwxrwx 28 root root       4096 May 31 23:18 ..
--rw-r--r--  1 3184 root  524288000 May 31 23:18 Genome
--rw-r--r--  1 3184 root    1650003 May 31 23:18 SA
--rw-r--r--  1 3184 root 1565873619 May 31 23:18 SAindex
--rw-r--r--  1 3184 root       8000 May 31 23:18 chrLength.txt
--rw-r--r--  1 3184 root      48890 May 31 23:18 chrName.txt
--rw-r--r--  1 3184 root      56890 May 31 23:18 chrNameLength.txt
--rw-r--r--  1 3184 root      19580 May 31 23:18 chrStart.txt
--rw-r--r--  1 3184 root        490 May 31 23:18 genomeParameters.txt
+    total 2044944
+    drwxrwxrwx  2 root root       4096 May 31 23:18 .
+    drwxrwxrwx 28 root root       4096 May 31 23:18 ..
+    -rw-r--r--  1 3184 root  524288000 May 31 23:18 Genome
+    -rw-r--r--  1 3184 root    1650003 May 31 23:18 SA
+    -rw-r--r--  1 3184 root 1565873619 May 31 23:18 SAindex
+    -rw-r--r--  1 3184 root       8000 May 31 23:18 chrLength.txt
+    -rw-r--r--  1 3184 root      48890 May 31 23:18 chrName.txt
+    -rw-r--r--  1 3184 root      56890 May 31 23:18 chrNameLength.txt
+    -rw-r--r--  1 3184 root      19580 May 31 23:18 chrStart.txt
+    -rw-r--r--  1 3184 root        490 May 31 23:18 genomeParameters.txt
 </p>
 
 
