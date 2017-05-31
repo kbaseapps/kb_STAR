@@ -100,18 +100,18 @@ qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
   e.g.,
   qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
   
-May 31 23:22:16 ..... started STAR run
-May 31 23:22:16 ..... loading genome
-May 31 23:22:17 ..... started mapping
-May 31 23:22:19 ..... finished successfully
+    May 31 23:22:16 ..... started STAR run
+    May 31 23:22:16 ..... loading genome
+    May 31 23:22:17 ..... started mapping
+    May 31 23:22:19 ..... finished successfully
 
   e.g.(for paried-end data),
   qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
   
-May 31 23:23:27 ..... started STAR run
-May 31 23:23:27 ..... loading genome
-May 31 23:23:28 ..... started mapping
-May 31 23:23:32 ..... finished successfully
+    May 31 23:23:27 ..... started STAR run
+    May 31 23:23:27 ..... loading genome
+    May 31 23:23:28 ..... started mapping
+    May 31 23:23:32 ..... finished successfully
 </p>
 
 <h4>STAR will create several output files</h4>
