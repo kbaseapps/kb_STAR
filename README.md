@@ -56,7 +56,32 @@ For more help on how to modify, register and deploy the example to KBase, see th
    STAR  --runMode genomeGenerate --runThreadN <# cpus> --genomeDir <genome output directory> --genomeFastaFiles <input Genome FASTA file>
 
    e.g.,
-   STAR  --runMode genomeGenerate --runThreadN 24 --genomeDir ./ --genomeFastaFiles mm9.fa
+   qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_directory/ --genomeFastaFiles testReads/test_long.fa
+May 31 23:18:10 ..... started STAR run
+May 31 23:18:10 ... starting to generate Genome files
+May 31 23:18:12 ... starting to sort Suffix Array. This may take a long time...
+May 31 23:18:13 ... sorting Suffix Array chunks and saving them to disk...
+May 31 23:18:14 ... loading chunks from disk, packing SA...
+May 31 23:18:15 ... finished generating suffix array
+May 31 23:18:15 ... generating Suffix Array index
+May 31 23:18:17 ... completed Suffix Array index
+May 31 23:18:17 ... writing Genome to disk ...
+May 31 23:18:18 ... writing Suffix Array to disk ...
+May 31 23:18:18 ... writing SAindex to disk
+May 31 23:18:19 ..... finished successfully
+
+qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
+total 2044944
+drwxrwxrwx  2 root root       4096 May 31 23:18 .
+drwxrwxrwx 28 root root       4096 May 31 23:18 ..
+-rw-r--r--  1 3184 root  524288000 May 31 23:18 Genome
+-rw-r--r--  1 3184 root    1650003 May 31 23:18 SA
+-rw-r--r--  1 3184 root 1565873619 May 31 23:18 SAindex
+-rw-r--r--  1 3184 root       8000 May 31 23:18 chrLength.txt
+-rw-r--r--  1 3184 root      48890 May 31 23:18 chrName.txt
+-rw-r--r--  1 3184 root      56890 May 31 23:18 chrNameLength.txt
+-rw-r--r--  1 3184 root      19580 May 31 23:18 chrStart.txt
+-rw-r--r--  1 3184 root        490 May 31 23:18 genomeParameters.txt
 </p>
 
 
@@ -69,11 +94,20 @@ For more help on how to modify, register and deploy the example to KBase, see th
 
   i.e., 
   STAR --genomeDir <Directory with the Genome Index>  --runThreadN <# cpus> --readFilesIn <FASTQ file> --outFileNamePrefix <OutputPrefix>
+  
   e.g.,
-  STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn Experiment1.fastq --outFileNamePrefix Experiment1Star
+  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
+May 31 23:22:16 ..... started STAR run
+May 31 23:22:16 ..... loading genome
+May 31 23:22:17 ..... started mapping
+May 31 23:22:19 ..... finished successfully
 
   e.g.(for paried-end data),
-  STAR --genomeDir mm9-starIndex/  --runThreadN 24 --readFilesIn read1.fastq read2.fastq --outFileNamePrefix Experiment1Star 
+  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
+May 31 23:23:27 ..... started STAR run
+May 31 23:23:27 ..... loading genome
+May 31 23:23:28 ..... started mapping
+May 31 23:23:32 ..... finished successfully
 </p>
 
 <h4>STAR will create several output files</h4>
