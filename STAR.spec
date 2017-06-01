@@ -19,9 +19,15 @@ module STAR {
     */
     typedef string assembly_ref;
 
+    /* A boolean - 0 for false, 1 for true.
+        @range (0, 1)
+    */
+    typedef int boolean;
+
     /*
 	Arguments for star_generate_indexes
 
+	string reads_ref, assembly_ref and genome_ref: KBase style variable references
 	string runMode: default: alignReads
 		type of the run:
 		alignReads => map reads
@@ -34,18 +40,24 @@ module STAR {
 		number of threads to run STAR
 	list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
 		Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
-	string sjdbGTFfile: default: -; path to the GTF file with annotations
-	int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
-		ideally = (mate length - 1)
 	list<string> readFilesIn: default: Read1 Read2
 		paths to files that contain input read1 (and, if needed, read2)
+
+	string sjdbGTFfile: default: -; path to the file with annotated transcripts in the standard GTF format
+	int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
+		ideally = (ReadLength - 1)
+	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix.
+		By default, this parameter is ./, i.e. all output files are written in the current directory
+
+	@optional sjdbGTFfile
+	@optional sjdbOverhang
     */
     typedef structure {
         string reads_ref;
         string assembly_ref;
         string genome_ref;
-
         string workspace_name;
+
 	string runMode;
 	int runThreadN;
 	list<string> genomeFastaFiles;
@@ -54,7 +66,7 @@ module STAR {
 	
 	list<string> readFilesIn;
         string outFileNamePrefix;
-    } AlignReadsParams;
+    } STARParams;
 
     /*
         Here is the definition of the output of the function.  The output
@@ -68,7 +80,7 @@ module STAR {
 
         string report_name;
         string report_ref;
-    } AlignReadsResults;
+    } STARResults;
     
     /*
         The actual function is declared using 'funcdef' to specify the name
@@ -76,7 +88,7 @@ module STAR {
         Apps that run in the Narrative, your function should have the 
         'authentication required' modifier.
     */
-    funcdef run_star(AlignReadsParams params)
-        returns (AlignReadsResults output) authentication required;
+    funcdef run_star(STARParams params)
+        returns (STARResults output) authentication required;
 
 };

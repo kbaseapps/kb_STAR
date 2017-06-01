@@ -126,9 +126,9 @@ sub new
 =begin html
 
 <pre>
-$params is a STAR.AlignReadsParams
-$output is a STAR.AlignReadsResults
-AlignReadsParams is a reference to a hash where the following keys are defined:
+$params is a STAR.STARParams
+$output is a STAR.STARResults
+STARParams is a reference to a hash where the following keys are defined:
 	reads_ref has a value which is a string
 	assembly_ref has a value which is a string
 	genome_ref has a value which is a string
@@ -140,7 +140,7 @@ AlignReadsParams is a reference to a hash where the following keys are defined:
 	sjdbOverhang has a value which is an int
 	readFilesIn has a value which is a reference to a list where each element is a string
 	outFileNamePrefix has a value which is a string
-AlignReadsResults is a reference to a hash where the following keys are defined:
+STARResults is a reference to a hash where the following keys are defined:
 	reads_alignment_ref has a value which is a string
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -151,9 +151,9 @@ AlignReadsResults is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a STAR.AlignReadsParams
-$output is a STAR.AlignReadsResults
-AlignReadsParams is a reference to a hash where the following keys are defined:
+$params is a STAR.STARParams
+$output is a STAR.STARResults
+STARParams is a reference to a hash where the following keys are defined:
 	reads_ref has a value which is a string
 	assembly_ref has a value which is a string
 	genome_ref has a value which is a string
@@ -165,7 +165,7 @@ AlignReadsParams is a reference to a hash where the following keys are defined:
 	sjdbOverhang has a value which is an int
 	readFilesIn has a value which is a reference to a list where each element is a string
 	outFileNamePrefix has a value which is a string
-AlignReadsResults is a reference to a hash where the following keys are defined:
+STARResults is a reference to a hash where the following keys are defined:
 	reads_alignment_ref has a value which is a string
 	report_name has a value which is a string
 	report_ref has a value which is a string
@@ -354,7 +354,39 @@ a string
 
 
 
-=head2 AlignReadsParams
+=head2 boolean
+
+=over 4
+
+
+
+=item Description
+
+A boolean - 0 for false, 1 for true.
+@range (0, 1)
+
+
+=item Definition
+
+=begin html
+
+<pre>
+an int
+</pre>
+
+=end html
+
+=begin text
+
+an int
+
+=end text
+
+=back
+
+
+
+=head2 STARParams
 
 =over 4
 
@@ -364,6 +396,7 @@ a string
 
 Arguments for star_generate_indexes
 
+string reads_ref, assembly_ref and genome_ref: KBase style variable references
 string runMode: default: alignReads
         type of the run:
         alignReads => map reads
@@ -376,11 +409,17 @@ int runThreadN: default: 1
         number of threads to run STAR
 list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
         Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
-string sjdbGTFfile: default: -; path to the GTF file with annotations
-int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
-        ideally = (mate length - 1)
 list<string> readFilesIn: default: Read1 Read2
         paths to files that contain input read1 (and, if needed, read2)
+
+string sjdbGTFfile: default: -; path to the file with annotated transcripts in the standard GTF format
+int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
+        ideally = (ReadLength - 1)
+string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix.
+        By default, this parameter is ./, i.e. all output files are written in the current directory
+
+@optional sjdbGTFfile
+@optional sjdbOverhang
 
 
 =item Definition
@@ -427,7 +466,7 @@ outFileNamePrefix has a value which is a string
 
 
 
-=head2 AlignReadsResults
+=head2 STARResults
 
 =over 4
 

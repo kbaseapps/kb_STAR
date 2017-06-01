@@ -46,8 +46,8 @@ RUN chmod -R a+rw /kb/module/STAR_genome_dir
 
 #WORKDIR /kb/module
 #RUN \
-  #mkdir /STAR_genome_directory && \
-  #chmod -R a+rw /STAR_genome_directory
+  #mkdir /STAR_genome_dir && \
+  #chmod -R a+rw /STAR_genome_dir
 
 # -----------------------------------------
 COPY ./ /kb/module
