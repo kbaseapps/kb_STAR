@@ -42,7 +42,7 @@ RUN \
 # and needs to have writing permissions. 
 # The file system needs to have at least 100GB of disk space available for a typical mammalian genome. 
 RUN mkdir -p /kb/module/STAR_genome_dir
-RUN chmod -R a+rw /kb/STAR_genome_dir
+RUN chmod -R a+rw /kb/module/STAR_genome_dir
 
 #WORKDIR /kb/module
 #RUN \
