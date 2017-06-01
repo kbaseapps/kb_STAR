@@ -33,7 +33,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "b39a52d5a6e467c8c64b99f07b930055fc1b66f3"
+    GIT_COMMIT_HASH = "6fa0356e589bb2bd90dbf9605bf542bfddb66e1d"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block

@@ -56,7 +56,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
    STAR  --runMode genomeGenerate --runThreadN <# cpus> --genomeDir <genome output directory> --genomeFastaFiles <input Genome FASTA file>
 
    e.g.,
-   qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_directory/ --genomeFastaFiles testReads/test_long.fa
+   qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_dir/ --genomeFastaFiles testReads/test_long.fa
    
     May 31 23:18:10 ..... started STAR run
     May 31 23:18:10 ... starting to generate Genome files
@@ -71,7 +71,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
     May 31 23:18:18 ... writing SAindex to disk
     May 31 23:18:19 ..... finished successfully
 
-qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
+qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_dir/
 
     total 2044944
     drwxrwxrwx  2 root root       4096 May 31 23:18 .
@@ -98,7 +98,7 @@ qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
   STAR --genomeDir <Directory with the Genome Index>  --runThreadN <# cpus> --readFilesIn <FASTQ file> --outFileNamePrefix <OutputPrefix>
   
   e.g.,
-  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
+  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_dir/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
   
     May 31 23:22:16 ..... started STAR run
     May 31 23:22:16 ..... loading genome
@@ -106,7 +106,7 @@ qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_directory/
     May 31 23:22:19 ..... finished successfully
 
   e.g.(for paried-end data),
-  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_directory/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
+  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_dir/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
   
     May 31 23:23:27 ..... started STAR run
     May 31 23:23:27 ..... loading genome
