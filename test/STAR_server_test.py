@@ -138,10 +138,10 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_star_installation")
-    def test_star_installation(self):
+    # @unittest.skip("skipped test_run_star")
+    def test_run_star(self):
         params = {'command': 'STAR', 'options': ['--help']}
-        self.getImpl().run_star_cli(self.getContext(), params)
+        self.getImpl().run_star(self.getContext(), params)
 
     # Uncomment to skip this test
     # @unittest.skip("skipped test_build_star_index_from_assembly")
