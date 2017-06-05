@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import unittest
 import os  # noqa: F401
+import os.path
 import json  # noqa: F401
 import time
 import requests
+import shutil
 
 from os import environ
 try:
@@ -18,6 +20,9 @@ from STAR.STARImpl import STAR
 from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
 
+from biokbase.AbstractHandle.Client import AbstractHandle as HandleService
+from ReadsUtils.baseclient import ServerError
+from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 
 class STARTest(unittest.TestCase):
@@ -31,11 +36,13 @@ class STARTest(unittest.TestCase):
         config.read(config_file)
         for nameval in config.items('STAR'):
             cls.cfg[nameval[0]] = nameval[1]
+            
         # Getting username from Auth profile for token
         authServiceUrl = cls.cfg['auth-service-url']
         auth_client = _KBaseAuth(authServiceUrl)
         user_id = auth_client.get_user(token)
-        # WARNING: don't call any logging methods on the context object,
+        
+        # WARNING: don't call any logging methods on the context object,        
         # it'll result in a NoneType error
         cls.ctx = MethodContext(None)
         cls.ctx.update({'token': token,
@@ -51,6 +58,9 @@ class STARTest(unittest.TestCase):
         cls.serviceImpl = STAR(cls.cfg)
         cls.scratch = cls.cfg['scratch']
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
+        
+        cls.readUtilsImpl = ReadsUtils(cls.callback_url, token=cls.token)
+        cls.staged = {}
 
     @classmethod
     def tearDownClass(cls):
@@ -89,19 +99,40 @@ class STARTest(unittest.TestCase):
         return assembly_ref
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    def test_filter_contigs_ok(self):
-
+    # Uncomment to skip this test
+    # @unittest.skip("skipped test_run_star")
+    def test_run_star(self):
         # First load a test FASTA file as an KBase Assembly
-        fasta_content = '>seq1 something soemthing asdf\n' \
-                        'agcttttcat\n' \
-                        '>seq2\n' \
-                        'agctt\n' \
-                        '>seq3\n' \
-                        'agcttttcatgg'
+        # get the test data
+        pe_lib_info = self.getPairedEndLibInfo()
+        pprint(pe_lib_info)
 
-        assembly_ref = self.load_fasta_file(os.path.join(self.scratch, 'test1.fasta'),
-                                            'TestAssembly',
-                                            fasta_content)
+        # STAR parameters
+        params = {
+            'workspace_name': self.getWsName(),
+            'output_contigset_name': 'STAR_test_contigset',
+            'hash_length': 21,
+            'read_libraries':[self.make_ref(pe_lib_info)],
+            'min_contig_length': 500,
+            'cov_cutoff': 5.2,
+            'read_trkg': 0,
+            'amos_file': 'yes',
+            'exp_cov': 21.3,
+            'ins_length': 400
+        }
+
+        # Second, call your implementation
+        result = self.getImpl().run_star(self.getContext(), params)
+
+        if not result[0]['report_ref'] is None:
+                rep = self.wsClient.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
+                print('REPORT object:')
+                pprint(rep)
+
+                self.assertEqual(rep['info'][1].rsplit('_', 1)[0], 'kb_velvet_report')
+                self.assertEqual(rep['info'][2].split('-', 1)[0], 'KBaseReport.Report')
+        else:
+                print('Velvet failed!')
 
         # Second, call your implementation
         ret = self.getImpl().filter_contigs(self.getContext(),
