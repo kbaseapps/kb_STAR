@@ -27,7 +27,10 @@ module STAR {
     /*
 	Arguments for star_generate_indexes
 
-	string reads_ref, assembly_ref and genome_ref: KBase style variable references
+	string reads_ref: KBase workspace reference for reads to align
+	string assembly_ref: 
+	string genome_ref: KBase workspace reference genome to align reads against
+	string workspace_name: the workspace name provided by the narrative for housing output in KBase
 	string runMode: default: alignReads
 		type of the run:
 		alignReads => map reads
@@ -35,7 +38,8 @@ module STAR {
 		inputAlignmentsFromBAM => input alignments from BAM. Presently only works with -outWigType
 			and -bamRemoveDuplicates.
 		liftOver => lift-over of GTF files (-sjdbGTFfile) between genome assemblies using
-			chain file(s) from -genomeChainFiles.
+			chain file(s) from -genomeChainFiles
+
 	int runThreadN: default: 1
 		number of threads to run STAR
 	list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
@@ -46,7 +50,7 @@ module STAR {
 	string sjdbGTFfile: default: -; path to the file with annotated transcripts in the standard GTF format
 	int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
 		ideally = (ReadLength - 1)
-	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix.
+	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
 		By default, this parameter is ./, i.e. all output files are written in the current directory
 
 	@optional sjdbGTFfile
@@ -76,7 +80,7 @@ module STAR {
         render your Report.
     */
     typedef structure {
-	string reads_alignment_ref;
+	string alignment_ref;
 
         string report_name;
         string report_ref;
