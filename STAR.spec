@@ -88,7 +88,7 @@ module STAR {
     */
     typedef structure {
 	string output_folder;
-
+	obj_ref alignment_ref;
         string report_name;
         string report_ref;
     } STARResults;
