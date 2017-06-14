@@ -88,7 +88,7 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'test.fna')
-        shutil.copy(os.path.join('data', 'test.fna'), fasta_path)
+        shutil.copy(os.path.join('testReads', 'test.fna'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -101,7 +101,7 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'genome_ref'):
             return self.__class__.genome_ref
         genbank_file_path = os.path.join(self.scratch, 'minimal.gbff')
-        shutil.copy(os.path.join('data', 'minimal.gbff'), genbank_file_path)
+        shutil.copy(os.path.join('testReads', 'minimal.gbff'), genbank_file_path)
         gfu = GenomeFileUtil(self.callback_url)
         genome_ref = gfu.genbank_to_genome({'file': {'path': genbank_file_path},
                                             'workspace_name': self.getWsName(),
@@ -115,7 +115,7 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'test.fna')
-        shutil.copy(os.path.join('data', 'test.fna'), fasta_path)
+        shutil.copy(os.path.join('testReads', 'test.fna'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -136,15 +136,72 @@ class STARTest(unittest.TestCase):
                                                               })
         return assembly_ref
 
+    # borrowed from Megahit - call this method to get the WS object info of a Paired End Library (will
+    # upload the example data if this is the first time the method is called during tests)
+    def getPairedEndLibInfo(self):
+        if hasattr(self.__class__, 'pairedEndLibInfo'):
+            return self.__class__.pairedEndLibInfo
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        forward_data_file = 'testReads/small.forward.fq'
+        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
+        shutil.copy(forward_data_file, forward_file)
+        reverse_data_file = 'testReads/small.reverse.fq'
+        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
+        shutil.copy(reverse_data_file, reverse_file)
+
+        ru = ReadsUtils(os.environ['SDK_CALLBACK_URL'])
+        paired_end_ref = ru.upload_reads({'fwd_file': forward_file, 'rev_file': reverse_file,
+                                          'sequencing_tech': 'artificial reads',
+                                          'interleaved': 0, 'wsname': self.getWsName(),
+                                          'name': 'test.pe.reads'})['obj_ref']
+
+        new_obj_info = self.wsClient.get_object_info_new({'objects': [{'ref': paired_end_ref}]})
+        self.__class__.pairedEndLibInfo = new_obj_info[0]
+        print ('paired reads uploaded:\n')
+        pprint (pformat(new_obj_info))
+
+        return new_obj_info[0]
+
+    @classmethod
+    def make_ref(self, object_info):
+        return str(object_info[6]) + '/' + str(object_info[0]) + \
+            '/' + str(object_info[4])
+
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_run_star")
+    @unittest.skip("skipped test_run_star")
     def test_run_star(self):
-        params = {'command': 'STAR', 'options': ['--help']}
-        self.getImpl().run_star(self.getContext(), params)
+        # get the test data
+        pe_lib_info = self.getPairedEndLibInfo()
+        pprint(pe_lib_info)
+
+        # STAR input parameters
+        params = {
+            'workspace_name': self.getWsName(),
+            'outFileNamePrefix': 'STARtest',
+            'genome_ref': '12345/67/8',#madeup
+	    'reads_ref': '',
+	    'runMode': 'generateGenome',
+	    'runThreadN': 4,
+	    'genomeFastaFiles':[self.make_ref()],
+            'readsFilesIn':[self.make_ref(pe_lib_info)]
+        }
+
+        result = self.getImpl().run_star(self.getContext(), params)
+
+        if not result[0]['report_ref'] is None:
+                rep = self.wsClient.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
+                print('REPORT object:')
+                pprint(rep)
+
+                self.assertEqual(rep['info'][1].rsplit('_', 1)[0], 'kb_star_report')
+                self.assertEqual(rep['info'][2].split('-', 1)[0], 'KBaseReport.Report')
+        else:
+                print('STAR failed!')
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_build_star_index_from_assembly")
+    @unittest.skip("skipped test_build_star_index_from_assembly")
     def test_build_star_index_from_assembly(self):
 
         # test build directly from an assembly, forget to add ws_for_cache so object will not be cached
@@ -187,10 +244,9 @@ class STARTest(unittest.TestCase):
         pprint(res)
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_build_star_index_from_genome")
+    @unittest.skip("skipped test_build_star_index_from_genome")
     def test_build_star_index_from_genome(self):
-
-        # finally, try it with a genome_ref instead
+        # STAR generate indexes with a genome_ref
         genome_ref = self.loadGenome()
         res = self.getImpl().get_star_index(self.getContext(), {'ref': genome_ref})[0]
         self.assertIn('output_dir', res)
@@ -236,6 +292,8 @@ class STARTest(unittest.TestCase):
 
 
 
+    # Uncomment to skip this test
+    @unittest.skip("skipped test_star_aligner")
     def test_star_aligner(self):
         self.loadAssembly()
         self.loadSingleEndReads()

@@ -3,6 +3,7 @@
 # The header block is where all import statments should live
 import os
 import json
+import time
 from pprint import pprint, pformat
 
 from STAR.Utils.STARUtils import STARUtil
@@ -37,6 +38,11 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
+
+    def log(self, message, prefix_newline=False):
+            print(('\n' if prefix_newline else '') +
+                str(time.time()) + ': ' + str(message))
+
     #END_CLASS_HEADER
 
     # config contains contents of config file in a hash or None if it couldn't
@@ -46,9 +52,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         
         # Any configuration parameters that are important should be parsed and
         # saved in the constructor.
-        self.cfg = config
-        self.callbackURL = os.environ['SDK_CALLBACK_URL']
-        self.log('Callback URL: ' + self.callbackURL)
+        self.config = config
         self.workspaceURL = config['workspace-url']
         self.scratch = os.path.abspath(config['scratch'])
         if not os.path.exists(self.scratch):
@@ -131,6 +135,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'output is not type dict as required.')
         # return the results
         return [output]
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

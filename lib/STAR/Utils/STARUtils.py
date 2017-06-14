@@ -2,6 +2,7 @@
 import time
 import json
 import os
+import re
 import uuid
 import errno
 import subprocess
@@ -16,12 +17,19 @@ from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
+from file_util import (
+    fetch_reads_from_reference,
+    fetch_reads_refs_from_sampleset
+    fetch_fasta_from_object
+)
+
 def log(message, prefix_newline=False):
     """Logging function, provides a hook to suppress or redirect log messages."""
     print(('\n' if prefix_newline else '') + '{0:.2f}'.format(time.time()) + ': ' + str(message))
 
 
 class STARUtil:
+    STAR_VERSION = 'STAR 2.5.3a'
     STAR_BIN = '/kb/deployment/bin/STAR'
     STAR_DATA = '/kb/module/work/tmp'
     #STAR_DATA = '/kb/module/testReads'
@@ -188,7 +196,7 @@ class STARUtil:
         return p.returncode
 
     def __init__(self, config):
-        self.callback_url = config['SDK_CALLBACK_URL']
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.scratch = config['scratch']
         self.shock_url = config['shock-url']
         self.dfu = DataFileUtil(self.callback_url)
@@ -249,53 +257,6 @@ class STARUtil:
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
                 ret = outdir
         return ret
-
-    def fetch_fasta_from_genome(genome_ref, ws_url, callback_url):
-	"""
-	Returns an assembly or contigset as FASTA.
-	"""
-	if not check_ref_type(genome_ref, ['KBaseGenomes.Genome'], ws_url):
-	    raise ValueError("The given genome_ref {} is not a KBaseGenomes.Genome type!")
-	# test if genome references an assembly type
-	# do get_objects2 without data. get list of refs
-	ws = Workspace(ws_url)
-	genome_obj_info = ws.get_objects2({
-		'objects': [{'ref': genome_ref}],
-		'no_data': 1
-	})
-	# get the list of genome refs from the returned info.
-	# if there are no refs (or something funky with the return), this will be an empty list.
-	# this WILL fail if data is an empty list. But it shouldn't be, and we know because
-	# we have a real genome reference, or get_objects2 would fail.
-	genome_obj_refs = genome_obj_info.get('data', [{}])[0].get('refs', [])
-
-	# see which of those are of an appropriate type (ContigSet or Assembly), if any.
-	assembly_ref = list()
-	ref_params = [{'ref': x} for x in genome_obj_refs]
-	ref_info = ws.get_object_info3({'objects': ref_params})
-	for idx, info in enumerate(ref_info.get('infos')):
-	if "KBaseGenomeAnnotations.Assembly" in info[2] or "KBaseGenomes.ContigSet" in info[2]:
-	    assembly_ref.append(";".join(ref_info.get('paths')[idx]))
-
-	if len(assembly_ref) == 1:
-	    return fetch_fasta_from_assembly(assembly_ref[0], ws_url, callback_url)
-	else:
-	    raise ValueError("Multiple assemblies found associated with the given genome ref {}! " +
-		 "Unable to continue.")
-
-
-    def fetch_fasta_from_assembly(assembly_ref, ws_url, callback_url):
-    	"""
-    	From an assembly or contigset, this uses a data file util to build a FASTA file and return the
-    	path to it.
-    	"""
-	allowed_types = ['KBaseFile.Assembly',
-		     'KBaseGenomeAnnotations.Assembly',
-		     'KBaseGenomes.ContigSet']
-	if not check_ref_type(assembly_ref, allowed_types, ws_url):
-	raise ValueError("The reference {} cannot be used to fetch a FASTA file".format(assembly_ref))
-	au = AssemblyUtil(callback_url)
-	return au.get_assembly_as_fasta({'ref': assembly_ref})
 
 
     def get_star_index(self, source_ref):
@@ -380,7 +341,7 @@ class STARUtil:
             "assembly_or_genome_ref": input_params["genome_ref"],
             "read_library_ref": reads_info["object_ref"],
             "aligned_using": "STAR",
-            "aligner_version":STAR _VERSION,
+            "aligner_version":self.STAR_VERSION,
             "aligner_opts": aligner_opts
         }
 
@@ -452,7 +413,7 @@ class STARUtil:
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
-    def run_star(self, input_params, idx_prefix, reads, output_file="aligned.out"):
+    def run_star(self, input_params): #, idx_prefix, reads, output_file="aligned.out"):
         """
         run_star: run the STAR app
 	output_file = the file prefix (before ".sam") for the generated reads. Default =
@@ -488,18 +449,18 @@ class STARUtil:
         log('Saved result files to: {}'.format(output_dir))
         log('Generated files:\n{}'.format('\n'.join(os.listdir(output_dir))))
 	
-	alignment_file = os.path.join(self.working_dir, "{}.sam".format(output_file))
+	#alignment_file = os.path.join(self.working_dir, "{}.sam".format(output_file))
         print("Uploading STAR output object and report...")
-        alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
+        #alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
 
-        reportVal = self._generate_report(alignment_ref, output_dir, input_params)
+        #reportVal = self._generate_report(alignment_ref, output_dir, input_params)
 
         returnVal = {
             'output_folder': output_dir,
             'alignment_ref': alignment_ref
         }
 
-        returnVal.update(reportVal)
+        #returnVal.update(reportVal)
 
         return returnVal
 
