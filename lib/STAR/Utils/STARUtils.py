@@ -160,6 +160,11 @@ class STARUtil:
 	    mp_cmd.append('--' + self.PARAM_IN_READS_FILES)
             for reads_file in params[self.PARAM_IN_READS_FILES]:
 	        mp_cmd.append(reads_file)
+		readName, readsExtension = os.path.splitext(reads_file)
+		if readsExtension == '.gz':
+			mp_cmd.append('--readFilesCommand')
+			mp_cmd.append('gunzip')
+			mp_cmd.append('-c')
 
 	if params.get(self.PARAM_IN_OUTFILE_NAME, None) is not None:
 	    mp_cmd.append('--' + self.PARAM_IN_OUTFILE_NAME)
