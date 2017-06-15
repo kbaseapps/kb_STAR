@@ -55,8 +55,10 @@ module STAR {
 	int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
 		ideally = (ReadLength - 1)
 	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
-		By default, this parameter is ./, i.e. all output files are written in the current directory
+		By default, this parameter is ./STARoutput_, i.e. all output files are written in the current directory with the prefix 'STARoutput_'.
 
+	@optional outFileNamePrefix
+	@optional runThreadN
 	@optional sjdbGTFfile
 	@optional sjdbOverhang
     */
@@ -68,7 +70,7 @@ module STAR {
 	string runMode;
 	int runThreadN;
 	list<obj_ref> genomeFastaFiles;
-	string sjdbGTFfile;
+	obj_ref sjdbGTFfile_ref;
 	int sjdbOverhang;
 	
 	list<obj_ref> readFilesIn;

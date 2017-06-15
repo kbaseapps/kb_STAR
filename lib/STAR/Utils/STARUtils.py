@@ -19,7 +19,7 @@ from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
 from file_util import (
     fetch_reads_from_reference,
-    fetch_reads_refs_from_sampleset
+    fetch_reads_refs_from_sampleset,
     fetch_fasta_from_object
 )
 
@@ -31,11 +31,11 @@ def log(message, prefix_newline=False):
 class STARUtil:
     STAR_VERSION = 'STAR 2.5.3a'
     STAR_BIN = '/kb/deployment/bin/STAR'
-    STAR_DATA = '/kb/module/work/tmp'
+    STAR_IDX = '/kb/module/STAR_genome_dir/'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
-    PARAM_IN_OUTFILE_NAME = 'outFileNamePrefix'
+    PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
     PARAM_IN_STARMODE = 'runMode'
     PARAM_IN_THREADN = 'runThreadN'
     PARAM_IN_READS_FILES = 'readFilesIn'
@@ -65,7 +65,7 @@ class STARUtil:
     def _process_params(self, params):
         """
         _process_params:
-                checks params passed to run_star method
+                checks params passed to run_star method and set default values
         """
         log('Start validating run_star parameters')
 
@@ -101,45 +101,45 @@ class STARUtil:
 	else:
 	    params[self.PARAM_IN_THREADN] = 1
 
-        if params.get(self.PARAM_IN_OUTFILE_NAME, None) is not None:
-            if self.INVALID_WS_OBJ_NAME_RE.search(params[self.PARAM_IN_OUTFILE_NAME]):
-            	raise ValueError('Invalid workspace object name ' +
-                             params[self.PARAM_IN_OUTFILE_NAME])
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
+	    params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'
+
+	return params
+
 
     def _construct_indexing_cmd(self, params):
-        # STEP 1: get the working folder housing the STAR results as well as the reads info
+        # STEP 1: get the workspace and its folder where the genome indices are stored
         wsname = params[self.PARAM_IN_WS]
-        out_folder = params['out_folder']
-
-        # STEP 2: construct the command for running `STAR --runMode genomeGenerate...`
-        indx_cmd = [self.STAR_BIN]
-	indx_cmd.append('--genomeDir')
-	indx_cmd.append(out_folder)
-	indx_cmd.append('--' + self.PARAM_IN_STARMODE)
-	indx_cmd.append('genomeGenerate')
-	indx_cmd.append('--' + self.PARAM_IN_THREADN)
-	indx_cmd.append(params[self.PARAM_IN_THREADN])
+        
+	# STEP 2: construct the command for running `STAR --runMode genomeGenerate...`
+        idx_cmd = [self.STAR_BIN]
+	idx_cmd.append('--genomeDir')
+	idx_cmd.append(self.STAR_IDX)
+	idx_cmd.append('--' + self.PARAM_IN_STARMODE)
+	idx_cmd.append('genomeGenerate')
+	idx_cmd.append('--' + self.PARAM_IN_THREADN)
+	idx_cmd.append(params[self.PARAM_IN_THREADN])
 
 	if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
             print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
-	    indx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
+	    idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
             for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
-	        indx_cmd.append(fasta_file)
+	        idx_cmd.append(fasta_file)
 
 	# appending the standard optional inputs
         if params.get('sjdbGTFfile', None) is not None: 
-            indx_cmd.append('--sjdbGTFfile')
-            indx_cmd.append(params['sjdbGTFfile'])
+            idx_cmd.append('--sjdbGTFfile')
+            idx_cmd.append(params['sjdbGTFfile'])
         if (params.get('sjdbOverhang', None) is not None 
 		and params['sjdbOverhang'] > 0):
-            indx_cmd.append('--sjdbOverhang')
-            indx_cmd.append(str(params['sjdbOverhang']))
+            idx_cmd.append('--sjdbOverhang')
+            idx_cmd.append(str(params['sjdbOverhang']))
         # appending the advanced optional inputs--TODO
 		
-        # STEP 3: return indx_cmd
+        # STEP 3: return idx_cmd
         print ('STAR indexing CMD:')
-        print ' '.join(indx_cmd)
-        return indx_cmd
+        print ' '.join(idx_cmd)
+        return idx_cmd
 
     def _construct_mapping_cmd(self, params):
         # STEP 1: get the working folder housing the STAR results as well as the reads info
@@ -166,9 +166,10 @@ class STARUtil:
 			mp_cmd.append('gunzip')
 			mp_cmd.append('-c')
 
-	if params.get(self.PARAM_IN_OUTFILE_NAME, None) is not None:
-	    mp_cmd.append('--' + self.PARAM_IN_OUTFILE_NAME)
-	    mp_cmd.append(params[PARAM_IN_OUTFILE_NAME])
+	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+	    mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
+	    mp_cmd.append(os.path.join(out_folder, params[PARAM_IN_OUTFILE_PREFIX]))
+
         # appending the advanced optional inputs--TODO
 
         # STEP 3 return mp_cmd
@@ -211,38 +212,39 @@ class STARUtil:
         self.working_dir = self.scratch
 
     def _exec_star(self, params):
+        params = self._process_params(params)
+
         outdir = os.path.join(self.scratch, 'star_output_dir')
         self._mkdir_p(outdir)
         tmpdir = os.path.join(self.scratch, 'star_tmp_dir')
 	self._mkdir_p(tmpdir)
 
         # build the parameters
-        params_indx = {
+        params_idx = {
                 'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE], #'genomeGenerate',
 		'runThreadN': params[self.PARAM_IN_THREADN],
-                'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES],
-                'out_folder': outdir
+                'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
 
         if params.get('sjdbGTFfile', None) is not None:
-            params_indx['sjdbGTFfile'] = params['sjdbGTFfile']
+            params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
         if params.get('sjdbOverhang', None) is not None :
-            params_indx['sjdbOverhang'] = params['sjdbOverhang']
+            params_idx['sjdbOverhang'] = params['sjdbOverhang']
 
         params_mp = {
                 'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readsFilesIn': params[self.PARAM_IN_READS_FILES],
-		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_NAME], 
+		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX], 
                 'out_folder': outdir
         }
 
         ret = 1
         try:
 	    if(params[self.PARAM_IN_STARMODE]=='genomeGenerate'):
-            	ret = self._exec_indexing(params_indx)
+            	ret = self._exec_indexing(params_idx)
 	    else:
 		ret = 0
 	    while( ret != 0 ):
@@ -418,41 +420,103 @@ class STARUtil:
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
-    def run_star(self, input_params): #, idx_prefix, reads, output_file="aligned.out"):
+    def run_star(self, input_params):
         """
         run_star: run the STAR app
-	output_file = the file prefix (before ".sam") for the generated reads. Default =
-                      "aligned_reads". Used for doing multiple alignments over a set of
-                      reads (a ReadsSet or SampleSet).
         """
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        existing_files = []
-        for subdir, dirs, files in os.walk('./'):
-            for file in files:
-                existing_files.append(file)
+	#1. Converting refs to file locations of the scratch area
+        #obj_ref reads_ref;
+	try:
+	    print("Fetching FASTA file from object {}".format(reads_ref))
+	    reads_fasta_file = fetch_fasta_from_object(reads_ref, self.workspace_url, self.callback_url)
+	    print("Done fetching FASTA file! Path = {}".format(reads_fasta_file.get("path", None)))
+	except ValueError:
+	    print("Incorrect object type for fetching a FASTA file!")
+	    raise
 
-        self._process_params(input_params)
-	star_out = self._exec_star(input_params)
-	self.log('STAR final return: ' + str(star_out))
+	if reads_fasta_file.get("path", None) is None:
+	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
+		       "exist!".format(reads_ref))
 
-        new_files = []
-        for subdir, dirs, files in os.walk('./'):
-            for file in files:
-                if file not in existing_files:
-                    new_files.append(file)
+        #obj_ref genome_ref;
+	try:
+	    print("Fetching FASTA file from object {}".format(genome_ref))
+	    genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
+	    print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
+	except ValueError:
+	    print("Incorrect object type for fetching a FASTA file!")
+	    raise
 
-        output_dir = os.path.join(self.scratch, 'star_output_dir')
-        self._mkdir_p(output_dir)
-        tmpdir = os.path.join(self.scratch, 'star_tmp_dir')
-	self._mkdir_p(tmpdir)
+	if genome_fasta_file.get("path", None) is None:
+	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
+		       "exist!".format(genome_ref))
 
-        for file in new_files:
-            shutil.copy(file, output_dir)
+	#obj_ref sjdbGTFfile_ref
+	try:
+	    print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
+	    sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
+	    print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
+	except ValueError:
+	    print("Incorrect object type for fetching a FASTA file!")
+	    raise
 
-        log('Saved result files to: {}'.format(output_dir))
-        log('Generated files:\n{}'.format('\n'.join(os.listdir(output_dir))))
+	if sjdbGTFfile.get("path", None) is None:
+	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
+		       "exist!".format(sjdbGTFfile_ref))
+
+	#list<obj_ref> genomeFastaFiles
+	genomeFastaFiles = list()
+	for source_ref in input_params['genomeFastaFiles']:
+		try:
+		    print("Fetching FASTA file from object {}".format(source_ref))
+		    fasta_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
+		    print("Done fetching FASTA file! Path = {}".format(fasta_file.get("path", None)))
+		except ValueError:
+		    print("Incorrect object type for fetching a FASTA file!")
+		    raise
+
+		if fasta_file.get("path", None) is None:
+		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
+			       "exist!".format(source_ref))
+
+		genomeFastaFiles.append(fasta_file)
+
+	#list<obj_ref> readsFilesIn
+	readsFiles = list()
+	for source_ref in input_params['readsFilesIn']:
+		try:
+		    print("Fetching FASTA file from object {}".format(source_ref))
+		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
+		    print("Done fetching FASTA file! Path = {}".format(reads_file.get("path", None)))
+		except ValueError:
+		    print("Incorrect object type for fetching a FASTA file!")
+		    raise
+
+		if reads_file.get("path", None) is None:
+		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
+			       "exist!".format(source_ref))
+
+		readsFiles.append(reads_file)
+
+	#2. Running star
+	params = {
+            'reads_fasta_file': reads_fasta_file,
+            'genome_fasta_file': genome_fasta_file,
+	    'runMode': input_params['runMode'],
+	    'runThreadN': input_params['runThreadN'],
+	    'genomeFastaFiles': genomeFastaFiles,
+	    'sjdbGTFfile': sjdbGTFfile,
+	    'sjdbOverhang': input_params['sjdbOverhang'],
+	    'readFilesIn': readsFiles,
+            'outFileNamePrefix': input_params['outFileNamePrefix']
+	}
+	star_out = self._exec_star(params)
+
+        log('STAR result files have been saved to: {}'.format(star_out))
+        log('STAR has generated files:\n{}'.format('\n'.join(os.listdir(star_out))))
 	
 	#alignment_file = os.path.join(self.working_dir, "{}.sam".format(output_file))
         print("Uploading STAR output object and report...")
@@ -461,7 +525,7 @@ class STARUtil:
         #reportVal = self._generate_report(alignment_ref, output_dir, input_params)
 
         returnVal = {
-            'output_folder': output_dir,
+            'output_folder': star_out,
             'alignment_ref': alignment_ref
         }
 
