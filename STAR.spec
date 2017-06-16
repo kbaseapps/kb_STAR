@@ -59,7 +59,7 @@ module STAR {
 
 	@optional outFileNamePrefix
 	@optional runThreadN
-	@optional sjdbGTFfile
+	@optional sjdbGTFfile_ref
 	@optional sjdbOverhang
     */
     typedef structure {
@@ -69,11 +69,11 @@ module STAR {
 
 	string runMode;
 	int runThreadN;
-	list<obj_ref> genomeFastaFiles;
+	list<obj_ref> genomeFastaFile_refs;
 	obj_ref sjdbGTFfile_ref;
 	int sjdbOverhang;
 	
-	list<obj_ref> readFilesIn;
+	list<obj_ref> readFilesIn_refs;
         string outFileNamePrefix;
     } STARParams;
 

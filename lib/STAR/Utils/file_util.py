@@ -52,8 +52,7 @@ def fetch_fasta_from_assembly(assembly_ref, ws_url, callback_url):
                      'KBaseGenomeAnnotations.Assembly',
                      'KBaseGenomes.ContigSet']
     if not check_ref_type(assembly_ref, allowed_types, ws_url):
-        raise ValueError("The reference {} cannot be used to fetch a FASTA file".format(
-            assembly_ref))
+        raise ValueError("The reference {} cannot be used to fetch a FASTA file".format(assembly_ref))
     au = AssemblyUtil(callback_url)
     return au.get_assembly_as_fasta({'ref': assembly_ref})
 

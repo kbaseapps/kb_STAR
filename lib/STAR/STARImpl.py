@@ -121,6 +121,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #BEGIN run_star
         self.log('Running run_star with params:\n' + pformat(params))
 
+        token = ctx['token']
+
         for key, value in params.iteritems():
             if isinstance(value, basestring):
                 params[key] = value.strip()

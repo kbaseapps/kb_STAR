@@ -18,8 +18,6 @@ from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
 from file_util import (
-    fetch_reads_from_reference,
-    fetch_reads_refs_from_sampleset,
     fetch_fasta_from_object
 )
 
@@ -34,18 +32,17 @@ class STARUtil:
     STAR_IDX = '/kb/module/STAR_genome_dir/'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
-    PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
+    PARAM_IN_FASTA_FILES = 'genomeFastaFile_refs'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
     PARAM_IN_STARMODE = 'runMode'
     PARAM_IN_THREADN = 'runThreadN'
-    PARAM_IN_READS_FILES = 'readFilesIn'
+    PARAM_IN_READS_FILES = 'readFilesIn_refs'
  
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
     PARAM_IN_LIB = 'reads_ref'
     PARAM_IN_GENOME = 'genome_ref'
-    PARAM_IN_ASSEMBLY = 'assembly_ref'
 
     def _mkdir_p(self, path):
         """
@@ -202,18 +199,16 @@ class STARUtil:
         return p.returncode
 
     def __init__(self, config):
+	self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
-        self.scratch = config['scratch']
         self.shock_url = config['shock-url']
         self.dfu = DataFileUtil(self.callback_url)
         self.ru = ReadsUtils(self.callback_url)
         self.au = AssemblyUtil(self.callback_url)
-	self.workspace_url = config['workspace-url']
+        self.scratch = config['scratch']
         self.working_dir = self.scratch
 
     def _exec_star(self, params):
-        params = self._process_params(params)
-
         outdir = os.path.join(self.scratch, 'star_output_dir')
         self._mkdir_p(outdir)
         tmpdir = os.path.join(self.scratch, 'star_tmp_dir')
@@ -227,6 +222,8 @@ class STARUtil:
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
 
+        if params.get('genome_fasta_file', None) is not None:
+            params_idx['genome_fasta_file'] = params['genome_fasta_file']
         if params.get('sjdbGTFfile', None) is not None:
             params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
         if params.get('sjdbOverhang', None) is not None :
@@ -240,6 +237,8 @@ class STARUtil:
 		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX], 
                 'out_folder': outdir
         }
+        if params.get('reads_fasta_file', None) is not None:
+            params_mp['reads_fasta_file'] = params['reads_fasta_file']
 
         ret = 1
         try:
@@ -427,49 +426,66 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-	#1. Converting refs to file locations of the scratch area
-        #obj_ref reads_ref;
-	try:
-	    print("Fetching FASTA file from object {}".format(reads_ref))
-	    reads_fasta_file = fetch_fasta_from_object(reads_ref, self.workspace_url, self.callback_url)
-	    print("Done fetching FASTA file! Path = {}".format(reads_fasta_file.get("path", None)))
-	except ValueError:
-	    print("Incorrect object type for fetching a FASTA file!")
-	    raise
+	#0. preprocessing the input parameters
+        input_params = self._process_params(input_params)
+        wsname = input_params[self.PARAM_IN_WS]
+	params = {
+	    'workspace_name': wsname,
+	    'runMode': input_params[self.PARAM_IN_STARMODE],
+	    'runThreadN': input_params[self.PARAM_IN_THREADN],
+            'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
+	}
 
-	if reads_fasta_file.get("path", None) is None:
-	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-		       "exist!".format(reads_ref))
+	#1. Converting refs to file locations in the scratch area
+        reads_ref = input_params.get(self.PARAM_IN_LIB, None)
+	if reads_ref is not None:
+	    try:
+		print("Fetching FASTA file from object {}".format(reads_ref))
+		reads_fasta_file = fetch_fasta_from_object(reads_ref, self.workspace_url, self.callback_url)
+		print("Done fetching FASTA file! Path = {}".format(reads_fasta_file.get("path", None)))
+	    except ValueError:
+		print("Incorrect object type for fetching a FASTA file!")
+		raise
 
-        #obj_ref genome_ref;
-	try:
-	    print("Fetching FASTA file from object {}".format(genome_ref))
-	    genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
-	    print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
-	except ValueError:
-	    print("Incorrect object type for fetching a FASTA file!")
-	    raise
+	    if reads_fasta_file.get("path", None) is None:
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(reads_ref))
+	    else:
+		params['reads_fasta_file'] = reads_fasta_file
 
-	if genome_fasta_file.get("path", None) is None:
-	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-		       "exist!".format(genome_ref))
+        genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
+	if genome_ref is not None:
+	    try:
+		print("Fetching FASTA file from object {}".format(genome_ref))
+		genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
+		print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
+	    except ValueError:
+		print("Incorrect object type for fetching a FASTA file!")
+		raise
 
-	#obj_ref sjdbGTFfile_ref
-	try:
-	    print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
-	    sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
-	    print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
-	except ValueError:
-	    print("Incorrect object type for fetching a FASTA file!")
-	    raise
+	    if genome_fasta_file.get("path", None) is None:
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
+	    else:
+		params['genome_fasta_file'] = genome_fasta_file
+		
+        sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
+	if sjdbGTFfile_ref is not None:
+	    try:
+		print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
+		sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
+		print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
+	    except ValueError:
+		print("Incorrect object type for fetching a FASTA file!")
+		raise
 
-	if sjdbGTFfile.get("path", None) is None:
-	    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-		       "exist!".format(sjdbGTFfile_ref))
+	    if sjdbGTFfile.get("path", None) is None:
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(sjdbGTFfile_ref))
+	    else:
+		params['sjdbGTFfile'] = sjdbGTFfile
+        	if input_params.get('sjdbOverhang', None) is not None :
+            	    params['sjdbOverhang'] = input_params['sjdbOverhang']
 
-	#list<obj_ref> genomeFastaFiles
 	genomeFastaFiles = list()
-	for source_ref in input_params['genomeFastaFiles']:
+	for source_ref in input_params['genomeFastaFile_refs']:
 		try:
 		    print("Fetching FASTA file from object {}".format(source_ref))
 		    fasta_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
@@ -483,10 +499,10 @@ class STARUtil:
 			       "exist!".format(source_ref))
 
 		genomeFastaFiles.append(fasta_file)
+	params['genomeFastaFiles'] = genomeFastaFiles
 
-	#list<obj_ref> readsFilesIn
 	readsFiles = list()
-	for source_ref in input_params['readsFilesIn']:
+	for source_ref in input_params['readsFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from object {}".format(source_ref))
 		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
@@ -500,26 +516,18 @@ class STARUtil:
 			       "exist!".format(source_ref))
 
 		readsFiles.append(reads_file)
+	params['readsFilesIn'] = readsFiles
 
 	#2. Running star
-	params = {
-            'reads_fasta_file': reads_fasta_file,
-            'genome_fasta_file': genome_fasta_file,
-	    'runMode': input_params['runMode'],
-	    'runThreadN': input_params['runThreadN'],
-	    'genomeFastaFiles': genomeFastaFiles,
-	    'sjdbGTFfile': sjdbGTFfile,
-	    'sjdbOverhang': input_params['sjdbOverhang'],
-	    'readFilesIn': readsFiles,
-            'outFileNamePrefix': input_params['outFileNamePrefix']
-	}
 	star_out = self._exec_star(params)
 
         log('STAR result files have been saved to: {}'.format(star_out))
         log('STAR has generated files:\n{}'.format('\n'.join(os.listdir(star_out))))
+
+	#3. Uploading the alignment and generating report
+        print("Uploading STAR output object and report...")
 	
 	#alignment_file = os.path.join(self.working_dir, "{}.sam".format(output_file))
-        print("Uploading STAR output object and report...")
         #alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
 
         #reportVal = self._generate_report(alignment_ref, output_dir, input_params)
