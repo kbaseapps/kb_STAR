@@ -59,6 +59,8 @@ class STARTest(unittest.TestCase):
         cls.scratch = cls.cfg['scratch']
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
 
+
+
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls, 'wsName'):
@@ -100,22 +102,37 @@ class STARTest(unittest.TestCase):
     def loadGenome(self):
         if hasattr(self.__class__, 'genome_ref'):
             return self.__class__.genome_ref
-        genbank_file_path = os.path.join(self.scratch, 'minimal.gbff')
-        shutil.copy(os.path.join('testReads', 'minimal.gbff'), genbank_file_path)
+        genome_file_path = os.path.join(self.scratch, 'star_test_genome.fa')
+        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), genome_file_path)
         gfu = GenomeFileUtil(self.callback_url)
-        genome_ref = gfu.genbank_to_genome({'file': {'path': genbank_file_path},
+        genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
                                             'workspace_name': self.getWsName(),
-                                            'genome_name': 'test_genome'
+                                            'genome_name': 'STAR_test_genome'
                                             })['genome_ref']
         self.__class__.genome_ref = genome_ref
         return genome_ref
+
+
+    def loadSEReads(self):
+        if hasattr(self.__class__, 'reads_ref'):
+            return self.__class__.reads_ref
+        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq.gz')
+        shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq.gz'), fq_path)
+
+        ru = ReadsUtils(self.callback_url)
+        reads_ref = ru.upload_reads({'fwd_file': fq_path,
+                                        'wsname': self.getWsName(),
+                                        'name': 'star_test_reads',
+                                        'sequencing_tech': 'rnaseq reads'})['obj_ref']
+        self.__class__.reads_ref = reads_ref
+        return reads_ref
 
 
     def loadPEReads(self):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'test.fna')
-        shutil.copy(os.path.join('testReads', 'test.fna'), fasta_path)
+        shutil.copy(os.path.join('testReads', 'test_reads.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -143,10 +160,10 @@ class STARTest(unittest.TestCase):
             return self.__class__.pairedEndLibInfo
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        forward_data_file = 'testReads/small.forward.fq'
+        forward_data_file = '../testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = 'testReads/small.reverse.fq'
+        reverse_data_file = '../testReads/small.reverse.fq'
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
@@ -170,7 +187,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star")
+    #@unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
         pe_lib_info = self.getPairedEndLibInfo()
@@ -180,11 +197,11 @@ class STARTest(unittest.TestCase):
         params = {
             'workspace_name': self.getWsName(),
             'outFileNamePrefix': 'STARtest',
-            'genome_ref': '12345/67/8',#madeup
-	    'reads_ref': '',
+            'genome_ref': self.loadGenome(),
+	    'reads_ref': self.loadSEReads(),
 	    'runMode': 'generateGenome',
 	    'runThreadN': 4,
-	    'genomeFastaFiles':[self.make_ref()],
+	    'genomeFastaFiles': [],#[self.make_ref()],
             'readsFilesIn':[self.make_ref(pe_lib_info)]
         }
 
@@ -257,21 +274,6 @@ class STARTest(unittest.TestCase):
         self.assertIn('index_files_basename', res)
         self.assertEquals(res['index_files_basename'], 'test_genome_assembly')
         pprint(res)
-
-    def loadSingleEndReads(self):
-        if hasattr(self.__class__, 'se_reads_ref'):
-            return self.__class__.se_reads_ref
-        fq_path = os.path.join(self.scratch, 'reads_1_se.fq')
-        shutil.copy(os.path.join('data', 'bt_test_data', 'reads_1.fq'), fq_path)
-
-        ru = ReadsUtils(self.callback_url)
-        se_reads_ref = ru.upload_reads({'fwd_file': fq_path,
-                                        'wsname': self.getWsName(),
-                                        'name': 'test_assembly',
-                                        'sequencing_tech': 'artificial reads'})['obj_ref']
-        self.__class__.se_reads_ref = se_reads_ref
-        return se_reads_ref
-
 
     def loadPairedEndReads(self):
         if hasattr(self.__class__, 'pe_reads_ref'):
