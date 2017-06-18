@@ -13,7 +13,7 @@ try:
 except:
     from configparser import ConfigParser  # py3
 
-from pprint import pprint  # noqa: F401
+from pprint import pprint, pformat # noqa: F401
 
 from biokbase.workspace.client import Workspace as workspaceService
 from STAR.STARImpl import STAR
@@ -89,12 +89,13 @@ class STARTest(unittest.TestCase):
     def loadAssembly(self):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
-        fasta_path = os.path.join(self.scratch, 'test.fna')
-        shutil.copy(os.path.join('testReads', 'test.fna'), fasta_path)
+        fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
+        #shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        shutil.copy(os.path.join('../testReads', 'test_reference.fq'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
-                                                    'assembly_name': 'test_assembly'
+                                                    'assembly_name': 'star_test_assembly'
                                                     })
         self.__class__.assembly_ref = assembly_ref
         return assembly_ref
@@ -116,8 +117,9 @@ class STARTest(unittest.TestCase):
     def loadSEReads(self):
         if hasattr(self.__class__, 'reads_ref'):
             return self.__class__.reads_ref
-        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq.gz')
-        shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq.gz'), fq_path)
+        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
+        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
+        shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
 
         ru = ReadsUtils(self.callback_url)
         reads_ref = ru.upload_reads({'fwd_file': fq_path,
@@ -196,12 +198,12 @@ class STARTest(unittest.TestCase):
         # STAR input parameters
         params = {
             'workspace_name': self.getWsName(),
-            'outFileNamePrefix': 'STARtest',
-            'genome_ref': self.loadGenome(),
+            'outFileNamePrefix': '../testReads/STARtest',
+            #'genome_ref': self.loadAssembly(),#self.loadGenome(),
 	    'reads_ref': self.loadSEReads(),
 	    'runMode': 'generateGenome',
 	    'runThreadN': 4,
-	    'genomeFastaFiles': [],#[self.make_ref()],
+	    'genomeFastaFiles': [self.loadAssembly()],#[self.make_ref()],
             'readsFilesIn':[self.make_ref(pe_lib_info)]
         }
 
