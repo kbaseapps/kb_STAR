@@ -17,6 +17,7 @@ from pprint import pprint, pformat # noqa: F401
 
 from biokbase.workspace.client import Workspace as workspaceService
 from STAR.STARImpl import STAR
+from STAR.Utils.STARUtils import STARUtil
 from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
 
@@ -91,7 +92,7 @@ class STARTest(unittest.TestCase):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
         #shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
-        shutil.copy(os.path.join('../testReads', 'test_reference.fq'), fasta_path)
+        shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -189,7 +190,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star")
+    @unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
         pe_lib_info = self.getPairedEndLibInfo()
@@ -203,8 +204,8 @@ class STARTest(unittest.TestCase):
 	    'reads_ref': self.loadSEReads(),
 	    'runMode': 'generateGenome',
 	    'runThreadN': 4,
-	    'genomeFastaFiles': [self.loadAssembly()],#[self.make_ref()],
-            'readsFilesIn':[self.make_ref(pe_lib_info)]
+	    'genomeFastaFile_refs': [self.loadAssembly()],#[self.make_ref()],
+            'readFilesIn_refs':[self.make_ref(pe_lib_info)]
         }
 
         result = self.getImpl().run_star(self.getContext(), params)
@@ -220,62 +221,80 @@ class STARTest(unittest.TestCase):
                 print('STAR failed!')
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_build_star_index_from_assembly")
-    def test_build_star_index_from_assembly(self):
+    @unittest.skip("skipped test_index_map")
+    def test_index_map(self):
 
-        # test build directly from an assembly, forget to add ws_for_cache so object will not be cached
-        assembly_ref = self.loadAssembly()
-        res = self.getImpl().get_star_index(self.getContext(), {'ref': assembly_ref})[0]
-        self.assertIn('output_dir', res)
-        self.assertIn('from_cache', res)
-        self.assertEquals(res['from_cache'], 0)
-        self.assertIn('pushed_to_cache', res)
-        self.assertEquals(res['pushed_to_cache'], 0)
-        self.assertIn('index_files_basename', res)
-        self.assertEquals(res['index_files_basename'], 'test_assembly')
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        genome_fasta_file = '../testReads/test_long.fa'
+        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
+        shutil.copy(genome_fasta_file, genome_file)
+        forward_data_file = '../testReads/small.forward.fq'
+        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
+        shutil.copy(forward_data_file, forward_file)
+        reverse_data_file = '../testReads/small.reverse.fq'
+        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
+        shutil.copy(reverse_data_file, reverse_file)
+        # STAR indexing input parameters
+        params_idx = {
+            'workspace_name': self.getWsName(),
+	    'runMode': 'generateGenome',
+	    'runThreadN': 4,
+	    'genomeFastaFiles': [genome_file]
+        }
+        # test build directly from the genome reference file
+	star_util = STARUtil(self.cfg)
+        result1 = star_util._exec_indexing(params_idx)
 
-        pprint(res)
+        pprint(result1)
 
-        # do it again, and set ws_for_cache
-        assembly_ref = self.loadAssembly()
-        res = self.getImpl().get_star_index(self.getContext(), {'ref': assembly_ref,
-                                                                   'ws_for_cache': self.getWsName()})[0]
-        self.assertIn('output_dir', res)
-        self.assertIn('from_cache', res)
-        self.assertEquals(res['from_cache'], 0)
-        self.assertIn('pushed_to_cache', res)
-        self.assertEquals(res['pushed_to_cache'], 1)
-        self.assertIn('index_files_basename', res)
-        self.assertEquals(res['index_files_basename'], 'test_assembly')
+        # STAR mapping input parameters
+        params_mp = {
+            'workspace_name': self.getWsName(),
+	    'runThreadN': 4,
+	    'outFileNamePrefix': 'star_test/STAR_',
+            'readFilesIn':[forward_file, reverse_file]
+        }
+        result2 = star_util._exec_mapping(params_mp)
 
-        pprint(res)
+        pprint(result2)
 
-        # do it again, should retrieve from cache
-        assembly_ref = self.loadAssembly()
-        res = self.getImpl().get_star_index(self.getContext(), {'ref': assembly_ref})[0]
-        self.assertIn('output_dir', res)
-        self.assertIn('from_cache', res)
-        self.assertEquals(res['from_cache'], 1)
-        self.assertIn('pushed_to_cache', res)
-        self.assertEquals(res['pushed_to_cache'], 0)
-        self.assertIn('index_files_basename', res)
-        self.assertEquals(res['index_files_basename'], 'test_assembly')
-        pprint(res)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_build_star_index_from_genome")
-    def test_build_star_index_from_genome(self):
-        # STAR generate indexes with a genome_ref
-        genome_ref = self.loadGenome()
-        res = self.getImpl().get_star_index(self.getContext(), {'ref': genome_ref})[0]
-        self.assertIn('output_dir', res)
-        self.assertIn('from_cache', res)
-        self.assertEquals(res['from_cache'], 0)
-        self.assertIn('pushed_to_cache', res)
-        self.assertEquals(res['pushed_to_cache'], 0)
-        self.assertIn('index_files_basename', res)
-        self.assertEquals(res['index_files_basename'], 'test_genome_assembly')
-        pprint(res)
+    #@unittest.skip("skipped test_exec_star")
+    def test_exec_star(self):
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa' #'test_long.fa'
+        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
+        shutil.copy(genome_fasta_file, genome_file)
+        rnaseq_data_file = '../testReads/test_long.fa' #'Ath_Hy5_R1.fastq'
+        rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
+        shutil.copy(rnaseq_data_file, rnaseq_file)
+
+        forward_data_file = '../testReads/small.forward.fq'
+        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
+        shutil.copy(forward_data_file, forward_file)
+        reverse_data_file = '../testReads/small.reverse.fq'
+        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
+        shutil.copy(reverse_data_file, reverse_file)
+
+	# 2) compose the input parameters
+        params = {
+                'workspace_name': self.getWsName(),
+                'runMode': 'genomeGenerate',
+		'runThreadN': 4,
+                'genomeFastaFiles': [genome_file],
+                'readFilesIn': [rnaseq_file],#[forward_file, reverse_file],
+		'star_output_dir': '',
+		'outFileNamePrefix': 'STAR_' 
+	}
+        # 3) test running star directly from files (not KBase refs)
+	star_util = STARUtil(self.cfg)
+        result = star_util._exec_star(params)
+
+        pprint(result)
+
 
     def loadPairedEndReads(self):
         if hasattr(self.__class__, 'pe_reads_ref'):
@@ -293,12 +312,3 @@ class STARTest(unittest.TestCase):
         self.__class__.pe_reads_ref = pe_reads_ref
         return pe_reads_ref
 
-
-
-
-    # Uncomment to skip this test
-    @unittest.skip("skipped test_star_aligner")
-    def test_star_aligner(self):
-        self.loadAssembly()
-        self.loadSingleEndReads()
-        self.loadPairedEndReads()
