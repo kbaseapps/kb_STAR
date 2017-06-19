@@ -32,11 +32,13 @@ class STARUtil:
     STAR_IDX = '/kb/module/STAR_genome_dir/'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
-    PARAM_IN_FASTA_FILES = 'genomeFastaFile_refs'
+    PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
+    PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
     PARAM_IN_STARMODE = 'runMode'
     PARAM_IN_THREADN = 'runThreadN'
-    PARAM_IN_READS_FILES = 'readFilesIn_refs'
+    PARAM_IN_READS_REFS = 'readFilesIn_refs'
+    PARAM_IN_READS_FILES = 'readFilesIn'
  
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
@@ -74,22 +76,22 @@ class STARUtil:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 	else:
             if params[self.PARAM_IN_STARMODE] == "genomeGenerate":
-		if params.get(self.PARAM_IN_FASTA_FILES, None) is None:
-		    raise ValueError(self.PARAM_IN_FASTA_FILES + 
+		if params.get(self.PARAM_IN_FASTA_REFS, None) is None:
+		    raise ValueError(self.PARAM_IN_FASTA_REFS + 
 				' parameter is required for generating genome index')
-		if type(params[self.PARAM_IN_FASTA_FILES]) != list:
-		    raise ValueError(self.PARAM_IN_FASTA_FILES + ' must be a list')
-		if params.get(self.PARAM_IN_FASTA_FILES, None) is None:
+		if type(params[self.PARAM_IN_FASTA_REFS]) != list:
+		    raise ValueError(self.PARAM_IN_FASTA_REFS + ' must be a list')
+		if params.get(self.PARAM_IN_FASTA_REFS, None) is None:
 		    raise ValueError('At least one FASTA file must be provided for generating genome index')
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and 
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
-            if params.get(self.PARAM_IN_READS_FILES, None) is None:
-		raise ValueError(self.PARAM_IN_READS_FILES + 
+            if params.get(self.PARAM_IN_READS_REFS, None) is None:
+		raise ValueError(self.PARAM_IN_READS_REFS + 
 				' parameter is required for genome mapping')
-            if type(params[self.PARAM_IN_READS_FILES]) != list:
-		raise ValueError(self.PARAM_IN_READS_FILES + ' must be a list')
-            if params.get(self.PARAM_IN_READS_FILES, None) is None:
+            if type(params[self.PARAM_IN_READS_REFS]) != list:
+		raise ValueError(self.PARAM_IN_READS_REFS + ' must be a list')
+            if params.get(self.PARAM_IN_READS_REFS, None) is None:
 		raise ValueError('At least one reads file must be provided for genome mapping')
 
         if params.get(self.PARAM_IN_THREADN, None) is not None:
@@ -100,6 +102,8 @@ class STARUtil:
 
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
 	    params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'
+	elif params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
+	    raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
 	return params
 
@@ -115,7 +119,7 @@ class STARUtil:
 	idx_cmd.append('--' + self.PARAM_IN_STARMODE)
 	idx_cmd.append('genomeGenerate')
 	idx_cmd.append('--' + self.PARAM_IN_THREADN)
-	idx_cmd.append(params[self.PARAM_IN_THREADN])
+	idx_cmd.append(str(params[self.PARAM_IN_THREADN]))
 
 	if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
             print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
@@ -140,17 +144,23 @@ class STARUtil:
 
     def _construct_mapping_cmd(self, params):
         # STEP 1: get the working folder housing the STAR results as well as the reads info
-        out_folder = params['out_folder']
         wsname = params[self.PARAM_IN_WS]
+	star_out_dir = ''
+	if params.get(self.PARAM_IN_STARMODE, None) is None:
+	    params[self.PARAM_IN_STARMODE] = 'alignReads'
+	if params.get('star_output_dir', None) is None:
+	    star_out_dir = self.scratch
+	else:
+	    star_out_dir = os.path.join(self.scratch, params['star_output_dir'])
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
 	mp_cmd.append('--genomeDir')
-	mp_cmd.append(out_folder)
+	mp_cmd.append(self.STAR_IDX)
 	mp_cmd.append('--' + self.PARAM_IN_STARMODE)
 	mp_cmd.append(params[self.PARAM_IN_STARMODE])
 	mp_cmd.append('--' + self.PARAM_IN_THREADN)
-	mp_cmd.append(params[self.PARAM_IN_THREADN])
+	mp_cmd.append(str(params[self.PARAM_IN_THREADN]))
         
 	if params.get(self.PARAM_IN_READS_FILES, None) is not None:
             print('Input reads files:' + pformat(params[self.PARAM_IN_READS_FILES]))
@@ -165,8 +175,7 @@ class STARUtil:
 
 	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
 	    mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
-	    mp_cmd.append(os.path.join(out_folder, params[PARAM_IN_OUTFILE_PREFIX]))
-
+	    mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
         # appending the advanced optional inputs--TODO
 
         # STEP 3 return mp_cmd
@@ -175,24 +184,24 @@ class STARUtil:
         return mp_cmd
 
     def _exec_indexing(self, params):
-        self.log('Running STAR index generating with params:\n' + pformat(params))
+        log('Running STAR index generating with params:\n' + pformat(params))
         STAR_cmd = self._construct_indexing_cmd(params)
 
         p = subprocess.Popen(STAR_cmd, cwd=self.scratch, shell=False)
         retcode = p.wait()
 
-        self.log('Return code: ' + str(retcode))
+        log('Return code: ' + str(retcode))
         if p.returncode != 0:
             raise ValueError('Error running STAR index generating, return code: ' + str(retcode) + '\n')
 
         return p.returncode
 
     def _exec_mapping(self, params):
-        self.log('Running STAR mapping with params:\n' + pformat(params))
+        log('Running STAR mapping with params:\n' + pformat(params))
         STAR_cmd = self._construct_mapping_cmd(params)
         p = subprocess.Popen(STAR_cmd, cwd=self.scratch, shell=False)
         retcode = p.wait()
-        self.log('Return code: ' + str(p.returncode))
+        log('Return code: ' + str(p.returncode))
         if p.returncode != 0:
             raise ValueError('Error running STAR mapping, return code: ' + str(p.returncode) + '\n')
 
@@ -217,7 +226,7 @@ class STARUtil:
         # build the parameters
         params_idx = {
                 'workspace_name': params[self.PARAM_IN_WS],
-                'runMode': params[self.PARAM_IN_STARMODE], #'genomeGenerate',
+                'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
@@ -233,9 +242,9 @@ class STARUtil:
                 'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
-                'readsFilesIn': params[self.PARAM_IN_READS_FILES],
-		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX], 
-                'out_folder': outdir
+                'readFilesIn': params[self.PARAM_IN_READS_FILES],
+		'star_output_dir': outdir,
+		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX] 
         }
         if params.get('reads_fasta_file', None) is not None:
             params_mp['reads_fasta_file'] = params['reads_fasta_file']
@@ -248,20 +257,22 @@ class STARUtil:
 		ret = 0
 	    while( ret != 0 ):
                 time.sleep(1)
-        except ValueError as eindx:
-            self.log('STAR genome indexing raised error:\n')
-            print(eindx)
+        except ValueError as eidx:
+            log('STAR genome indexing raised error:\n')
+            print(eidx)
         else:#no exception raised by genome indexing and STAR returns 0, then run mapping
             ret = 1 
+	    if(params[self.PARAM_IN_STARMODE]=='genomeGenerate'):
+		params_mp['runMode'] = 'alignReads'
             try:
                 ret = self._exec_mapping(params_mp)
                 while( ret != 0 ):
                     time.sleep(1)
-            except ValueError as eg:
-                self.log('STAR mapping raised error:\n')
-                print(eg)
+            except ValueError as emp:
+                log('STAR mapping raised error:\n')
+                print(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = outdir
+                ret = os.path.join(outdir, params[self.PARAM_IN_OUTFILE_PREFIX])
         return ret
 
 

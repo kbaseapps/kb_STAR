@@ -87,19 +87,6 @@ class STARTest(unittest.TestCase):
         return self.__class__.ctx
 
     
-    def loadAssembly(self):
-        if hasattr(self.__class__, 'assembly_ref'):
-            return self.__class__.assembly_ref
-        fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        #shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
-        shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
-        au = AssemblyUtil(self.callback_url)
-        assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
-                                                    'workspace_name': self.getWsName(),
-                                                    'assembly_name': 'star_test_assembly'
-                                                    })
-        self.__class__.assembly_ref = assembly_ref
-        return assembly_ref
 
     def loadGenome(self):
         if hasattr(self.__class__, 'genome_ref'):
@@ -188,9 +175,24 @@ class STARTest(unittest.TestCase):
         return str(object_info[6]) + '/' + str(object_info[0]) + \
             '/' + str(object_info[4])
 
+    def loadAssembly(self):
+        if hasattr(self.__class__, 'assembly_ref'):
+            return self.__class__.assembly_ref
+        fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
+        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        #shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
+        au = AssemblyUtil(self.callback_url)
+        assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
+                                                    'workspace_name': self.getWsName(),
+                                                    'assembly_name': 'star_test_assembly'
+                                                    })
+        self.__class__.assembly_ref = assembly_ref
+        return assembly_ref
+
+
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star")
+    #@unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
         pe_lib_info = self.getPairedEndLibInfo()
@@ -199,9 +201,9 @@ class STARTest(unittest.TestCase):
         # STAR input parameters
         params = {
             'workspace_name': self.getWsName(),
-            'outFileNamePrefix': '../testReads/STARtest',
+            'outFileNamePrefix': 'STARtest_',
             #'genome_ref': self.loadAssembly(),#self.loadGenome(),
-	    'reads_ref': self.loadSEReads(),
+	    #'reads_ref': self.loadSEReads(),
 	    'runMode': 'generateGenome',
 	    'runThreadN': 4,
 	    'genomeFastaFile_refs': [self.loadAssembly()],#[self.make_ref()],
@@ -252,7 +254,7 @@ class STARTest(unittest.TestCase):
         params_mp = {
             'workspace_name': self.getWsName(),
 	    'runThreadN': 4,
-	    'outFileNamePrefix': 'star_test/STAR_',
+	    'outFileNamePrefix': 'STAR_',
             'readFilesIn':[forward_file, reverse_file]
         }
         result2 = star_util._exec_mapping(params_mp)
@@ -261,11 +263,11 @@ class STARTest(unittest.TestCase):
 
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_exec_star")
+    @unittest.skip("skipped test_exec_star")
     def test_exec_star(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa' #'test_long.fa'
+        genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
         rnaseq_data_file = '../testReads/test_long.fa' #'Ath_Hy5_R1.fastq'
