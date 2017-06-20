@@ -22,7 +22,7 @@ from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
 
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
-from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
+#from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from ReadsUtils.baseclient import ServerError
 from ReadsUtils.ReadsUtilsClient import ReadsUtils
 
@@ -86,7 +86,6 @@ class STARTest(unittest.TestCase):
     def getContext(self):
         return self.__class__.ctx
 
-    
 
     def loadGenome(self):
         if hasattr(self.__class__, 'genome_ref'):
@@ -117,19 +116,6 @@ class STARTest(unittest.TestCase):
         self.__class__.reads_ref = reads_ref
         return reads_ref
 
-
-    def loadPEReads(self):
-        if hasattr(self.__class__, 'assembly_ref'):
-            return self.__class__.assembly_ref
-        fasta_path = os.path.join(self.scratch, 'test.fna')
-        shutil.copy(os.path.join('testReads', 'test_reads.fa'), fasta_path)
-        au = AssemblyUtil(self.callback_url)
-        assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
-                                                    'workspace_name': self.getWsName(),
-                                                    'assembly_name': 'test_assembly'
-                                                    })
-        self.__class__.assembly_ref = assembly_ref
-        return assembly_ref
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def load_fasta_file(self, filename, obj_name, contents):
@@ -179,8 +165,8 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
-        #shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
+        shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
+        #shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -189,14 +175,25 @@ class STARTest(unittest.TestCase):
         self.__class__.assembly_ref = assembly_ref
         return assembly_ref
 
+    def loadFasta2Assembly(self, filename):
+        fn, ext = os.path.splitext(filename)
+        fasta_path = os.path.join(self.scratch, filename)
+        shutil.copy(os.path.join('../testReads', filename), fasta_path)
+        au = AssemblyUtil(self.callback_url)
+        a_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
+                                                    'workspace_name': self.getWsName(),
+                                                    'assembly_name': fn
+                                                    })
+        return a_ref
+
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
     @unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
-        pe_lib_info = self.getPairedEndLibInfo()
-        pprint(pe_lib_info)
+        #pe_lib_info = self.getPairedEndLibInfo()
+        #pprint(pe_lib_info)
 
         # STAR input parameters
         params = {
@@ -204,10 +201,10 @@ class STARTest(unittest.TestCase):
             'outFileNamePrefix': 'STARtest_',
             #'genome_ref': self.loadAssembly(),#self.loadGenome(),
 	    #'reads_ref': self.loadSEReads(),
-	    'runMode': 'generateGenome',
+	    'runMode': 'genomeGenerate',
 	    'runThreadN': 4,
-	    'genomeFastaFile_refs': [self.loadAssembly()],#[self.make_ref()],
-            'readFilesIn_refs':[self.make_ref(pe_lib_info)]
+	    'genomeFastaFile_refs': [self.loadAssembly()],
+            'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }
 
         result = self.getImpl().run_star(self.getContext(), params)
@@ -223,7 +220,7 @@ class STARTest(unittest.TestCase):
                 print('STAR failed!')
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_index_map")
+    #@unittest.skip("skipped test_index_map")
     def test_index_map(self):
 
         # 1) upload files to shock
@@ -231,6 +228,10 @@ class STARTest(unittest.TestCase):
         genome_fasta_file = '../testReads/test_long.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file2 = '../testReads/test_reference.fa'
+        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
+        shutil.copy(genome_fasta_file2, genome_file2)
+
         forward_data_file = '../testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
@@ -242,11 +243,20 @@ class STARTest(unittest.TestCase):
             'workspace_name': self.getWsName(),
 	    'runMode': 'generateGenome',
 	    'runThreadN': 4,
-	    'genomeFastaFiles': [genome_file]
+	    'genomeFastaFiles': [genome_file, genome_file2]
         }
         # test build directly from the genome reference file
 	star_util = STARUtil(self.cfg)
         result1 = star_util._exec_indexing(params_idx)
+
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/Genome'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/genomeParameters.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/SAindex'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/SA'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrLength.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrName.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrNameLength.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrStart.txt'))
 
         pprint(result1)
 
@@ -254,16 +264,23 @@ class STARTest(unittest.TestCase):
         params_mp = {
             'workspace_name': self.getWsName(),
 	    'runThreadN': 4,
+            'star_output_dir': 'STAR_output_dir',
 	    'outFileNamePrefix': 'STAR_',
             'readFilesIn':[forward_file, reverse_file]
         }
         result2 = star_util._exec_mapping(params_mp)
 
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_SJ.out.tab')))
+
         pprint(result2)
 
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_exec_star")
+    @unittest.skip("skipped test_exec_star")
     def test_exec_star(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
@@ -288,15 +305,31 @@ class STARTest(unittest.TestCase):
 		'runThreadN': 4,
                 'genomeFastaFiles': [genome_file],
                 'readFilesIn': [rnaseq_file],#[forward_file, reverse_file],
-		'star_output_dir': '',
-		'outFileNamePrefix': 'STAR_' 
+		'outFileNamePrefix': 'STAR_'
 	}
         # 3) test running star directly from files (not KBase refs)
 	star_util = STARUtil(self.cfg)
         result = star_util._exec_star(params)
 
-        pprint(result)
+        pprint('RESULT from velveth is saved in:\n' + os.path.join(self.scratch,''))
+        pprint('Returned value by exec_star is: ' + str(result))
 
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/Genome'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/genomeParameters.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/SAindex'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/SA'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrLength.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrName.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrNameLength.txt'))
+        self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/chrStart.txt'))
+
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_SJ.out.tab')))
+
+        pprint(result)
 
     def loadPairedEndReads(self):
         if hasattr(self.__class__, 'pe_reads_ref'):

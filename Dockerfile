@@ -44,7 +44,6 @@ RUN \
 RUN mkdir -p /kb/module/STAR_genome_dir
 RUN chmod -R a+rw /kb/module/STAR_genome_dir
 
-
 # -----------------------------------------
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work

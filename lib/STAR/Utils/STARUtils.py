@@ -11,7 +11,7 @@ import sys
 import zipfile
 from pprint import pprint, pformat
 
-from DataFileUtil.DataFileUtilClient import DataFileUtil
+#from DataFileUtil.DataFileUtilClient import DataFileUtil
 from KBaseReport.KBaseReportClient import KBaseReport
 from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
@@ -145,13 +145,15 @@ class STARUtil:
     def _construct_mapping_cmd(self, params):
         # STEP 1: get the working folder housing the STAR results as well as the reads info
         wsname = params[self.PARAM_IN_WS]
-	star_out_dir = ''
 	if params.get(self.PARAM_IN_STARMODE, None) is None:
 	    params[self.PARAM_IN_STARMODE] = 'alignReads'
+	
+        star_out_dir = ''
 	if params.get('star_output_dir', None) is None:
 	    star_out_dir = self.scratch
 	else:
 	    star_out_dir = os.path.join(self.scratch, params['star_output_dir'])
+        self._mkdir_p(star_out_dir)
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -212,17 +214,15 @@ class STARUtil:
 	self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shock_url = config['shock-url']
-        self.dfu = DataFileUtil(self.callback_url)
+        #self.dfu = DataFileUtil(self.callback_url)
         self.ru = ReadsUtils(self.callback_url)
         self.au = AssemblyUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
 
     def _exec_star(self, params):
-        outdir = os.path.join(self.scratch, 'star_output_dir')
+        outdir = os.path.join(self.scratch, 'STAR_output_dir')
         self._mkdir_p(outdir)
-        tmpdir = os.path.join(self.scratch, 'star_tmp_dir')
-	self._mkdir_p(tmpdir)
 
         # build the parameters
         params_idx = {
@@ -252,7 +252,7 @@ class STARUtil:
 
         ret = 1
         try:
-	    if(params[self.PARAM_IN_STARMODE]=='genomeGenerate'):
+	    if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
             	ret = self._exec_indexing(params_idx)
 	    else:
 		ret = 0
@@ -260,10 +260,10 @@ class STARUtil:
                 time.sleep(1)
         except ValueError as eidx:
             log('STAR genome indexing raised error:\n')
-            print(eidx)
+            pprina(eidx)
         else:#no exception raised by genome indexing and STAR returns 0, then run mapping
             ret = 1 
-	    if(params[self.PARAM_IN_STARMODE]=='genomeGenerate'):
+	    if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
 		params_mp['runMode'] = 'alignReads'
             try:
                 ret = self._exec_mapping(params_mp)
@@ -271,76 +271,10 @@ class STARUtil:
                     time.sleep(1)
             except ValueError as emp:
                 log('STAR mapping raised error:\n')
-                print(emp)
+                pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
                 ret = os.path.join(outdir, params[self.PARAM_IN_OUTFILE_PREFIX])
         return ret
-
-
-    def get_star_index(self, source_ref):
-        """
-        Builds or fetches the index file(s) as necessary, unpacks them in a directory.
-        Returns a string representing the path and prefix of the index files.
-        E.g. if there are a set of files like "foo.1.ht2", "foo.2.ht2", etc. all in the
-        "my_reads" directory, this will return "my_reads/foo"
-        """
-        idx_prefix = self._fetch_star_index(source_ref, {})
-        if idx_prefix:
-            return idx_prefix
-        else:
-            return self._build_star_index(source_ref, {})
-
-    def _fetch_star_index(self, source_ref, options):
-        """
-        Fetches STAR indexes from a remote location, if they're available.
-        """
-        # TODO: insert fetch code from file cache HERE.
-        return None
-
-    def _build_star_index(self, source_ref, options):
-        """
-        Runs star-build to build the index files and directory for use in STAR.
-        It creates a directory called "kb_star_idx" and places the index files within.
-        This also caches them, um, elsewhere so they can be found again.
-        """
-        # check options and raise ValueError here as needed.
-        if source_ref is None:
-            raise ValueError("Missing reference object needed to build a STAR index.")
-        print("Building STAR index files for {}".format(source_ref))
-        idx_dir = "kb_star_idx"
-        idx_prefix = "kb_star_idx-" + str(uuid.uuid4())
-        try:
-            slef._mkdir_p(os.path.join(self.working_dir, idx_dir))
-        except OSError:
-            print("Ignoring error for already existing {} directory".format(idx_dir))
-        try:
-            print("Fetching FASTA file from object {}".format(source_ref))
-            fasta_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
-            print("Done fetching FASTA file! Path = {}".format(fasta_file.get("path", None)))
-        except ValueError:
-            print("Incorrect object type for fetching a FASTA file!")
-            raise
-
-        fasta_path = fasta_file.get("path", None)
-        if fasta_path is None:
-            raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-                               "exist!".format(source_ref))
-        build_star_cmd = [
-            "star-build",
-            "-f",
-            fasta_path
-        ]
-        if options.get('num_threads', None) is not None:
-            build_star_cmd.extend(["-p", options['num_threads']])
-        idx_prefix_path = os.path.join(self.working_dir, idx_dir, idx_prefix)
-        build_star_cmd.append(idx_prefix_path)
-        print("Executing build-star command: {}".format(build_star_cmd))
-        p = subprocess.Popen(build_star_cmd, shell=False)
-        ret_code = p.wait()
-        if ret_code != 0:
-            raise RuntimeError('Failed to generate STAR index files!')
-        print("Done! STAR index files created with prefix {}".format(idx_prefix_path))
-        return idx_prefix_path
 
     def upload_alignment(self, input_params, reads_info, alignment_file):
         """
@@ -462,7 +396,7 @@ class STARUtil:
 	    if reads_fasta_file.get("path", None) is None:
 		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(reads_ref))
 	    else:
-		params['reads_fasta_file'] = reads_fasta_file
+		params['reads_fasta_file'] = reads_fasta_file["path"]
 
         genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
 	if genome_ref is not None:
@@ -477,7 +411,7 @@ class STARUtil:
 	    if genome_fasta_file.get("path", None) is None:
 		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
 	    else:
-		params['genome_fasta_file'] = genome_fasta_file
+		params['genome_fasta_file'] = genome_fasta_file["path"]
 		
         sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
 	if sjdbGTFfile_ref is not None:
@@ -492,7 +426,7 @@ class STARUtil:
 	    if sjdbGTFfile.get("path", None) is None:
 		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(sjdbGTFfile_ref))
 	    else:
-		params['sjdbGTFfile'] = sjdbGTFfile
+		params['sjdbGTFfile'] = sjdbGTFfile["path"]
         	if input_params.get('sjdbOverhang', None) is not None :
             	    params['sjdbOverhang'] = input_params['sjdbOverhang']
 
@@ -510,11 +444,11 @@ class STARUtil:
 		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
 			       "exist!".format(source_ref))
 
-		genomeFastaFiles.append(fasta_file)
+		genomeFastaFiles.append(fasta_file["path"])
 	params['genomeFastaFiles'] = genomeFastaFiles
 
 	readsFiles = list()
-	for source_ref in input_params['readsFilesIn_refs']:
+	for source_ref in input_params['readFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from object {}".format(source_ref))
 		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
@@ -524,23 +458,19 @@ class STARUtil:
 		    raise
 
 		if reads_file.get("path", None) is None:
-		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-			       "exist!".format(source_ref))
-
-		readsFiles.append(reads_file)
-	params['readsFilesIn'] = readsFiles
+		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(source_ref))
+                else: 
+		    readsFiles.append(reads_file["path"])
+	params['readFilesIn'] = readsFiles
 
 	#2. Running star
 	star_out = self._exec_star(params)
 
-        log('STAR result files have been saved to: {}'.format(star_out))
-        log('STAR has generated files:\n{}'.format('\n'.join(os.listdir(star_out))))
-
 	#3. Uploading the alignment and generating report
         print("Uploading STAR output object and report...")
 	
-	#alignment_file = os.path.join(self.working_dir, "{}.sam".format(output_file))
-        #alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
+	alignment_file = os.path.join(star_out, "{}.Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX]))
+        alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
 
         #reportVal = self._generate_report(alignment_ref, output_dir, input_params)
 

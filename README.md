@@ -56,34 +56,32 @@ For more help on how to modify, register and deploy the example to KBase, see th
    STAR  --runMode genomeGenerate --runThreadN <# cpus> --genomeDir <genome output directory> --genomeFastaFiles <input Genome FASTA file>
 
    e.g.,
-   qzhang@e6b9c1a37b42:/kb/module$ STAR  --runMode genomeGenerate --runThreadN 4 --genomeDir ./STAR_genome_dir/ --genomeFastaFiles testReads/test_long.fa
-   
-    May 31 23:18:10 ..... started STAR run
-    May 31 23:18:10 ... starting to generate Genome files
-    May 31 23:18:12 ... starting to sort Suffix Array. This may take a long time...
-    May 31 23:18:13 ... sorting Suffix Array chunks and saving them to disk...
-    May 31 23:18:14 ... loading chunks from disk, packing SA...
-    May 31 23:18:15 ... finished generating suffix array
-    May 31 23:18:15 ... generating Suffix Array index
-    May 31 23:18:17 ... completed Suffix Array index
-    May 31 23:18:17 ... writing Genome to disk ...
-    May 31 23:18:18 ... writing Suffix Array to disk ...
-    May 31 23:18:18 ... writing SAindex to disk
-    May 31 23:18:19 ..... finished successfully
+   root@651068a1ff75:/kb/module# STAR --genomeDir /kb/module/STAR_genome_dir/ --runMode genomeGenerate --runThreadN 4 --genomeFastaFiles /kb/module/work/tmp/star_test_assembly.fa 
+    Jun 20 19:57:09 ..... started STAR run
+    Jun 20 19:57:09 ... starting to generate Genome files
+    Jun 20 19:57:09 ... starting to sort Suffix Array. This may take a long time...
+    Jun 20 19:57:09 ... sorting Suffix Array chunks and saving them to disk...
+    Jun 20 19:57:10 ... loading chunks from disk, packing SA...
+    Jun 20 19:57:10 ... finished generating suffix array
+    Jun 20 19:57:10 ... generating Suffix Array index
+    Jun 20 19:57:13 ... completed Suffix Array index
+    Jun 20 19:57:13 ... writing Genome to disk ...
+    Jun 20 19:57:13 ... writing Suffix Array to disk ...
+    Jun 20 19:57:13 ... writing SAindex to disk
+    Jun 20 19:57:17 ..... finished successfully
 
-qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_dir/
-
-    total 2044944
-    drwxrwxrwx  2 root root       4096 May 31 23:18 .
-    drwxrwxrwx 28 root root       4096 May 31 23:18 ..
-    -rw-r--r--  1 3184 root  524288000 May 31 23:18 Genome
-    -rw-r--r--  1 3184 root    1650003 May 31 23:18 SA
-    -rw-r--r--  1 3184 root 1565873619 May 31 23:18 SAindex
-    -rw-r--r--  1 3184 root       8000 May 31 23:18 chrLength.txt
-    -rw-r--r--  1 3184 root      48890 May 31 23:18 chrName.txt
-    -rw-r--r--  1 3184 root      56890 May 31 23:18 chrNameLength.txt
-    -rw-r--r--  1 3184 root      19580 May 31 23:18 chrStart.txt
-    -rw-r--r--  1 3184 root        490 May 31 23:18 genomeParameters.txt
+    root@651068a1ff75:/kb/module# ls -la STAR_genome_dir/
+    total 1530272
+    drwxrwxrwx  2 root root       4096 Jun 20 19:57 .
+    drwxrwxrwx 35 root root       4096 Jun 20 19:57 ..
+    -rw-r--r--  1 root root     262144 Jun 20 19:57 Genome
+    -rw-r--r--  1 root root     825003 Jun 20 19:57 SA
+    -rw-r--r--  1 root root 1565873619 Jun 20 19:57 SAindex
+    -rw-r--r--  1 root root          7 Jun 20 19:57 chrLength.txt
+    -rw-r--r--  1 root root          9 Jun 20 19:57 chrName.txt
+    -rw-r--r--  1 root root         16 Jun 20 19:57 chrNameLength.txt
+    -rw-r--r--  1 root root          9 Jun 20 19:57 chrStart.txt
+    -rw-r--r--  1 root root        527 Jun 20 19:57 genomeParameters.txt
 </p>
 
 
@@ -97,16 +95,15 @@ qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_dir/
   i.e., 
   STAR --genomeDir <Directory with the Genome Index>  --runThreadN <# cpus> --readFilesIn <FASTQ file> --outFileNamePrefix <OutputPrefix>
   
-  e.g.,
-  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_dir/  --runThreadN 4 --readFilesIn testReads/small.forward.fq --outFileNamePrefix Experiment1Star
-  
-    May 31 23:22:16 ..... started STAR run
-    May 31 23:22:16 ..... loading genome
-    May 31 23:22:17 ..... started mapping
-    May 31 23:22:19 ..... finished successfully
+    e.g.,
+    root@651068a1ff75:/kb/module# STAR --genomeDir /kb/module/STAR_genome_dir/ --runMode alignReads --runThreadN 4 --readFilesIn /kb/module/work/tmp/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa --outFileNamePrefix /kb/module/work/tmp/STAR_output_dir/STARtest_
+    Jun 20 19:57:32 ..... started STAR run
+    Jun 20 19:57:32 ..... loading genome
+    Jun 20 19:57:40 ..... started mapping
+    Jun 20 19:57:41 ..... finished successfully
 
-  e.g.(for paried-end data),
-  qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_dir/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
+    e.g.(for paried-end data),
+    qzhang@e6b9c1a37b42:/kb/module$ STAR --genomeDir STAR_genome_dir/  --runThreadN 4 --readFilesIn testReads/small.forward.fq testReads/small.reverse.fq --outFileNamePrefix Experiment1Star_paired
   
     May 31 23:23:27 ..... started STAR run
     May 31 23:23:27 ..... loading genome
@@ -116,6 +113,15 @@ qzhang@e6b9c1a37b42:/kb/module$ ls -la STAR_genome_dir/
 
 <h4>STAR will create several output files</h4>
 <p>
+    root@651068a1ff75:/kb/module# ls -la work/tmp/STAR_output_dir/
+    total 28
+    drwxr-xr-x  7 root root   238 Jun 20 19:57 .
+    drwxr-xr-x 18 root root   612 Jun 20 19:37 ..
+    -rw-r--r--  1 root root   561 Jun 20 19:57 STARtest_Aligned.out.sam
+    -rw-r--r--  1 root root  1807 Jun 20 19:57 STARtest_Log.final.out
+    -rw-r--r--  1 root root 15718 Jun 20 19:57 STARtest_Log.out
+    -rw-r--r--  1 root root   246 Jun 20 19:57 STARtest_Log.progress.out
+    -rw-r--r--  1 root root     0 Jun 20 19:57 STARtest_SJ.out.tab
 
 The most important of which is the "*.Aligned.out.sam". The default output is a SAM file.
 </p>
