@@ -55,8 +55,8 @@ For more help on how to modify, register and deploy the example to KBase, see th
    i.e., 
    STAR  --runMode genomeGenerate --runThreadN <# cpus> --genomeDir <genome output directory> --genomeFastaFiles <input Genome FASTA file>
 
-   e.g.,
-   root@651068a1ff75:/kb/module# STAR --genomeDir /kb/module/STAR_genome_dir/ --runMode genomeGenerate --runThreadN 4 --genomeFastaFiles /kb/module/work/tmp/star_test_assembly.fa 
+    e.g.,
+    root@651068a1ff75:/kb/module# STAR --genomeDir /kb/module/STAR_genome_dir/ --runMode genomeGenerate --runThreadN 4 --genomeFastaFiles /kb/module/work/tmp/star_test_assembly.fa 
     Jun 20 19:57:09 ..... started STAR run
     Jun 20 19:57:09 ... starting to generate Genome files
     Jun 20 19:57:09 ... starting to sort Suffix Array. This may take a long time...
@@ -88,9 +88,9 @@ For more help on how to modify, register and deploy the example to KBase, see th
 <h4>The basic options to run a mapping job are as follows</h4>
 <p>
 
---runThreadN NumberOfThreads
---genomeDir /path/to/genomeDir
---readFilesIn /path/to/read1 [/path/to/read2 ]
+    --runThreadN NumberOfThreads
+    --genomeDir /path/to/genomeDir
+    --readFilesIn /path/to/read1 [/path/to/read2 ]
 
   i.e., 
   STAR --genomeDir <Directory with the Genome Index>  --runThreadN <# cpus> --readFilesIn <FASTQ file> --outFileNamePrefix <OutputPrefix>
@@ -113,6 +113,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 
 <h4>STAR will create several output files</h4>
 <p>
+
     root@651068a1ff75:/kb/module# ls -la work/tmp/STAR_output_dir/
     total 28
     drwxr-xr-x  7 root root   238 Jun 20 19:57 .
