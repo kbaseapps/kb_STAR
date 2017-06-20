@@ -168,6 +168,7 @@ class STARUtil:
             for reads_file in params[self.PARAM_IN_READS_FILES]:
 	        mp_cmd.append(reads_file)
 		readName, readsExtension = os.path.splitext(reads_file)
+        	print ('Reads file name-- {}/extension-- {}:'.format(readName, readsExtension))
 		if readsExtension == '.gz':
 			mp_cmd.append('--readFilesCommand')
 			mp_cmd.append('gunzip')
