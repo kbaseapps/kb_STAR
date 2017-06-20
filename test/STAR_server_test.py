@@ -192,7 +192,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star")
+    @unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
         pe_lib_info = self.getPairedEndLibInfo()
@@ -263,14 +263,14 @@ class STARTest(unittest.TestCase):
 
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_exec_star")
+    #@unittest.skip("skipped test_exec_star")
     def test_exec_star(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
         genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
-        rnaseq_data_file = '../testReads/test_long.fa' #'Ath_Hy5_R1.fastq'
+        rnaseq_data_file = '../testReads/Ath_Hy5_R1.fastq.gz' #'../testReads/test_long.fa' #'Ath_Hy5_R1.fastq'
         rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
         shutil.copy(rnaseq_data_file, rnaseq_file)
 
