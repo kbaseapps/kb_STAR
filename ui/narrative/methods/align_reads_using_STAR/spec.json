@@ -1,0 +1,150 @@
+{
+    "ver": "0.0.1",
+    "authors": [
+        "qzhang"
+    ],
+    "contact": "https://kbase.us/contact-us/",
+    "categories": ["active"],
+    "widgets": {
+        "input": null,
+        "output": "kbaseRNASeqPieNew"
+    },
+    "parameters": [ 
+        {
+            "id": "genomeFastaFile_refs",
+            "optional": false,
+            "advanced": false,
+            "allow_multiple": true,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "valid_ws_types": [ "KBaseGenomes.Genome", "KBaseGenomeAnnotations.Assembly", "KBaseGenomes.ContigSet" ]
+            }
+        },
+        {
+            "id": "readFilesIn_refs",
+            "optional": false,
+            "advanced": false,
+            "allow_multiple": true,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "valid_ws_types": [ "KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet" , "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary" ]
+            }
+        },
+        {
+            "id": "runMode",
+            "optional": true,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "aligneReads" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "text"
+            }
+        },
+        {
+            "id": "runThreadN",
+            "optional": true,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "1" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        },
+        {
+            "id": "outFileNamePrefix",
+            "optional": true,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "text"
+            }
+        },
+        {
+            "id": "sjdbGTFfile_ref",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": [ "KBaseGenomeAnnotations.Assembly" ]
+            }
+        },
+        {
+            "id": "sjdbOverhang",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        }
+    ],
+    "behavior": {
+        "service-mapping": {
+            "url": "",
+            "name":"STAR",
+            "method": "run_star",
+            "input_mapping": [
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "workspace_name"
+                },
+                {
+                    "input_parameter": "genomeFastaFile_refs",
+                    "target_property": "genomeFastaFile_refs",
+                    "target_type_transform": "resolved-ref"
+                },
+                {
+                    "input_parameter": "readFilesIn_refs",
+                    "target_property": "readFilesIn_refs",
+                    "target_type_transform": "resolved-ref"
+                },
+                {
+                    "input_parameter": "runMode",
+                    "target_property": "runMode"
+                },
+                {
+                    "input_parameter": "runThreadN",
+                    "target_property": "runThreadN"
+                },
+                {
+                    "narrative_system_variable": "outFileNamePrefix",
+                    "target_property": "outFileNamePrefix"
+                },
+                {
+                    "input_parameter": "sjdbGTFfile_ref",
+                    "target_property": "sjdbGTFfile_ref",
+                    "target_type_transform": "resolved-ref"
+                },
+                {
+                    "input_parameter": "sjdbOverhang",
+                    "target_property": "sjdbOverhang"
+                }
+            ],
+            "output_mapping": [
+                {
+                    "service_method_output_path": [0,"report_name"],
+                    "target_property": "report_name"
+                },
+                {
+                    "service_method_output_path": [0,"report_ref"],
+                    "target_property": "report_ref"
+                },
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "workspace_name"
+                }
+            ]
+        }
+    },
+    "job_id_output_field": "docker"
+}

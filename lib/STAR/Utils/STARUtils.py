@@ -289,7 +289,7 @@ class STARUtil:
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params["workspace_name"], input_params["alignment_name"]),
             "file_path": alignment_file,
-            "assembly_or_genome_ref": input_params["genome_ref"],
+            "assembly_or_genome_ref": input_params['genomeFastaFile_refs'],
             "read_library_ref": reads_ref,
             "aligned_using": "STAR",
             "aligner_version":self.STAR_VERSION,
@@ -447,7 +447,7 @@ class STARUtil:
 	for source_ref in input_params['readFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from reads reference {}".format(source_ref))
-		    reads_file = fetch_reads_from_reference(source_ref, self.workspace_url, self.callback_url)
+		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
 		    print("Done fetching FASTA file! Path = {}".format(reads_file.get("path", None)))
 		except ValueError:
 		    print("Incorrect object type for fetching a FASTA file!")
@@ -461,14 +461,17 @@ class STARUtil:
 
 	#2. Running star
 	star_out = self._exec_star(params)
+        input_params['alignment_name'] = "{}.Aligned".format(input_params['readFilesIn_refs'][0])
 
 	#3. Uploading the alignment and generating report
         print("Uploading STAR output object and report...")
-	alignment_file = os.path.join(star_out, "{}.Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX]))
-        # Upload the alignment with ONLY the first reads_ref
+        alignment_file = "{}.Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+	alignment_file = os.path.join(star_out, alignment_file)
+
+        # Upload the alignment with ONLY the first reads_ref for now
 	alignment_ref = self.upload_STARalignment(input_params, input_params['readFilesIn_refs'][0], alignment_file)
 
-        reportVal = self._generate_report(alignment_ref, stra_output, input_params)
+        reportVal = self._generate_report(alignment_ref, star_out, input_params)
 
         returnVal = {
             'output_folder': star_out,

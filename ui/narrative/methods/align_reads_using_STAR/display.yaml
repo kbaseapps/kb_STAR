@@ -1,0 +1,88 @@
+#
+# define display information
+#
+name: STAR 2.5
+tooltip: |
+        Spliced Transcripts Alignment to a Reference
+screenshots: []
+
+icon: null
+
+#
+# define a set of similar methods that might be useful to the user
+#
+suggestions:
+    apps:
+        related:
+            []
+        next:
+            []
+    methods:
+        related:
+            []
+        next:
+            []
+
+#
+# Configure the display and description of the parameters
+#
+parameters :
+    genomeFastaFile_refs :
+        ui-name : |
+            Reference Genome(s)
+        short-hint : |
+            One or more FASTA files with the genome reference sequences            
+        long-hint : |
+            Specified one or more FASTA files with the genome reference sequences. Multiple reference sequences (henceforth called chromosomes) are allowed for each fasta file.
+    readFilesIn_refs :
+        ui-name : |
+            Files containing the sequences to be mapped
+        short-hint : |
+            File name(s) (with path) containing the sequences to be mapped
+        long-hint : |
+            File name(s) (with path) containing the sequences to be mapped (e.g. RNA-seq FASTQ files).
+    runMode :
+        ui-name : |
+            STAR Running Mode
+        short-hint : |
+            Set the running mode for STAR--'genomeGenerate' option directs STAR to run genome indices generation job
+    runThreadN :
+        ui-name : |
+            Number of Threads to use
+        short-hint : |
+            Defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
+    outFileNamePrefix :
+        ui-name : |
+            Prefix for Alignment Output File Names
+        short-hint : |
+            Prefix for all STAR output files
+        long-hint : |
+            STAR produces multiple output files. All files have standard name, however, you can change the file prefixes
+    sjdbGTFfile_ref :
+        ui-name : |
+            Standard GTF Splice Junction file
+        short-hint : |
+            Path to the file with annotated transcripts in the standard GTF format
+        long-hint : |
+            STAR will extract splice junctions from this file and use them to greatly improve accuracy of the mapping
+    sjdbOverhang :
+        ui-name : |
+            Splice Junction Overhang
+        short-hint : |
+            Length of the genomic sequence around the annotated junction
+        long-hint : |
+            Length of the genomic sequence around the annotated junction to be used in constructing the splice junctions database
+            
+description : |
+    <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
+    <p>Basic STAR work flow consists of 2 steps:</p>
+    <p>1. Generating genome indexes files: In this step user supplied the reference genome sequences (FASTA files) and annotations (GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination.
+    </p>
+    <p>2. Mapping reads to the genome: In this step user supplies the genome files generated in the 1st step, as well as the RNA-seq reads (sequences) in the form of FASTA or FASTQ files. STAR maps the reads to the genome, and writes several output files, such as alignments (SAM/BAM), mapping summary statistics, splice junctions, unmapped reads, signal (wiggle) tracks etc. 
+    </p>
+    
+publications :
+    -
+        display-text: |
+            Alexander Dobin, 2009-2016, STAR: ultrafast universal RNA-seq aligner 
+        link: https://www.ncbi.nlm.nih.gov/pubmed/23104886
