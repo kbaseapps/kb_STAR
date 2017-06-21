@@ -18,7 +18,8 @@ from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
 from file_util import (
-    fetch_fasta_from_object
+    fetch_fasta_from_object,
+    fetch_reads_from_reference
 )
 
 def log(message, prefix_newline=False):
@@ -170,7 +171,7 @@ class STARUtil:
             for reads_file in params[self.PARAM_IN_READS_FILES]:
 	        mp_cmd.append(reads_file)
 		readName, readsExtension = os.path.splitext(reads_file)
-        	print ('Reads file name-- {}/extension-- {}:'.format(readName, readsExtension))
+        	#print ('Reads file name-- {}/extension-- {}:'.format(readName, readsExtension))
 		if readsExtension == '.gz':
 			mp_cmd.append('--readFilesCommand')
 			mp_cmd.append('gunzip')
@@ -276,7 +277,7 @@ class STARUtil:
                 ret = os.path.join(outdir, params[self.PARAM_IN_OUTFILE_PREFIX])
         return ret
 
-    def upload_alignment(self, input_params, reads_info, alignment_file):
+    def upload_STARalignment(self, input_params, reads_ref, alignment_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
@@ -286,20 +287,15 @@ class STARUtil:
             aligner_opts[k] = str(input_params[k])
 
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params["workspace_name"], input_params["alignmentset_name"]),
+            "destination_ref": "{}/{}".format(input_params["workspace_name"], input_params["alignment_name"]),
             "file_path": alignment_file,
-            "library_type": reads_info["style"],  # single or paired end,
-            "condition": reads_info["condition"],
             "assembly_or_genome_ref": input_params["genome_ref"],
-            "read_library_ref": reads_info["object_ref"],
+            "read_library_ref": reads_ref,
             "aligned_using": "STAR",
             "aligner_version":self.STAR_VERSION,
             "aligner_opts": aligner_opts
         }
 
-        if "sampleset_ref" in reads_info:
-            align_upload_params["sampleset_ref"] = reads_info["sampleset_ref"]
-        print("Uploading completed alignment")
         pprint(align_upload_params)
 
         ra_util = ReadsAlignmentUtils(self.callback_url, service_ver="dev")
@@ -450,8 +446,8 @@ class STARUtil:
 	readsFiles = list()
 	for source_ref in input_params['readFilesIn_refs']:
 		try:
-		    print("Fetching FASTA file from object {}".format(source_ref))
-		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
+		    print("Fetching FASTA file from reads reference {}".format(source_ref))
+		    reads_file = fetch_reads_from_reference(source_ref, self.workspace_url, self.callback_url)
 		    print("Done fetching FASTA file! Path = {}".format(reads_file.get("path", None)))
 		except ValueError:
 		    print("Incorrect object type for fetching a FASTA file!")
@@ -468,11 +464,11 @@ class STARUtil:
 
 	#3. Uploading the alignment and generating report
         print("Uploading STAR output object and report...")
-	
 	alignment_file = os.path.join(star_out, "{}.Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX]))
-        alignment_ref = self.upload_alignment(input_params, reads, alignment_file)
+        # Upload the alignment with ONLY the first reads_ref
+	alignment_ref = self.upload_STARalignment(input_params, input_params['readFilesIn_refs'][0], alignment_file)
 
-        #reportVal = self._generate_report(alignment_ref, output_dir, input_params)
+        reportVal = self._generate_report(alignment_ref, stra_output, input_params)
 
         returnVal = {
             'output_folder': star_out,

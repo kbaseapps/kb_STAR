@@ -189,7 +189,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star")
+    #@unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
         #pe_lib_info = self.getPairedEndLibInfo()
@@ -220,7 +220,7 @@ class STARTest(unittest.TestCase):
                 print('STAR failed!')
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_index_map")
+    @unittest.skip("skipped test_index_map")
     def test_index_map(self):
 
         # 1) upload files to shock
