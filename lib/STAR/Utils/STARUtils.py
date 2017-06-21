@@ -274,7 +274,7 @@ class STARUtil:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = os.path.join(outdir, params[self.PARAM_IN_OUTFILE_PREFIX])
+                ret = outdir
         return ret
 
     def upload_STARalignment(self, input_params, reads_ref, alignment_file):
@@ -287,11 +287,13 @@ class STARUtil:
             aligner_opts[k] = str(input_params[k])
 
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params["workspace_name"], input_params["alignment_name"]),
+            "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
             "file_path": alignment_file,
-            "assembly_or_genome_ref": input_params['genomeFastaFile_refs'],
+            "assembly_or_genome_ref": input_params['genomeFastaFile_refs'][0],
             "read_library_ref": reads_ref,
-            "aligned_using": "STAR",
+            "library_type": 'single',
+            "condition": 'Whatisthis',
+            "aligned_using": 'STAR',
             "aligner_version":self.STAR_VERSION,
             "aligner_opts": aligner_opts
         }
@@ -444,6 +446,7 @@ class STARUtil:
 	params['genomeFastaFiles'] = genomeFastaFiles
 
 	readsFiles = list()
+        readsNames = list()
 	for source_ref in input_params['readFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from reads reference {}".format(source_ref))
@@ -457,18 +460,20 @@ class STARUtil:
 		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(source_ref))
                 else: 
 		    readsFiles.append(reads_file["path"])
+                    readsNames.append(reads_file["assembly_name"])
+
 	params['readFilesIn'] = readsFiles
 
 	#2. Running star
 	star_out = self._exec_star(params)
-        input_params['alignment_name'] = "{}.Aligned".format(input_params['readFilesIn_refs'][0])
 
 	#3. Uploading the alignment and generating report
         print("Uploading STAR output object and report...")
-        alignment_file = "{}.Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+        alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
 	alignment_file = os.path.join(star_out, alignment_file)
 
         # Upload the alignment with ONLY the first reads_ref for now
+        input_params['alignment_name'] = "{}_Aligned".format(readsNames[0])
 	alignment_ref = self.upload_STARalignment(input_params, input_params['readFilesIn_refs'][0], alignment_file)
 
         reportVal = self._generate_report(alignment_ref, star_out, input_params)
