@@ -35,6 +35,7 @@ module STAR {
 	obj_ref reads_ref: KBase workspace reference for reads to align
 	obj_ref genome_ref: KBase workspace reference genome to align reads against
 	string workspace_name: the workspace name provided by the narrative for housing output in KBase
+	string sampleset_ref = the workspace reference for the sampleset of reads to align
 	string runMode: default: alignReads
 		type of the run:
 		alignReads => map reads
@@ -47,7 +48,7 @@ module STAR {
 	int runThreadN: default: 1
 		number of threads to run STAR
 	list<obj_ref> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation
-		Only used if runMode==genomeGenerate. These files should be plain text FASTA files, they *cannot* be zipped.
+		Only used if runMode==genomeGenerate. These files should be plain text FASTA files, they *cannot* be zipped
 	list<obj_ref> readFilesIn: default: Read1 Read2
 		paths to files that contain input read1 (and, if needed, read2)
 
@@ -66,6 +67,8 @@ module STAR {
         obj_ref reads_ref;
         obj_ref genome_ref;
         string workspace_name;
+        string sampleset_ref;
+        string genome_ref;
 
 	string runMode;
 	int runThreadN;
