@@ -277,7 +277,7 @@ class STARUtil:
                 ret = outdir
         return ret
 
-    def upload_STARalignment(self, input_params, reads_ref, alignment_file):
+    def upload_STARalignment(self, input_params, reads_info, alignment_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
@@ -290,9 +290,9 @@ class STARUtil:
             "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
             "file_path": alignment_file,
             "assembly_or_genome_ref": input_params['genomeFastaFile_refs'][0],
-            "read_library_ref": reads_ref,
-            "library_type": 'single',
-            "condition": 'Whatisthis',
+            "read_library_ref": reads_info['obj_ref'],
+            "library_type": reads_info['style'],
+            "condition": reads_info['condition'],
             "aligned_using": 'STAR',
             "aligner_version":self.STAR_VERSION,
             "aligner_opts": aligner_opts
@@ -445,22 +445,28 @@ class STARUtil:
 		genomeFastaFiles.append(fasta_file["path"])
 	params['genomeFastaFiles'] = genomeFastaFiles
 
+        readsInfo = list()
 	readsFiles = list()
         readsNames = list()
 	for source_ref in input_params['readFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from reads reference {}".format(source_ref))
-		    reads_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
-		    print("Done fetching FASTA file! Path = {}".format(reads_file.get("path", None)))
+		    ret_reads = fetch_reads_from_reference(source_ref, self.callback_url)
+		    print("Done fetching FASTA file! Path = {}".format(ret_reads.get("file_fwd", None)))
 		except ValueError:
 		    print("Incorrect object type for fetching a FASTA file!")
 		    raise
 
-		if reads_file.get("path", None) is None:
+		if ret_reads.get("file_fwd", None) is None:
 		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(source_ref))
-                else: 
-		    readsFiles.append(reads_file["path"])
-                    readsNames.append(reads_file["assembly_name"])
+                else:
+                    if ret_reads.get("condition", None) is None:
+                        ret_reads["condition"] = "N/A"
+		    readsInfo.append(ret_reads)
+		    readsFiles.append(ret_reads["file_fwd"])
+                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
+                    if ret_reads.get("file_rev", None) is not None:
+                        readsFiles.append(ret_reads["file_rev"])
 
 	params['readFilesIn'] = readsFiles
 
@@ -474,7 +480,7 @@ class STARUtil:
 
         # Upload the alignment with ONLY the first reads_ref for now
         input_params['alignment_name'] = "{}_Aligned".format(readsNames[0])
-	alignment_ref = self.upload_STARalignment(input_params, input_params['readFilesIn_refs'][0], alignment_file)
+	alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
         reportVal = self._generate_report(alignment_ref, star_out, input_params)
 
