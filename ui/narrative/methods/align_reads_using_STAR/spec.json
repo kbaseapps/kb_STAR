@@ -37,7 +37,7 @@
             "optional": true,
             "advanced": false,
             "allow_multiple": false,
-            "default_values": [ "aligneReads" ],
+            "default_values": [ "alignReads" ],
             "field_type": "text",
             "text_options": {
                 "validate_as": "text"
@@ -57,7 +57,7 @@
         {
             "id": "outFileNamePrefix",
             "optional": true,
-            "advanced": false,
+            "advanced": true,
             "allow_multiple": false,
             "default_values": [ "" ],
             "field_type": "text",
