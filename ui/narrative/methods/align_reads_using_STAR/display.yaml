@@ -27,9 +27,19 @@ suggestions:
 # Configure the display and description of the parameters
 #
 parameters :
+    sampleset_id :
+        ui-name : |
+            RNA-seq Sample or Sample Set
+        short-hint : |
+            Select the RNA-seq sample set or reads set. If you have only one sample of RNA-seq reads, select the corresponding library object.
+    genome_id :
+        ui-name : |
+            Genome
+        short-hint : |
+            Select the Genome to align the reads
     genomeFastaFile_refs :
         ui-name : |
-            Reference Genome(s)
+            Reference Genome Fasta File(s)
         short-hint : |
             One or more FASTA files with the genome reference sequences            
         long-hint : |
