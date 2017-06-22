@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "d9f109adadd4d58e98c605b6b99055a41837034e"
+    GIT_COMMIT_HASH = "c01d33e1cc883d49e6b46834848ce8cd6caaa817"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -75,8 +75,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            for reads to align obj_ref genome_ref: KBase workspace reference
            genome to align reads against string workspace_name: the workspace
            name provided by the narrative for housing output in KBase string
-           runMode: default: alignReads type of the run: alignReads => map
-           reads genomeGenerate => generate genome files
+           sampleset_ref = the workspace reference for the sampleset of reads
+           to align string runMode: default: alignReads type of the run:
+           alignReads => map reads genomeGenerate => generate genome files
            inputAlignmentsFromBAM => input alignments from BAM. Presently
            only works with -outWigType and -bamRemoveDuplicates. liftOver =>
            lift-over of GTF files (-sjdbGTFfile) between genome assemblies
@@ -85,25 +86,27 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            genomeFastaFiles: path(s) to the fasta files with genomic
            sequences for genome generation Only used if
            runMode==genomeGenerate. These files should be plain text FASTA
-           files, they *cannot* be zipped. list<obj_ref> readFilesIn:
-           default: Read1 Read2 paths to files that contain input read1 (and,
-           if needed, read2) string sjdbGTFfile: default: -; path to the file
+           files, they *cannot* be zipped list<obj_ref> readFilesIn: default:
+           Read1 Read2 paths to files that contain input read1 (and, if
+           needed, read2) string sjdbGTFfile: default: -; path to the file
            with annotated transcripts in the standard GTF format int
            sjdbOverhang: default: 100; int>0: length of the donor/acceptor
            sequence on each side of the junctions, ideally = (ReadLength - 1)
            string outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
-           parameter is ./, i.e. all output files are written in the current
-           directory @optional sjdbGTFfile @optional sjdbOverhang) ->
-           structure: parameter "reads_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "genome_ref" of type "obj_ref" (An X/Y/Z
-           style reference), parameter "workspace_name" of String, parameter
-           "runMode" of String, parameter "runThreadN" of Long, parameter
-           "genomeFastaFiles" of list of type "obj_ref" (An X/Y/Z style
-           reference), parameter "sjdbGTFfile" of String, parameter
-           "sjdbOverhang" of Long, parameter "readFilesIn" of list of type
-           "obj_ref" (An X/Y/Z style reference), parameter
-           "outFileNamePrefix" of String
+           parameter is ./STARoutput_, i.e. all output files are written in
+           the current directory with the prefix 'STARoutput_'. @optional
+           outFileNamePrefix @optional runThreadN @optional sjdbGTFfile_ref
+           @optional sjdbOverhang) -> structure: parameter "reads_ref" of
+           type "obj_ref" (An X/Y/Z style reference), parameter "genome_ref"
+           of type "obj_ref" (An X/Y/Z style reference), parameter
+           "workspace_name" of String, parameter "sampleset_ref" of String,
+           parameter "runMode" of String, parameter "runThreadN" of Long,
+           parameter "genomeFastaFile_refs" of list of type "obj_ref" (An
+           X/Y/Z style reference), parameter "sjdbGTFfile_ref" of type
+           "obj_ref" (An X/Y/Z style reference), parameter "sjdbOverhang" of
+           Long, parameter "readFilesIn_refs" of list of type "obj_ref" (An
+           X/Y/Z style reference), parameter "outFileNamePrefix" of String
         :returns: instance of type "STARResults" (Here is the definition of
            the output of the function.  The output can be used by other SDK
            modules which call your code, or the output visualizations in the
@@ -137,7 +140,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'output is not type dict as required.')
         # return the results
         return [output]
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

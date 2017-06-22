@@ -451,22 +451,30 @@ class STARUtil:
 	for source_ref in input_params['readFilesIn_refs']:
 		try:
 		    print("Fetching FASTA file from reads reference {}".format(source_ref))
-		    ret_reads = fetch_reads_from_reference(source_ref, self.callback_url)
-		    print("Done fetching FASTA file! Path = {}".format(ret_reads.get("file_fwd", None)))
+		    ret_reads = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
+		    if ret_reads.get("file_fwd", None) is not None:
+                        print("Done fetching FASTA file! Path = {}".format(ret_reads.get("file_fwd", None)))
+                    elif ret_reads.get("path", None) is not None:
+                        print("Done fetching FASTA file! Path = {}".format(ret_reads.get("path", None)))
 		except ValueError:
 		    print("Incorrect object type for fetching a FASTA file!")
 		    raise
 
-		if ret_reads.get("file_fwd", None) is None:
+		if (ret_reads.get("file_fwd", None) is None and
+                        ret_reads.get("path", None) is None):
 		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(source_ref))
                 else:
                     if ret_reads.get("condition", None) is None:
                         ret_reads["condition"] = "N/A"
 		    readsInfo.append(ret_reads)
-		    readsFiles.append(ret_reads["file_fwd"])
-                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
-                    if ret_reads.get("file_rev", None) is not None:
-                        readsFiles.append(ret_reads["file_rev"])
+                    if ret_reads.get("file_fwd", None) is not None:
+                        readsFiles.append(ret_reads["file_fwd"])
+                        readsNames.append(os.path.basename(ret_reads["file_fwd"]))
+                        if ret_reads.get("file_rev", None) is not None:
+                            readsFiles.append(ret_reads["file_rev"])
+                    elif ret_reads.get("path", None) is not None:
+                        readsFiles.append(ret_reads["path"])
+                        readsNames.append(os.path.basename(ret_reads["path"]))
 
 	params['readFilesIn'] = readsFiles
 
