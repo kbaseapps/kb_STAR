@@ -31,36 +31,44 @@ parameters :
         ui-name : |
             RNA-seq Sample or Sample Set
         short-hint : |
-            Select the RNA-seq sample set or reads set. If you have only one sample of RNA-seq reads, select the corresponding library object.
+            Select the RNA-seq sample set or reads set
+        long-hint : |
+            Select the RNA-seq sample set or reads set (If you have only one sample of RNA-seq reads, select the corresponding library object.)
     genome_ref :
         ui-name : |
             Genome
         short-hint : |
             Select the Genome to align the reads
-    genomeFastaFile_refs :
+    outFilterMultimapNmax :
         ui-name : |
-            Reference Genome Fasta File(s)
+            Max number of multiple alignments allowed for a read
         short-hint : |
-            One or more FASTA files with the genome reference sequences            
-        long-hint : |
-            Specified one or more FASTA files with the genome reference sequences. Multiple reference sequences (henceforth called chromosomes) are allowed for each fasta file.
-    readFilesIn_refs :
+            Max number of multiple alignments allowed for a read, default to 20 (up/down+integer counter)          
+    alignSJoverhangMin :
         ui-name : |
-            Files containing the sequences to be mapped
+            Min overhang for unannotated junctions
         short-hint : |
-            File name(s) (with path) containing the sequences to be mapped
-        long-hint : |
-            File name(s) (with path) containing the sequences to be mapped (e.g. RNA-seq FASTQ files).
-    runMode :
+            Minimum overhang for unannotated junctions, default to 8
+    alignSJDBoverhangMin :
         ui-name : |
-            STAR Running Mode
+            Min overhang for annotated junctions
         short-hint : |
-            Set the running mode for STAR--'genomeGenerate' option directs STAR to run genome indices generation job
-    runThreadN :
+            Minimum overhang for annotated junctions, default to 1
+    outFilterMismatchNmax :
         ui-name : |
-            Number of Threads to use
+            Max number of mismatches per pair 
         short-hint : |
-            Defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
+            Maximum number of mismatches per pair, large number switches off this filter, default to 999
+    alignIntronMin :
+        ui-name : |
+            Min intron length, default to 20
+        short-hint : |
+            Minimum intron length, default to 20
+    alignIntronMax :
+        ui-name : |
+            Max intron length, default to 1000000
+        short-hint : |
+            Maximum intron length, default to 1000000
     outFileNamePrefix :
         ui-name : |
             Prefix for Alignment Output File Names
@@ -68,20 +76,11 @@ parameters :
             Prefix for all STAR output files
         long-hint : |
             STAR produces multiple output files. All files have standard name, however, you can change the file prefixes
-    sjdbGTFfile_ref :
+    quanMode :
         ui-name : |
-            Standard GTF Splice Junction file
+            Output quantification method
         short-hint : |
-            Path to the file with annotated transcripts in the standard GTF format
-        long-hint : |
-            STAR will extract splice junctions from this file and use them to greatly improve accuracy of the mapping
-    sjdbOverhang :
-        ui-name : |
-            Splice Junction Overhang
-        short-hint : |
-            Length of the genomic sequence around the annotated junction
-        long-hint : |
-            Length of the genomic sequence around the annotated junction to be used in constructing the splice junctions database
+            Indicate the types of quantification requested
             
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
