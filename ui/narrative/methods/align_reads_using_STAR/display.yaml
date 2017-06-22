@@ -27,12 +27,12 @@ suggestions:
 # Configure the display and description of the parameters
 #
 parameters :
-    sampleset_id :
+    sampleset_ref :
         ui-name : |
             RNA-seq Sample or Sample Set
         short-hint : |
             Select the RNA-seq sample set or reads set. If you have only one sample of RNA-seq reads, select the corresponding library object.
-    genome_id :
+    genome_ref :
         ui-name : |
             Genome
         short-hint : |
