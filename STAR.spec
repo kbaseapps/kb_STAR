@@ -68,7 +68,6 @@ module STAR {
         obj_ref genome_ref;
         string workspace_name;
         string sampleset_ref;
-        string genome_ref;
 
 	string runMode;
 	int runThreadN;
