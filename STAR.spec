@@ -52,7 +52,6 @@ module STAR {
 	int alignIntronMax: maximum intron length, default to 1000000
 	int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
 		
-	@optional outFileNamePrefix
 	@optional quanMode
 	@optional alignSJoverhangMin
 	@optional alignSJDBoverhangMin
@@ -60,12 +59,14 @@ module STAR {
 	@optional alignIntronMin
 	@optional alignIntronMax
 	@optional alignMatesGapMax
+	@optional outFileNamePrefix
     */
     typedef structure {
         obj_ref sampleset_ref;
         obj_ref genome_ref;
         string workspace_name;
 	    
+	string quanMode;
 	int outFilterMultimapNmax;
 	int alignSJoverhangMin;
 	int alignSJDBoverhangMin;
@@ -74,7 +75,6 @@ module STAR {
 	int alignIntronMax;
 	int alignMatesGapMax;
 	string outFileNamePrefix;
-	string quanMode;
     } STARParams;
 
     /*
