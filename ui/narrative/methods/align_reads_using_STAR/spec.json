@@ -10,7 +10,7 @@
         "output": "kbaseRNASeqPieNew"
     },
     "parameters": [{
-        "id" : "sampleset_id",
+        "id" : "sampleset_ref",
         "optional" : false,
         "advanced" : false,
         "allow_multiple" : false,
@@ -20,7 +20,7 @@
             "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet" , "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"]
         }
     }, {
-        "id" : "genome_id",
+        "id" : "genome_ref",
         "optional" : false,
         "advanced" : false,
         "allow_multiple" : false,
