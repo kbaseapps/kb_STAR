@@ -39,6 +39,11 @@ parameters :
             Genome
         short-hint : |
             Select the Genome to align the reads
+    quanMode :
+        ui-name : |
+            Output quantification method
+        short-hint : |
+            Indicate the types of quantification requested
     outFilterMultimapNmax :
         ui-name : |
             Max number of multiple alignments allowed for a read
@@ -76,11 +81,6 @@ parameters :
             Prefix for all STAR output files
         long-hint : |
             STAR produces multiple output files. All files have standard name, however, you can change the file prefixes
-    quanMode :
-        ui-name : |
-            Output quantification method
-        short-hint : |
-            Indicate the types of quantification requested
             
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
