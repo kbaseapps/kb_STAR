@@ -114,11 +114,11 @@
                     "constant_value"  : 2,
                     "target_property" : "runThreadN"
                 }, {
-                    "input_parameter" : "sampleset_id",
+                    "input_parameter" : "sampleset_ref",
                     "target_property" : "sampleset_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
-                    "input_parameter" : "genome_id",
+                    "input_parameter" : "genome_ref",
                     "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
