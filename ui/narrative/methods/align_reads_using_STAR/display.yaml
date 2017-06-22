@@ -1,7 +1,7 @@
 #
 # define display information
 #
-name: STAR 2.5
+name: Align Reads Using STAR
 tooltip: |
         Spliced Transcripts Alignment to a Reference
 screenshots: []
