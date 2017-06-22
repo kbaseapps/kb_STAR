@@ -42,6 +42,7 @@ module STAR {
 		
 	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
                 By default, this parameter is ./, i.e. all output files are written in current directory without a prefix
+	string quanMode: types of quantification requested--none/TranscriptomeSAM/GeneCounts
 	int outFilterMultimapNmax: max number of multiple alignments allowed for a read: if exceeded, 
 		the read is considered unmapped, default to 20
 	int alignSJoverhangMin: minimum overhang for unannotated junctions, default to 8
@@ -50,9 +51,9 @@ module STAR {
 	int alignIntronMin: minimum intron length, default to 20
 	int alignIntronMax: maximum intron length, default to 1000000
 	int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
-
 		
 	@optional outFileNamePrefix
+	@optional quanMode
 	@optional alignSJoverhangMin
 	@optional alignSJDBoverhangMin
 	@optional outFilterMismatchNmax	
@@ -73,6 +74,7 @@ module STAR {
 	int alignIntronMax;
 	int alignMatesGapMax;
 	string outFileNamePrefix;
+	string quanMode;
     } STARParams;
 
     /*
