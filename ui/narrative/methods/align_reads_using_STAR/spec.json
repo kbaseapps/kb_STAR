@@ -17,7 +17,7 @@
         "default_values" : [ "" ],
         "field_type" : "text",
         "text_options" : {
-            "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet" , "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"]
+            "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet" , "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary", "KBaseFile.SingleEndLibrary-2.0", "KBaseFile.PairedEndLibrary-2.0", "KBaseFile.SingleEndLibrary-2.1", "KBaseFile.PairedEndLibrary-2.1"]
         }
     }, {
         "id" : "genome_ref",
@@ -30,41 +30,86 @@
             "valid_ws_types" : ["KBaseGenomes.Genome" ]
         }
     }, {
-            "id": "genomeFastaFile_refs",
-            "optional": false,
-            "advanced": false,
-            "allow_multiple": true,
-            "default_values": [ "" ],
-            "field_type": "text",
-            "text_options": {
-                "valid_ws_types": [ "KBaseGenomes.Genome", "KBaseGenomeAnnotations.Assembly", "KBaseGenomes.ContigSet" ]
-            }
+        "id": "quantMode",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "" ],
+        "field_type" : "dropdown",
+        "dropdown_options":{
+            "options": [{
+                "value": "TranscriptomeSAM",
+                "display": "SAM/BAM alignment to transcripts",
+                "id": "TranscriptomeSAM",
+                "ui_name": "TranscriptomeSAM"
+            }, {
+                "value": "GeneCounts",
+                "display": "Gene Count",
+                "id": "GeneCounts",
+                "ui_name": "GeneCounts"
+            },{
+                "value": "",
+                "display": "None",
+                "id": "None",
+                "ui_name": "None"
+            }]
+        }
         }, {
-            "id": "readFilesIn_refs",
-            "optional": false,
-            "advanced": false,
-            "allow_multiple": true,
-            "default_values": [ "" ],
-            "field_type": "text",
-            "text_options": {
-                "valid_ws_types": [ "KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet" , "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary", "KBaseFile.SingleEndLibrary-2.0", "KBaseFile.PairedEndLibrary-2.0", "KBaseFile.SingleEndLibrary-2.1", "KBaseFile.PairedEndLibrary-2.1" ]
-            }
-        }, {
-            "id": "runMode",
+            "id": "alignSJoverhangMin",
             "optional": true,
-            "advanced": false,
+            "advanced": true,
             "allow_multiple": false,
-            "default_values": [ "alignReads" ],
+            "default_values": [ "8" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "text"
+                "validate as": "int"
             }
         }, {
-            "id": "runThreadN",
+            "id": "alignSJDBoverhangMin",
             "optional": true,
-            "advanced": false,
+            "advanced": true,
             "allow_multiple": false,
             "default_values": [ "1" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        }, {
+            "id": "outFilterMismatchNmax",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "999" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        }, {
+            "id": "alignIntronMin",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "20" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        }, {
+            "id": "alignIntronMax",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "1000000" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+        }, {
+            "id": "alignMatesGapMax",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "1000000" ],
             "field_type": "text",
             "text_options": {
                 "validate_as": "int"
@@ -79,29 +124,13 @@
             "text_options": {
                 "validate_as": "text"
             }
-        }, {
-            "id": "sjdbGTFfile_ref",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": [ "KBaseGenomeAnnotations.Assembly" ]
-            }
-        }, {
-            "id": "sjdbOverhang",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int"
-            }
         }
     ],
     "behavior": {
+
+	@optional alignMatesGapMax
+	@optional outFileNamePrefix
+        
         "service-mapping": {
             "url": "",
             "name":"STAR",
@@ -122,26 +151,29 @@
                     "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
-                    "input_parameter": "genomeFastaFile_refs",
-                    "target_property": "genomeFastaFile_refs",
-                    "target_type_transform": "resolved-ref"
+                    "input_parameter": "quantMode",
+                    "target_property": "quantMode"
                 }, {
-                    "input_parameter": "readFilesIn_refs",
-                    "target_property": "readFilesIn_refs",
-                    "target_type_transform": "resolved-ref"
+                    "input_parameter": "alignSJoverhangMin",
+                    "target_property": "alignSJoverhangMin"
                 }, {
-                    "input_parameter": "runMode",
-                    "target_property": "runMode"
+                    "input_parameter": "alignSJDBoverhangMin",
+                    "target_property": "alignSJDBoverhangMin"
+                }, {
+                    "input_parameter": "outFilterMismatchNmax",
+                    "target_property": "outFilterMismatchNmax"
+                }, {
+                    "input_parameter": "alignIntronMin",
+                    "target_property": "alignIntronMin"
+                }, {
+                    "input_parameter": "alignIntronMax",
+                    "target_property": "alignIntronMax"
+                }, {
+                    "input_parameter": "alignMatesGapMax",
+                    "target_property": "alignMatesGapMax"
                 }, {
                     "input_parameter": "outFileNamePrefix",
                     "target_property": "outFileNamePrefix"
-                }, {
-                    "input_parameter": "sjdbGTFfile_ref",
-                    "target_property": "sjdbGTFfile_ref",
-                    "target_type_transform": "resolved-ref"
-                }, {
-                    "input_parameter": "sjdbOverhang",
-                    "target_property": "sjdbOverhang"
                 }
             ],
             "output_mapping": [
