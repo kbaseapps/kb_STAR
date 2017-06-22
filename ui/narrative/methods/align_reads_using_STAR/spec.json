@@ -127,10 +127,6 @@
         }
     ],
     "behavior": {
-
-	@optional alignMatesGapMax
-	@optional outFileNamePrefix
-        
         "service-mapping": {
             "url": "",
             "name":"STAR",
