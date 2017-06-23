@@ -308,7 +308,7 @@ class STARUtil:
         aligner_opts = dict()
         for k in input_params:
             aligner_opts[k] = str(input_params[k])
-
+        pprint(reads_info)
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
             "file_path": alignment_file,
@@ -357,25 +357,19 @@ class STARUtil:
 
         return report_output
 
-    def _generate_report(self, params, reads_refs, alignments, alignment_set=None):
+    def _generate_report(self, params, alignment_ref):
         """
         Builds and uploads the STAR report.
         """
         report_client = KBaseReport(self.callback_url)
         report_text = None
         created_objects = list()
-        for k in alignments:
-            created_objects.append({
-                "ref": alignments[k],
-                "description": "Reads {} aligned to Genome {}".format(k, params[self.PARAM_IN_GENOME])
-            })
-        if alignment_set is not None:
-            created_objects.append({
-                "ref": alignment_set,
-                "description": "Set of all new alignments"
-            })
+        created_objects.append({
+            "ref": alignment_ref,
+            "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+        })
 
-        report_text = "Created {} alignments from the given alignment set.".format(len(alignments))
+        report_text = "Created one alignment from the given sample set."
         report_info = report_client.create({
             "workspace_name": params[self.PARAM_IN_WS],
             "report": {
@@ -488,7 +482,7 @@ class STARUtil:
         input_params['alignment_name'] = "{}_Aligned".format(readsNames[0])
 	alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
-        reportVal = self._generate_report(alignment_ref, star_out, input_params)
+        reportVal = self._generate_report(input_params, alignment_ref)
 
         returnVal = {
             'output_folder': star_out,
