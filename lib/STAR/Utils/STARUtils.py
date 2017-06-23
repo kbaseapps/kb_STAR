@@ -367,7 +367,7 @@ class STARUtil:
         for k in alignments:
             created_objects.append({
                 "ref": alignments[k],
-                "description": "default for now" #"Reads {} aligned to Genome {}".format(k, params["genome_ref"])
+                "description": "Reads {} aligned to Genome {}".format(k, params[self.PARAM_IN_GENOME])
             })
         if alignment_set is not None:
             created_objects.append({
@@ -377,7 +377,7 @@ class STARUtil:
 
         report_text = "Created {} alignments from the given alignment set.".format(len(alignments))
         report_info = report_client.create({
-            "workspace_name": params["workspace_name"],
+            "workspace_name": params[self.PARAM_IN_WS],
             "report": {
                 "objects_created": created_objects,
                 "text_message": report_text
