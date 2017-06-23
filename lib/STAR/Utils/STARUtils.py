@@ -130,6 +130,7 @@ class STARUtil:
 		and params['sjdbOverhang'] > 0):
             idx_cmd.append('--sjdbOverhang')
             idx_cmd.append(str(params['sjdbOverhang']))
+
         # appending the advanced optional inputs--TODO
 
         # STEP 3: return idx_cmd
@@ -175,6 +176,41 @@ class STARUtil:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
         # appending the advanced optional inputs--TODO
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", ""]
+        if (params.get('quantMode', None) is not None
+                and params.get('quantMode', None) in quant_modes):
+            mp_cmd.append('--quantMode')
+            mp_cmd.append(params['quantMode'])
+        if (params.get('alignSJoverhangMin', None) is not None
+		and isinstance(params['alignSJoverhangMin'], int)
+                and params['alignSJoverhangMin'] > 0):
+            mp_cmd.append('--alignSJoverhangMin')
+            mp_cmd.append(str(params['alignSJoverhangMin']))
+        if (params.get('alignSJDBoverhangMin', None) is not None
+		and isinstance(params['alignSJDBoverhangMin'], int)
+                and params['alignSJDBoverhangMin'] > 0):
+            mp_cmd.append('--alignSJDBoverhangMin')
+            mp_cmd.append(str(params['alignSJDBoverhangMin']))
+        if (params.get('outFilterMismatchNmax', None) is not None
+		and isinstance(params['outFilterMismatchNmax'], int)
+                and params['outFilterMismatchNmax'] > 0):
+            mp_cmd.append('--outFilterMismatchNmax')
+            mp_cmd.append(str(params['outFilterMismatchNmax']))
+        if (params.get('alignIntronMin', None) is not None
+		and isinstance(params['alignIntronMin'], int)
+                and params['alignIntronMin'] > 0):
+            mp_cmd.append('--alignIntronMin')
+            mp_cmd.append(str(params['alignIntronMin']))
+        if (params.get('alignIntronMax', None) is not None
+		and isinstance(params['alignIntronMax'], int)
+                and params['alignIntronMax'] >= 0):
+            mp_cmd.append('--alignIntronMax')
+            mp_cmd.append(str(params['alignIntronMax']))
+        if (params.get('alignMatesGapMax', None) is not None
+		and isinstance(params['alignMatesGapMax'], int)
+                and params['alignMatesGapMax'] >= 0):
+            mp_cmd.append('--alignMatesGapMax')
+            mp_cmd.append(str(params['alignMatesGapMax']))
 
         # STEP 3 return mp_cmd
         print ('STAR mapping CMD:')
@@ -250,11 +286,10 @@ class STARUtil:
                 time.sleep(1)
         except ValueError as eidx:
             log('STAR genome indexing raised error:\n')
-            pprina(eidx)
+            pprint(eidx)
         else:#no exception raised by genome indexing and STAR returns 0, then run mapping
             ret = 1
-            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
-		params_mp['runMode'] = 'alignReads'
+            params_mp[self.PARAM_IN_STARMODE] = 'alignReads'
             try:
                 ret = self._exec_mapping(params_mp)
                 while( ret != 0 ):
@@ -363,8 +398,8 @@ class STARUtil:
         input_params = self._process_params(input_params)
 	params = {
             'workspace_name': input_params[self.PARAM_IN_WS],
-            'runMode': 'genomeGenerate', #input_params[self.PARAM_IN_STARMODE],
-            'runThreadN': 4, #input_params[self.PARAM_IN_THREADN],
+            'runMode': 'genomeGenerate',
+            'runThreadN': input_params[self.PARAM_IN_THREADN],
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
 	}
 
@@ -458,7 +493,7 @@ class STARUtil:
             'alignment_ref': alignment_ref
         }
 
-        #returnVal.update(reportVal)
+        returnVal.update(reportVal)
 
         return returnVal
 

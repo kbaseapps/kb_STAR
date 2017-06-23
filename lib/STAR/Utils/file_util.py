@@ -68,15 +68,6 @@ def fetch_fasta_from_object(ref, ws_url, callback_url):
         return fetch_fasta_from_genome(ref, ws_url, callback_url)
     elif "KBaseGenomeAnnotations.Assembly" in obj_type or "KBaseGenomes.ContigSet" in obj_type:
         return fetch_fasta_from_assembly(ref, ws_url, callback_url)
-    elif ("KBaseAssembly.SingleEndLibrary" in obj_type or
-          "KBaseFile.SingleEndLibrary" in obj_type or
-          "KBaseFile.SingleEndLibrary-2.0" in obj_type or
-          "KBaseFile.SingleEndLibrary-2.1" in obj_type or
-          "KBaseAssembly.PairedEndLibrary" in obj_type or
-          "KBaseFile.PairedEndLibrary" in obj_type or
-          "KBaseFile.PairedEndLibrary-2.0" in obj_type or
-          "KBaseFile.PairedEndLibrary-2.1" in obj_type):
-        return fetch_reads_from_reference(ref, callback_url)
     else:
         raise ValueError("Unable to fetch a FASTA file from an object of type {}".format(obj_type))
 
