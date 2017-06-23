@@ -49,9 +49,9 @@
                 "ui_name": "GeneCounts"
             },{
                 "value": "",
-                "display": "None",
-                "id": "None",
-                "ui_name": "None"
+                "display": "Both",
+                "id": "Both",
+                "ui_name": "Both"
             }]
         }
         }, {
