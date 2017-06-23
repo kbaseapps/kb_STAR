@@ -62,7 +62,8 @@
             "default_values": [ "8" ],
             "field_type": "text",
             "text_options": {
-                "validate as": "int"
+                "validate as": "int",
+                "min_int" : 0
             }
         }, {
             "id": "alignSJDBoverhangMin",
@@ -72,7 +73,8 @@
             "default_values": [ "1" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int",
+                "min_int" : 0
             }
         }, {
             "id": "outFilterMismatchNmax",
@@ -82,7 +84,8 @@
             "default_values": [ "999" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int".
+                "min_int" : 0
             }
         }, {
             "id": "alignIntronMin",
@@ -92,7 +95,8 @@
             "default_values": [ "20" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int",
+                "min_int" : 0
             }
         }, {
             "id": "alignIntronMax",
@@ -102,7 +106,8 @@
             "default_values": [ "1000000" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int",
+                "min_int" : 0
             }
         }, {
             "id": "alignMatesGapMax",
@@ -112,14 +117,15 @@
             "default_values": [ "1000000" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int",
+                "min_int" : 0
             }
         }, {
             "id": "outFileNamePrefix",
             "optional": true,
             "advanced": true,
             "allow_multiple": false,
-            "default_values": [ "" ],
+            "default_values": [ "STARoutput_" ],
             "field_type": "text",
             "text_options": {
                 "validate_as": "text"
