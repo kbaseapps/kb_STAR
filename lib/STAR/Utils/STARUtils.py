@@ -31,12 +31,11 @@ def log(message, prefix_newline=False):
 class STARUtil:
     STAR_VERSION = 'STAR 2.5.3a'
     STAR_BIN = '/kb/deployment/bin/STAR'
-    STAR_IDX = '/kb/module/STAR_genome_dir/'
+    STAR_IDX = '/kb/module/STAR_Genome_index/'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
-    PARAM_IN_FASTA_FILE = 'genome_fasta_file'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
     PARAM_IN_STARMODE = 'runMode'
     PARAM_IN_THREADN = 'runThreadN'
@@ -251,8 +250,8 @@ class STARUtil:
         self.scratch = config['scratch']
         self.working_dir = self.scratch
 
-    def _exec_star(self, params):
-        outdir = os.path.join(self.scratch, 'STAR_output_dir')
+    def _exec_star(self, params, star_outdir):
+        outdir = os.path.join(self.scratch, star_outdir)
         self._mkdir_p(outdir)
 
         # build the parameters
@@ -260,7 +259,7 @@ class STARUtil:
                 'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
-                'genomeFastaFiles': [params[self.PARAM_IN_FASTA_FILE]]
+                'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
 
         if params.get('sjdbGTFfile', None) is not None:
@@ -314,7 +313,7 @@ class STARUtil:
             "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
             "file_path": alignment_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
-            "read_library_ref": reads_info['obj_ref'],
+            "read_library_ref": reads_info['object_ref'],
             "library_type": reads_info['style'],
             "condition": reads_info['condition'],
             "aligned_using": 'STAR',
@@ -418,10 +417,10 @@ class STARUtil:
         readsInfo = list()
 	readsFiles = list()
         readsNames = list()
-	for source_ref in reads_refs:
+	for source_reads in reads_refs:
             try:
-                print("Fetching FASTA file from reads reference {}".format(source_ref))
-                ret_reads = fetch_reads_from_reference(source_ref, self.callback_url)
+                print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
+                ret_reads = fetch_reads_from_reference(source_reads['ref'], self.callback_url)
                 if ret_reads.get("file_fwd", None) is not None:
                     print("Done fetching FASTA file with name = {}".format(ret_reads.get("file_fwd", None)))
             except ValueError:
@@ -429,9 +428,11 @@ class STARUtil:
                 raise
 
             if ret_reads.get("file_fwd", None) is None:
-                raise RuntimeError("FASTA file fetched from reads ref {} doesn't seem to exist!".format(source_ref))
+                raise RuntimeError("FASTA file fetched from reads ref {} doesn't seem to exist!".format(source_reads['ref']))
             else:
-                if ret_reads.get("condition", None) is None:
+                if source_reads.get("condition", None) is not None:
+                    ret_reads["condition"] = source_reads["condition"]
+                else:
                     ret_reads["condition"] = "N/A"
                 readsInfo.append(ret_reads)
                 if ret_reads.get("file_fwd", None) is not None:
@@ -442,6 +443,7 @@ class STARUtil:
 
 	params[self.PARAM_IN_READS_FILES] = readsFiles
 
+        params[self.PARAM_IN_FASTA_FILES] = list()
         genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
 	if genome_ref is not None:
             try:
@@ -455,7 +457,7 @@ class STARUtil:
             if genome_fasta_file.get("path", None) is None:
 		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
             else:
-		params[self.PARAM_IN_FASTA_FILES] = genome_fasta_file["path"]
+		params[self.PARAM_IN_FASTA_FILES].append(genome_fasta_file["path"])
 
         sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
 	if sjdbGTFfile_ref is not None:
@@ -475,7 +477,7 @@ class STARUtil:
                     params['sjdbOverhang'] = input_params['sjdbOverhang']
 
 	#2. Running star
-	star_out = self._exec_star(params)
+	star_out = self._exec_star(params, readsNames[0])
 
 	#3. Uploading the alignment and generating report
         print("Uploading STAR output object and report...")
