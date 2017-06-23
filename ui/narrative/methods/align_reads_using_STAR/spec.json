@@ -29,6 +29,17 @@
         "text_options" : {
             "valid_ws_types" : ["KBaseGenomes.Genome" ]
         }
+     }, {
+        "id" : "output_obj_name",
+        "optional" : false,
+        "advanced" : false,
+        "allow_multiple" : false,
+        "default_values" : [ "" ],
+        "field_type" : "text",
+        "text_options" : {
+        "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment" ],
+        "is_output_name" : true
+       } 
     }, {
         "id": "quantMode",
         "optional": true,
@@ -149,6 +160,9 @@
                     "input_parameter" : "genome_ref",
                     "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
+                }, {
+                    "input_parameter" : "output_obj_name",
+                    "target_property" : "output_name"
                 }, {
                     "input_parameter": "quantMode",
                     "target_property": "quantMode"
