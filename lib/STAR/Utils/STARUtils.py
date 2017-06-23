@@ -176,7 +176,7 @@ class STARUtil:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
         # appending the advanced optional inputs--TODO
-        quant_modes = ["TranscriptomeSAM", "GeneCounts", ""]
+        quant_modes = ["TranscriptomeSAM", "GeneCounts"]
         if (params.get('quantMode', None) is not None
                 and params.get('quantMode', None) in quant_modes):
             mp_cmd.append('--quantMode')
