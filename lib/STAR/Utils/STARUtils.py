@@ -19,6 +19,7 @@ from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
 from file_util import (
     fetch_fasta_from_object,
+    fetch_reads_refs_from_sampleset,
     fetch_reads_from_reference
 )
 
@@ -35,16 +36,17 @@ class STARUtil:
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
+    PARAM_IN_FASTA_FILE = 'genome_fasta_file'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
     PARAM_IN_STARMODE = 'runMode'
     PARAM_IN_THREADN = 'runThreadN'
     PARAM_IN_READS_REFS = 'readFilesIn_refs'
     PARAM_IN_READS_FILES = 'readFilesIn'
- 
+
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
-    PARAM_IN_LIB = 'reads_ref'
+    PARAM_IN_READS = 'sampleset_ref'
     PARAM_IN_GENOME = 'genome_ref'
 
     def _mkdir_p(self, path):
@@ -77,34 +79,26 @@ class STARUtil:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 	else:
             if params[self.PARAM_IN_STARMODE] == "genomeGenerate":
-		if params.get(self.PARAM_IN_FASTA_REFS, None) is None:
-		    raise ValueError(self.PARAM_IN_FASTA_REFS + 
+		if params.get(self.PARAM_IN_GENOME, None) is None:
+                   raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
-		if type(params[self.PARAM_IN_FASTA_REFS]) != list:
-		    raise ValueError(self.PARAM_IN_FASTA_REFS + ' must be a list')
-		if params.get(self.PARAM_IN_FASTA_REFS, None) is None:
-		    raise ValueError('At least one FASTA file must be provided for generating genome index')
 
-        if (params.get(self.PARAM_IN_STARMODE, None) is not None and 
+        if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
-            if params.get(self.PARAM_IN_READS_REFS, None) is None:
-		raise ValueError(self.PARAM_IN_READS_REFS + 
-				' parameter is required for genome mapping')
-            if type(params[self.PARAM_IN_READS_REFS]) != list:
-		raise ValueError(self.PARAM_IN_READS_REFS + ' must be a list')
-            if params.get(self.PARAM_IN_READS_REFS, None) is None:
-		raise ValueError('At least one reads file must be provided for genome mapping')
+            if params.get(self.PARAM_IN_READS, None) is None:
+		raise ValueError(self.PARAM_IN_READS +
+				' parameter is required for reads mapping')
 
         if params.get(self.PARAM_IN_THREADN, None) is not None:
             if not isinstance(params[self.PARAM_IN_THREADN], int):
                 raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
 	else:
-	    params[self.PARAM_IN_THREADN] = 1
+             params[self.PARAM_IN_THREADN] = 1
 
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
-	    params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'
+             params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'
 	elif params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
-	    raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
+            raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
 	return params
 
@@ -112,7 +106,7 @@ class STARUtil:
     def _construct_indexing_cmd(self, params):
         # STEP 1: get the workspace and its folder where the genome indices are stored
         wsname = params[self.PARAM_IN_WS]
-        
+
 	# STEP 2: construct the command for running `STAR --runMode genomeGenerate...`
         idx_cmd = [self.STAR_BIN]
 	idx_cmd.append('--genomeDir')
@@ -124,20 +118,20 @@ class STARUtil:
 
 	if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
             print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
-	    idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
+            idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
             for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
-	        idx_cmd.append(fasta_file)
+                idx_cmd.append(fasta_file)
 
 	# appending the standard optional inputs
-        if params.get('sjdbGTFfile', None) is not None: 
+        if params.get('sjdbGTFfile', None) is not None:
             idx_cmd.append('--sjdbGTFfile')
             idx_cmd.append(params['sjdbGTFfile'])
-        if (params.get('sjdbOverhang', None) is not None 
+        if (params.get('sjdbOverhang', None) is not None
 		and params['sjdbOverhang'] > 0):
             idx_cmd.append('--sjdbOverhang')
             idx_cmd.append(str(params['sjdbOverhang']))
         # appending the advanced optional inputs--TODO
-		
+
         # STEP 3: return idx_cmd
         print ('STAR indexing CMD:')
         print ' '.join(idx_cmd)
@@ -147,13 +141,13 @@ class STARUtil:
         # STEP 1: get the working folder housing the STAR results as well as the reads info
         wsname = params[self.PARAM_IN_WS]
 	if params.get(self.PARAM_IN_STARMODE, None) is None:
-	    params[self.PARAM_IN_STARMODE] = 'alignReads'
-	
+            params[self.PARAM_IN_STARMODE] = 'alignReads'
+
         star_out_dir = ''
 	if params.get('star_output_dir', None) is None:
-	    star_out_dir = self.scratch
+            star_out_dir = self.scratch
 	else:
-	    star_out_dir = os.path.join(self.scratch, params['star_output_dir'])
+            star_out_dir = os.path.join(self.scratch, params['star_output_dir'])
         self._mkdir_p(star_out_dir)
 
         # STEP 2: construct the command for running STAR mapping
@@ -164,22 +158,22 @@ class STARUtil:
 	mp_cmd.append(params[self.PARAM_IN_STARMODE])
 	mp_cmd.append('--' + self.PARAM_IN_THREADN)
 	mp_cmd.append(str(params[self.PARAM_IN_THREADN]))
-        
+
 	if params.get(self.PARAM_IN_READS_FILES, None) is not None:
             print('Input reads files:' + pformat(params[self.PARAM_IN_READS_FILES]))
-	    mp_cmd.append('--' + self.PARAM_IN_READS_FILES)
+            mp_cmd.append('--' + self.PARAM_IN_READS_FILES)
             for reads_file in params[self.PARAM_IN_READS_FILES]:
-	        mp_cmd.append(reads_file)
+                mp_cmd.append(reads_file)
 		readName, readsExtension = os.path.splitext(reads_file)
-        	#print ('Reads file name-- {}/extension-- {}:'.format(readName, readsExtension))
+                #print ('Reads file name-- {}/extension-- {}:'.format(readName, readsExtension))
 		if readsExtension == '.gz':
 			mp_cmd.append('--readFilesCommand')
 			mp_cmd.append('gunzip')
 			mp_cmd.append('-c')
 
 	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-	    mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
-	    mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
+            mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
+            mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
         # appending the advanced optional inputs--TODO
 
         # STEP 3 return mp_cmd
@@ -230,11 +224,9 @@ class STARUtil:
                 'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
-                'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
+                'genomeFastaFiles': [params[self.PARAM_IN_FASTA_FILE]]
         }
 
-        if params.get('genome_fasta_file', None) is not None:
-            params_idx['genome_fasta_file'] = params['genome_fasta_file']
         if params.get('sjdbGTFfile', None) is not None:
             params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
         if params.get('sjdbOverhang', None) is not None :
@@ -246,25 +238,22 @@ class STARUtil:
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': params[self.PARAM_IN_READS_FILES],
 		'star_output_dir': outdir,
-		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX] 
+		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX]
         }
-        if params.get('reads_fasta_file', None) is not None:
-            params_mp['reads_fasta_file'] = params['reads_fasta_file']
-
         ret = 1
         try:
-	    if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
-            	ret = self._exec_indexing(params_idx)
-	    else:
+            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
+                ret = self._exec_indexing(params_idx)
+            else:
 		ret = 0
-	    while( ret != 0 ):
+            while( ret != 0 ):
                 time.sleep(1)
         except ValueError as eidx:
             log('STAR genome indexing raised error:\n')
             pprina(eidx)
         else:#no exception raised by genome indexing and STAR returns 0, then run mapping
-            ret = 1 
-	    if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
+            ret = 1
+            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
 		params_mp['runMode'] = 'alignReads'
             try:
                 ret = self._exec_mapping(params_mp)
@@ -289,7 +278,7 @@ class STARUtil:
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
             "file_path": alignment_file,
-            "assembly_or_genome_ref": input_params['genomeFastaFile_refs'][0],
+            "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['obj_ref'],
             "library_type": reads_info['style'],
             "condition": reads_info['condition'],
@@ -372,111 +361,83 @@ class STARUtil:
 
 	#0. preprocessing the input parameters
         input_params = self._process_params(input_params)
-        wsname = input_params[self.PARAM_IN_WS]
 	params = {
-	    'workspace_name': wsname,
-	    'runMode': input_params[self.PARAM_IN_STARMODE],
-	    'runThreadN': input_params[self.PARAM_IN_THREADN],
+            'workspace_name': input_params[self.PARAM_IN_WS],
+            'runMode': 'genomeGenerate', #input_params[self.PARAM_IN_STARMODE],
+            'runThreadN': 4, #input_params[self.PARAM_IN_THREADN],
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
 	}
 
 	#1. Converting refs to file locations in the scratch area
-        reads_ref = input_params.get(self.PARAM_IN_LIB, None)
-	if reads_ref is not None:
-	    try:
-		print("Fetching FASTA file from object {}".format(reads_ref))
-		reads_fasta_file = fetch_fasta_from_object(reads_ref, self.workspace_url, self.callback_url)
-		print("Done fetching FASTA file! Path = {}".format(reads_fasta_file.get("path", None)))
-	    except ValueError:
-		print("Incorrect object type for fetching a FASTA file!")
+        smplset_ref = input_params.get(self.PARAM_IN_READS, None)
+        reads_refs = list()
+	if smplset_ref is not None:
+            try:
+		print("Fetching reads ref(s) from sampleset ref {}".format(smplset_ref))
+		reads_refs = fetch_reads_refs_from_sampleset(smplset_ref, self.workspace_url, self.callback_url)
+		print("Done fetching reads ref(s)!")
+            except ValueError:
+		print("Incorrect object type for fetching reads ref(s)!")
 		raise
-
-	    if reads_fasta_file.get("path", None) is None:
-		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(reads_ref))
-	    else:
-		params['reads_fasta_file'] = reads_fasta_file["path"]
-
-        genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
-	if genome_ref is not None:
-	    try:
-		print("Fetching FASTA file from object {}".format(genome_ref))
-		genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
-		print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
-	    except ValueError:
-		print("Incorrect object type for fetching a FASTA file!")
-		raise
-
-	    if genome_fasta_file.get("path", None) is None:
-		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
-	    else:
-		params['genome_fasta_file'] = genome_fasta_file["path"]
-		
-        sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
-	if sjdbGTFfile_ref is not None:
-	    try:
-		print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
-		sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
-		print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
-	    except ValueError:
-		print("Incorrect object type for fetching a FASTA file!")
-		raise
-
-	    if sjdbGTFfile.get("path", None) is None:
-		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(sjdbGTFfile_ref))
-	    else:
-		params['sjdbGTFfile'] = sjdbGTFfile["path"]
-        	if input_params.get('sjdbOverhang', None) is not None :
-            	    params['sjdbOverhang'] = input_params['sjdbOverhang']
-
-	genomeFastaFiles = list()
-	for source_ref in input_params['genomeFastaFile_refs']:
-		try:
-		    print("Fetching FASTA file from object {}".format(source_ref))
-		    fasta_file = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
-		    print("Done fetching FASTA file! Path = {}".format(fasta_file.get("path", None)))
-		except ValueError:
-		    print("Incorrect object type for fetching a FASTA file!")
-		    raise
-
-		if fasta_file.get("path", None) is None:
-		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to "
-			       "exist!".format(source_ref))
-
-		genomeFastaFiles.append(fasta_file["path"])
-	params['genomeFastaFiles'] = genomeFastaFiles
 
         readsInfo = list()
 	readsFiles = list()
         readsNames = list()
-	for source_ref in input_params['readFilesIn_refs']:
-		try:
-		    print("Fetching FASTA file from reads reference {}".format(source_ref))
-		    ret_reads = fetch_fasta_from_object(source_ref, self.workspace_url, self.callback_url)
-		    if ret_reads.get("file_fwd", None) is not None:
-                        print("Done fetching FASTA file! Path = {}".format(ret_reads.get("file_fwd", None)))
-                    elif ret_reads.get("path", None) is not None:
-                        print("Done fetching FASTA file! Path = {}".format(ret_reads.get("path", None)))
-		except ValueError:
-		    print("Incorrect object type for fetching a FASTA file!")
-		    raise
+	for source_ref in reads_refs:
+            try:
+                print("Fetching FASTA file from reads reference {}".format(source_ref))
+                ret_reads = fetch_reads_from_reference(source_ref, self.callback_url)
+                if ret_reads.get("file_fwd", None) is not None:
+                    print("Done fetching FASTA file with name = {}".format(ret_reads.get("file_fwd", None)))
+            except ValueError:
+                print("Incorrect object type for fetching a FASTA file!")
+                raise
 
-		if (ret_reads.get("file_fwd", None) is None and
-                        ret_reads.get("path", None) is None):
-		    raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(source_ref))
-                else:
-                    if ret_reads.get("condition", None) is None:
-                        ret_reads["condition"] = "N/A"
-		    readsInfo.append(ret_reads)
-                    if ret_reads.get("file_fwd", None) is not None:
-                        readsFiles.append(ret_reads["file_fwd"])
-                        readsNames.append(os.path.basename(ret_reads["file_fwd"]))
-                        if ret_reads.get("file_rev", None) is not None:
-                            readsFiles.append(ret_reads["file_rev"])
-                    elif ret_reads.get("path", None) is not None:
-                        readsFiles.append(ret_reads["path"])
-                        readsNames.append(os.path.basename(ret_reads["path"]))
+            if ret_reads.get("file_fwd", None) is None:
+                raise RuntimeError("FASTA file fetched from reads ref {} doesn't seem to exist!".format(source_ref))
+            else:
+                if ret_reads.get("condition", None) is None:
+                    ret_reads["condition"] = "N/A"
+                readsInfo.append(ret_reads)
+                if ret_reads.get("file_fwd", None) is not None:
+                    readsFiles.append(ret_reads["file_fwd"])
+                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
+                    if ret_reads.get("file_rev", None) is not None:
+                        readsFiles.append(ret_reads["file_rev"])
 
-	params['readFilesIn'] = readsFiles
+	params[self.PARAM_IN_READS_FILES] = readsFiles
+
+        genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
+	if genome_ref is not None:
+            try:
+		print("Fetching FASTA file from object {}".format(genome_ref))
+		genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
+		print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
+            except ValueError:
+		print("Incorrect object type for fetching a FASTA file!")
+		raise
+
+            if genome_fasta_file.get("path", None) is None:
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
+            else:
+		params[self.PARAM_IN_FASTA_FILES] = genome_fasta_file["path"]
+
+        sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
+	if sjdbGTFfile_ref is not None:
+            try:
+		print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
+		sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
+		print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
+            except ValueError:
+		print("Incorrect object type for fetching a FASTA file!")
+		raise
+
+            if sjdbGTFfile.get("path", None) is None:
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(sjdbGTFfile_ref))
+            else:
+		params['sjdbGTFfile'] = sjdbGTFfile["path"]
+                if input_params.get('sjdbOverhang', None) is not None :
+                    params['sjdbOverhang'] = input_params['sjdbOverhang']
 
 	#2. Running star
 	star_out = self._exec_star(params)

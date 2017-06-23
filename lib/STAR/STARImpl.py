@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "c01d33e1cc883d49e6b46834848ce8cd6caaa817"
+    GIT_COMMIT_HASH = "4029907e3f98ddd1792f0784c8e0f7cc873e784a"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -70,43 +70,45 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         and input/return arguments to the function.  For all typical KBase
         Apps that run in the Narrative, your function should have the 
         'authentication required' modifier.
-        :param params: instance of type "STARParams" (Arguments for
-           star_generate_indexes obj_ref reads_ref: KBase workspace reference
-           for reads to align obj_ref genome_ref: KBase workspace reference
-           genome to align reads against string workspace_name: the workspace
-           name provided by the narrative for housing output in KBase string
-           sampleset_ref = the workspace reference for the sampleset of reads
-           to align string runMode: default: alignReads type of the run:
-           alignReads => map reads genomeGenerate => generate genome files
-           inputAlignmentsFromBAM => input alignments from BAM. Presently
-           only works with -outWigType and -bamRemoveDuplicates. liftOver =>
-           lift-over of GTF files (-sjdbGTFfile) between genome assemblies
-           using chain file(s) from -genomeChainFiles int runThreadN:
-           default: 1 number of threads to run STAR list<obj_ref>
-           genomeFastaFiles: path(s) to the fasta files with genomic
-           sequences for genome generation Only used if
-           runMode==genomeGenerate. These files should be plain text FASTA
-           files, they *cannot* be zipped list<obj_ref> readFilesIn: default:
-           Read1 Read2 paths to files that contain input read1 (and, if
-           needed, read2) string sjdbGTFfile: default: -; path to the file
-           with annotated transcripts in the standard GTF format int
-           sjdbOverhang: default: 100; int>0: length of the donor/acceptor
-           sequence on each side of the junctions, ideally = (ReadLength - 1)
-           string outFileNamePrefix: you can change the file prefixes using
-           --outFileNamePrefix /path/to/output/dir/prefix By default, this
-           parameter is ./STARoutput_, i.e. all output files are written in
-           the current directory with the prefix 'STARoutput_'. @optional
-           outFileNamePrefix @optional runThreadN @optional sjdbGTFfile_ref
-           @optional sjdbOverhang) -> structure: parameter "reads_ref" of
-           type "obj_ref" (An X/Y/Z style reference), parameter "genome_ref"
-           of type "obj_ref" (An X/Y/Z style reference), parameter
-           "workspace_name" of String, parameter "sampleset_ref" of String,
-           parameter "runMode" of String, parameter "runThreadN" of Long,
-           parameter "genomeFastaFile_refs" of list of type "obj_ref" (An
-           X/Y/Z style reference), parameter "sjdbGTFfile_ref" of type
-           "obj_ref" (An X/Y/Z style reference), parameter "sjdbOverhang" of
-           Long, parameter "readFilesIn_refs" of list of type "obj_ref" (An
-           X/Y/Z style reference), parameter "outFileNamePrefix" of String
+        :param params: instance of type "STARParams" (Will align the input
+           reads (or set of reads specified in a SampleSet) to the specified
+           assembly or assembly for the specified Genome (accepts Assembly,
+           ContigSet, or Genome types) and produces a ReadsAlignment object,
+           or in the case of a SampleSet, a ReadsAlignmentSet object obj_ref
+           genome_ref: KBase workspace reference genome to align reads
+           against obj_ref sampleset_ref: the workspace reference for the
+           sampleset of reads to align, referring to either a
+           SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
+           string workspace_name: the workspace name provided by the
+           narrative for housing output in KBase string outFileNamePrefix:
+           you can change the file prefixes using --outFileNamePrefix
+           /path/to/output/dir/prefix By default, this parameter is ./, i.e.
+           all output files are written in current directory without a prefix
+           string quantMode: types of quantification
+           requested--none/TranscriptomeSAM/GeneCounts int
+           outFilterMultimapNmax: max number of multiple alignments allowed
+           for a read: if exceeded, the read is considered unmapped, default
+           to 20 int alignSJoverhangMin: minimum overhang for unannotated
+           junctions, default to 8 int alignSJDBoverhangMin: minimum overhang
+           for annotated junctions, default to 1 int outFilterMismatchNmax:
+           maximum number of mismatches per pair, large number switches off
+           this filter, default to 999 int alignIntronMin: minimum intron
+           length, default to 20 int alignIntronMax: maximum intron length,
+           default to 1000000 int alignMatesGapMax: maximum genomic distance
+           between mates, default to 1000000 @optional quantMode @optional
+           alignSJoverhangMin @optional alignSJDBoverhangMin @optional
+           outFilterMismatchNmax @optional alignIntronMin @optional
+           alignIntronMax @optional alignMatesGapMax @optional
+           outFileNamePrefix) -> structure: parameter "sampleset_ref" of type
+           "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
+           type "obj_ref" (An X/Y/Z style reference), parameter
+           "workspace_name" of String, parameter "quantMode" of String,
+           parameter "outFilterMultimapNmax" of Long, parameter
+           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
+           Long, parameter "outFilterMismatchNmax" of Long, parameter
+           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
+           parameter "alignMatesGapMax" of Long, parameter
+           "outFileNamePrefix" of String
         :returns: instance of type "STARResults" (Here is the definition of
            the output of the function.  The output can be used by other SDK
            modules which call your code, or the output visualizations in the

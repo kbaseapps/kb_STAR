@@ -22,7 +22,7 @@ from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
 
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
-#from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
+from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from ReadsUtils.baseclient import ServerError
 from ReadsUtils.ReadsUtilsClient import ReadsUtils
 
@@ -90,8 +90,8 @@ class STARTest(unittest.TestCase):
     def loadGenome(self):
         if hasattr(self.__class__, 'genome_ref'):
             return self.__class__.genome_ref
-        genome_file_path = os.path.join(self.scratch, 'star_test_genome.fa')
-        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), genome_file_path)
+        genome_file_path = os.path.join(self.scratch, 'star_test_genome.gbff')
+        shutil.copy(os.path.join('../testReads', 'ecoli_genomic.gbff'), genome_file_path)
         gfu = GenomeFileUtil(self.callback_url)
         genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
                                             'workspace_name': self.getWsName(),
@@ -199,12 +199,12 @@ class STARTest(unittest.TestCase):
         params = {
             'workspace_name': self.getWsName(),
             'outFileNamePrefix': 'STARtest_',
-            #'genome_ref': self.loadAssembly(),#self.loadGenome(),
-	    #'reads_ref': self.loadSEReads(),
-	    'runMode': 'genomeGenerate',
-	    'runThreadN': 4,
-	    'genomeFastaFile_refs': [self.loadAssembly()],
-            'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
+            'genome_ref': self.loadGenome(),
+            'sampleset_ref': self.loadSEReads()
+            #'runMode': 'genomeGenerate',
+            #'runThreadN': 4,
+            #'genomeFastaFile_refs': [self.loadAssembly()],
+            #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }
 
         result = self.getImpl().run_star(self.getContext(), params)
