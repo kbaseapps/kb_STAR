@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "4029907e3f98ddd1792f0784c8e0f7cc873e784a"
+    GIT_COMMIT_HASH = "03e96fbf186c3c239ecf1a6715f07b2f5819f2ba"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -80,12 +80,13 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            sampleset of reads to align, referring to either a
            SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
            string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string outFileNamePrefix:
-           you can change the file prefixes using --outFileNamePrefix
-           /path/to/output/dir/prefix By default, this parameter is ./, i.e.
-           all output files are written in current directory without a prefix
-           string quantMode: types of quantification
-           requested--none/TranscriptomeSAM/GeneCounts int
+           narrative for housing output in KBase string output_name - name of
+           the output ReadsAlignment or ReadsAlignmentSet string
+           outFileNamePrefix: you can change the file prefixes using
+           --outFileNamePrefix /path/to/output/dir/prefix By default, this
+           parameter is ./, i.e. all output files are written in current
+           directory without a prefix string quantMode: types of
+           quantification requested--none/TranscriptomeSAM/GeneCounts int
            outFilterMultimapNmax: max number of multiple alignments allowed
            for a read: if exceeded, the read is considered unmapped, default
            to 20 int alignSJoverhangMin: minimum overhang for unannotated
@@ -102,13 +103,13 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            outFileNamePrefix) -> structure: parameter "sampleset_ref" of type
            "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
            type "obj_ref" (An X/Y/Z style reference), parameter
-           "workspace_name" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
-           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
-           Long, parameter "outFilterMismatchNmax" of Long, parameter
-           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
-           parameter "alignMatesGapMax" of Long, parameter
-           "outFileNamePrefix" of String
+           "workspace_name" of String, parameter "output_name" of String,
+           parameter "quantMode" of String, parameter "outFilterMultimapNmax"
+           of Long, parameter "alignSJoverhangMin" of Long, parameter
+           "alignSJDBoverhangMin" of Long, parameter "outFilterMismatchNmax"
+           of Long, parameter "alignIntronMin" of Long, parameter
+           "alignIntronMax" of Long, parameter "alignMatesGapMax" of Long,
+           parameter "outFileNamePrefix" of String
         :returns: instance of type "STARResults" (Here is the definition of
            the output of the function.  The output can be used by other SDK
            modules which call your code, or the output visualizations in the

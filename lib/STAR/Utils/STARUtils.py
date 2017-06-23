@@ -313,7 +313,7 @@ class STARUtil:
             aligner_opts[k] = str(input_params[k])
         pprint(reads_info)
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params[PARAM_IN_OUTPUT_NAME]),
+            "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params[self.PARAM_IN_OUTPUT_NAME]),
             "file_path": alignment_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
