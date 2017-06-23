@@ -367,7 +367,7 @@ class STARUtil:
         for k in alignments:
             created_objects.append({
                 "ref": alignments[k],
-                "description": "Reads {} aligned to Genome {}".format(k, params["genome_ref"])
+                "description": "default for now" #"Reads {} aligned to Genome {}".format(k, params["genome_ref"])
             })
         if alignment_set is not None:
             created_objects.append({
