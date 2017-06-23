@@ -39,6 +39,11 @@ parameters :
             Genome
         short-hint : |
             Select the Genome to align the reads
+    output_obj_name :
+        ui-name : |
+            Output Alignment Name
+        short-hint : |
+            Provide a name for the output reads alignment or reads alignment set
     quantMode :
         ui-name : |
             Output quantification method
