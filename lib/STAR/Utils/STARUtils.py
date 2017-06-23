@@ -34,6 +34,7 @@ class STARUtil:
     STAR_IDX = '/kb/module/STAR_Genome_index/'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
+    PARAM_IN_OUTPUT_NAME = 'output_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
@@ -73,7 +74,9 @@ class STARUtil:
         if (self.PARAM_IN_WS not in params or
                 not params[self.PARAM_IN_WS]):
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-
+        if (self.PARAM_IN_OUTPUT_NAME not in params or
+                not params[self.PARAM_IN_OUTPUT_NAME]):
+            raise ValueError(self.PARAM_IN_OUTPUT_NAME + ' parameter is required')
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 	else:
@@ -310,7 +313,7 @@ class STARUtil:
             aligner_opts[k] = str(input_params[k])
         pprint(reads_info)
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params['alignment_name']),
+            "destination_ref": "{}/{}".format(input_params['workspace_name'], input_params[PARAM_IN_OUTPUT_NAME]),
             "file_path": alignment_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
@@ -479,7 +482,6 @@ class STARUtil:
 	alignment_file = os.path.join(star_out, alignment_file)
 
         # Upload the alignment with ONLY the first reads_ref for now
-        input_params['alignment_name'] = "{}_Aligned".format(readsNames[0])
 	alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
         reportVal = self._generate_report(input_params, alignment_ref)
