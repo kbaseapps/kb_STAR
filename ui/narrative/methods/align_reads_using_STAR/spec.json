@@ -84,7 +84,7 @@
             "default_values": [ "999" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int".
+                "validate_as": "int",
                 "min_int" : 0
             }
         }, {
