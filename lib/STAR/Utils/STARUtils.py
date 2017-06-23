@@ -251,7 +251,7 @@ class STARUtil:
         self.working_dir = self.scratch
 
     def _exec_star(self, params, star_outdir):
-        outdir = os.path.join(self.scratch, star_outdir)
+        outdir = os.path.join(self.scratch, "star_output_dir")
         self._mkdir_p(outdir)
 
         # build the parameters
