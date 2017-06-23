@@ -62,7 +62,7 @@
             "default_values": [ "8" ],
             "field_type": "text",
             "text_options": {
-                "validate as": "int",
+                "validate_as": "int",
                 "min_int" : 0
             }
         }, {
