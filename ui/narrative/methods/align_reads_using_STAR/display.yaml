@@ -81,9 +81,9 @@ parameters :
             Maximum genomic distance between mates
     outFileNamePrefix :
         ui-name : |
-            Prefix for Alignment Output File Names
+            Prefix for alignment output file names
         short-hint : |
-            Prefix for all STAR output files
+            Prefix for all STAR output file names
         long-hint : |
             STAR produces multiple output files. All files have standard name, however, you can change the file prefixes
             
