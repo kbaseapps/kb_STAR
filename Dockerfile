@@ -25,7 +25,7 @@ RUN pip install cffi --upgrade \
 #  Directions from https://github.com/alexdobin/STAR 
 #  with more details at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3530905/ 
 #  Download tarball from https://github.com/alexdobin/STAR/archive/2.5.3a.tar.gz, 
-#  untar and build STAT.
+#  untar and build STAR.
 
 WORKDIR /kb/module
 RUN \
