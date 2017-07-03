@@ -477,21 +477,26 @@ class STARUtil:
 	star_out = self._exec_star(params, readsNames[0])
 
 	#3. Uploading the alignment and generating report
-        print("Uploading STAR output object and report...")
-        alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
-	alignment_file = os.path.join(star_out, alignment_file)
+        if not isinstance(star_out, int):
+            print("Uploading STAR output object and report...")
+            alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+            alignment_file = os.path.join(star_out, alignment_file)
 
-        # Upload the alignment with ONLY the first reads_ref for now
-	alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
+            # Upload the alignment with ONLY the first reads_ref for now
+            alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
-        reportVal = self._generate_report(input_params, alignment_ref)
+            reportVal = self._generate_report(input_params, alignment_ref)
 
-        returnVal = {
-            'output_folder': star_out,
-            'alignment_ref': alignment_ref
-        }
-
-        returnVal.update(reportVal)
-
+            returnVal = {
+                'output_folder': star_out,
+                'alignment_ref': alignment_ref
+            }
+            returnVal.update(reportVal)
+        else:
+            print("STAR raised an error!!!")
+            returnVal = {
+                'output_folder': 'star_raised an error',
+                'alignment_ref': 'star error'
+            }
         return returnVal
 
