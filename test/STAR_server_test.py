@@ -104,9 +104,9 @@ class STARTest(unittest.TestCase):
     def loadSEReads(self):
         if hasattr(self.__class__, 'reads_ref'):
             return self.__class__.reads_ref
-        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
-        shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
-        #shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
+        fq_path = os.path.join(self.scratch, 'star_test_reads.fa')
+        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
+        shutil.copy(os.path.join('../testReads', 'test_reads.fa'), fq_path)
 
         ru = ReadsUtils(self.callback_url)
         reads_ref = ru.upload_reads({'fwd_file': fq_path,
