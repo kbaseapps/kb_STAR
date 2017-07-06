@@ -105,8 +105,8 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'reads_ref'):
             return self.__class__.reads_ref
         fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
-        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
-        shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
+        shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
+        #shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
 
         ru = ReadsUtils(self.callback_url)
         reads_ref = ru.upload_reads({'fwd_file': fq_path,
@@ -128,6 +128,7 @@ class STARTest(unittest.TestCase):
                                                               'assembly_name': obj_name
                                                               })
         return assembly_ref
+
 
     # borrowed from Megahit - call this method to get the WS object info of a Paired End Library (will
     # upload the example data if this is the first time the method is called during tests)
@@ -165,8 +166,8 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
-        #shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        #shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
+        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
