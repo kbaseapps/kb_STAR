@@ -16,6 +16,7 @@ except:
 from pprint import pprint, pformat # noqa: F401
 
 from biokbase.workspace.client import Workspace as workspaceService
+from Workspace.WorkspaceClient import Workspace as Workspace
 from STAR.STARImpl import STAR
 from STAR.Utils.STARUtils import STARUtil
 from STAR.STARServer import MethodContext
@@ -37,12 +38,12 @@ class STARTest(unittest.TestCase):
         config.read(config_file)
         for nameval in config.items('STAR'):
             cls.cfg[nameval[0]] = nameval[1]
-            
+
         # Getting username from Auth profile for token
         authServiceUrl = cls.cfg['auth-service-url']
         auth_client = _KBaseAuth(authServiceUrl)
         user_id = auth_client.get_user(token)
-        
+
         # WARNING: don't call any logging methods on the context object,        
         # it'll result in a NoneType error
         cls.ctx = MethodContext(None)
@@ -56,6 +57,7 @@ class STARTest(unittest.TestCase):
                         'authenticated': 1})
         cls.wsURL = cls.cfg['workspace-url']
         cls.wsClient = workspaceService(cls.wsURL)
+        cls.ws = Workspace(cls.wsURL, token=token)
         cls.serviceImpl = STAR(cls.cfg)
         cls.scratch = cls.cfg['scratch']
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
@@ -213,7 +215,7 @@ class STARTest(unittest.TestCase):
         self.assertIn('output_folder', result[0])
 
         if not result[0]['report_ref'] is None:
-            rep = self.wsClient.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
+            rep = self.ws.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
             print('REPORT object:')
             pprint(rep)
             #self.assertEqual(rep['info'][1].rsplit('_', 1)[0], 'kb_star_report')
