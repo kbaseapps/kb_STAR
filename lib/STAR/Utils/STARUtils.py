@@ -322,7 +322,7 @@ class STARUtil:
         return alignment_ref
 
     # borrowed from kb_stringtie
-    def _generate_output_file_list(self, output_dir):
+    def _get_output_file_list(self, output_dir):
         """
         _generate_output_file_list: zip result files and generate file_links for report
         """
@@ -338,9 +338,7 @@ class STARUtil:
                              allowZip64=True) as zip_file:
             for root, dirs, files in os.walk(output_dir):
                 for file in files:
-                    if not (file.endswith('.DS_Store')):
-                        zip_file.write(os.path.join(root, file),
-                                       os.path.join(os.path.basename(root), file))
+                    zip_file.write(os.path.join(root, file),os.path.join(os.path.basename(root), file))
 
         output_files.append({'path': result_file,
                              'name': os.path.basename(result_file),
@@ -350,23 +348,25 @@ class STARUtil:
         return output_files
 
 
-    def _generate_extended_report(self, obj_ref, output_dir, params):
+    def _generate_extended_report(self, obj_ref, params, index_dir, output_dir):
         """
-        generate_report: generate a summary STAR report
+        generate_report: generate a summary STAR report, including index files and alignment output files
         """
         log('Generating summary report...')
 
+	index_files = self._generate_output_file_list(index_dir)
         output_files = self._generate_output_file_list(output_dir)
-        output_html_files = self._generate_html_report(output_dir, obj_ref)
+        #output_html_files = self._generate_html_report(output_dir, obj_ref)
 
         report_params = {
               'message': '',
               'workspace_name': params.get('workspace_name'),
-              'file_links': output_files,
-              'html_links': output_html_files,
+              'file_links': index_files + output_files,
+              #'html_links': output_html_files,
               'direct_html_link_index': 0,
               'html_window_height': 366,
-              'report_object_name': 'kb_star_report_' + str(uuid.uuid4())}
+              'report_object_name': 'kb_star_report_' + str(uuid.uuid4())
+	}
 
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
         output = kbase_report_client.create_extended_report(report_params)
@@ -497,7 +497,7 @@ class STARUtil:
             # Upload the alignment with ONLY the first reads_ref for now
             alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
-            reportVal = self._generate_report(input_params, alignment_ref)
+            reportVal = self._generate_extended_report(alignment_ref, input_params, self.STAR_IDX, star_out)
 
             returnVal = {
                 'output_folder': star_out,
