@@ -389,7 +389,6 @@ class STARUtil:
 	# STEP 0: preprocessing the input parameters
         input_params = self._process_params(input_params)
 	params = {
-            'workspace_name': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
             'runThreadN': input_params[self.PARAM_IN_THREADN],
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
