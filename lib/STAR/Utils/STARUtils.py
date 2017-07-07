@@ -352,39 +352,40 @@ class STARUtil:
 
         return output_files
 
-
     def _generate_extended_report(self, obj_ref, params, index_dir, output_dir):
         """
         generate_report: generate a summary STAR report, including index files and alignment output files
         """
         log('Generating summary report...')
-
+	
+        created_objects = list()
+        created_objects.append({
+            "ref": obj_ref,
+            "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+        })
 	index_files = self._get_output_file_list(index_dir)
         output_files = self._get_output_file_list(output_dir)
-        #output_html_files = self._generate_html_report(output_dir, obj_ref)
 
         report_params = {
-              'message': '',
+              'message': 'Created one alignment from the given sample set.',
               'workspace_name': params.get('workspace_name'),
+	      'objects_created': created_objects,
               'file_links': index_files + output_files,
-              #'html_links': output_html_files,
               'direct_html_link_index': 0,
               'html_window_height': 366,
               'report_object_name': 'kb_star_report_' + str(uuid.uuid4())
 	}
 
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
-        output = kbase_report_client.create_extended_report(report_params)
+        report_info = kbase_report_client.create_extended_report(report_params)
 
-        report_output = {'report_name': output['name'], 'report_ref': output['ref']}
-
-        return report_output
+        return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
     def _generate_report(self, params, obj_ref):
         """
         Creates a brief STAR report.
         """
-        report_client = KBaseReport(self.callback_url)
+        report_client = KBaseReport(self.callback_url, token=self.token)
         report_text = None
         created_objects = list()
         created_objects.append({
@@ -401,7 +402,6 @@ class STARUtil:
             }
         })
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
-
 
     def run_star(self, input_params):
         """
