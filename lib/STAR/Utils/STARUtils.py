@@ -106,10 +106,7 @@ class STARUtil:
 
 
     def _construct_indexing_cmd(self, params):
-        # STEP 1: get the workspace and its folder where the genome indices are stored
-        wsname = params[self.PARAM_IN_WS]
-
-	# STEP 2: construct the command for running `STAR --runMode genomeGenerate...`
+	# STEP 1: construct the command for running `STAR --runMode genomeGenerate...`
         idx_cmd = [self.STAR_BIN]
 	idx_cmd.append('--genomeDir')
 	idx_cmd.append(self.STAR_IDX)
@@ -133,7 +130,7 @@ class STARUtil:
             idx_cmd.append('--sjdbOverhang')
             idx_cmd.append(str(params['sjdbOverhang']))
 
-        # appending the advanced optional inputs--TODO
+        # STEP 2: appending the advanced optional inputs--TODO
 
         # STEP 3: return idx_cmd
         print ('STAR indexing CMD:')
@@ -141,17 +138,16 @@ class STARUtil:
         return idx_cmd
 
     def _construct_mapping_cmd(self, params):
-        # STEP 1: get the working folder housing the STAR results as well as the reads info
-        wsname = params[self.PARAM_IN_WS]
 	if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 
+        # STEP 1: set the working folder housing the STAR output results as well as the reads info
         star_out_dir = ''
 	if params.get('star_output_dir', None) is None:
             star_out_dir = self.scratch
 	else:
             star_out_dir = os.path.join(self.scratch, params['star_output_dir'])
-        self._mkdir_p(star_out_dir)
+            self._mkdir_p(star_out_dir)
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -177,7 +173,8 @@ class STARUtil:
 	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
-        # appending the advanced optional inputs--TODO
+		
+        # STEP 3: appending the advanced optional inputs
         quant_modes = ["TranscriptomeSAM", "GeneCounts"]
         if (params.get('quantMode', None) is not None
                 and params.get('quantMode', None) in quant_modes):
@@ -214,7 +211,7 @@ class STARUtil:
             mp_cmd.append('--alignMatesGapMax')
             mp_cmd.append(str(params['alignMatesGapMax']))
 
-        # STEP 3 return mp_cmd
+        # STEP 4: return mp_cmd
         print ('STAR mapping CMD:')
         print ' '.join(mp_cmd)
         return mp_cmd
@@ -247,19 +244,19 @@ class STARUtil:
 	self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shock_url = config['shock-url']
-        #self.dfu = DataFileUtil(self.callback_url)
+        self.dfu = DataFileUtil(self.callback_url)
         self.ru = ReadsUtils(self.callback_url)
         self.au = AssemblyUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
 
     def _exec_star(self, params, star_outdir):
-        outdir = os.path.join(self.scratch, "star_output_dir")
+	outdir = os.path.join(self.scratch, star_outdir)
+        #outdir = os.path.join(self.scratch, "star_output_dir")
         self._mkdir_p(outdir)
 
         # build the parameters
         params_idx = {
-                'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
@@ -271,7 +268,6 @@ class STARUtil:
             params_idx['sjdbOverhang'] = params['sjdbOverhang']
 
         params_mp = {
-                'workspace_name': params[self.PARAM_IN_WS],
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': params[self.PARAM_IN_READS_FILES],
@@ -390,7 +386,7 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-	#0. preprocessing the input parameters
+	# STEP 0: preprocessing the input parameters
         input_params = self._process_params(input_params)
 	params = {
             'workspace_name': input_params[self.PARAM_IN_WS],
@@ -399,7 +395,7 @@ class STARUtil:
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
 	}
 
-	#1. Converting refs to file locations in the scratch area
+	# STEP 1: Converting refs to file locations in the scratch area
         smplset_ref = input_params.get(self.PARAM_IN_READS, None)
         reads_refs = list()
 	if smplset_ref is not None:
@@ -418,8 +414,13 @@ class STARUtil:
             try:
                 print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
                 ret_reads = fetch_reads_from_reference(source_reads['ref'], self.callback_url)
-                if ret_reads.get("file_fwd", None) is not None:
-                    print("Done fetching FASTA file with name = {}".format(ret_reads.get("file_fwd", None)))
+                ret_fwd = ret_reads.get("file_fwd", None)
+		if ret_fwd is not None:
+                    print("Done fetching FASTA file with name = {}".format(ret_fwd))
+		    readsFiles.append(ret_reads["file_fwd"])
+                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
+                    if ret_reads.get("file_rev", None) is not None:
+                        readsFiles.append(ret_reads["file_rev"])
             except ValueError:
                 print("Incorrect object type for fetching a FASTA file!")
                 raise
@@ -432,11 +433,6 @@ class STARUtil:
                 else:
                     ret_reads["condition"] = "N/A"
                 readsInfo.append(ret_reads)
-                if ret_reads.get("file_fwd", None) is not None:
-                    readsFiles.append(ret_reads["file_fwd"])
-                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
-                    if ret_reads.get("file_rev", None) is not None:
-                        readsFiles.append(ret_reads["file_rev"])
 
 	params[self.PARAM_IN_READS_FILES] = readsFiles
 
@@ -473,10 +469,10 @@ class STARUtil:
                 if input_params.get('sjdbOverhang', None) is not None :
                     params['sjdbOverhang'] = input_params['sjdbOverhang']
 
-	#2. Running star
+	# STEP 2: Running star
 	star_out = self._exec_star(params, readsNames[0])
 
-	#3. Uploading the alignment and generating report
+	# STEP 3: Uploading the alignment and generating report
         if not isinstance(star_out, int):
             print("Uploading STAR output object and report...")
             alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
@@ -493,7 +489,7 @@ class STARUtil:
             }
             returnVal.update(reportVal)
         else:
-            print("STAR raised an error!!!")
+            print("STAR failed with error!!!")
             returnVal = {
                 'output_folder': 'star_raised an error',
                 'alignment_ref': 'star error'
