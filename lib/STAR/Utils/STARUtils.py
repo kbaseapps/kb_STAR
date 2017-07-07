@@ -13,7 +13,7 @@ from pprint import pprint, pformat
 
 #from DataFileUtil.DataFileUtilClient import DataFileUtil
 from KBaseReport.KBaseReportClient import KBaseReport
-from ReadsUtils.ReadsUtilsClient import ReadsUtils
+#from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 
@@ -244,8 +244,8 @@ class STARUtil:
 	self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shock_url = config['shock-url']
-        self.dfu = DataFileUtil(self.callback_url)
-        self.ru = ReadsUtils(self.callback_url)
+        #self.dfu = DataFileUtil(self.callback_url)
+        #self.ru = ReadsUtils(self.callback_url)
         self.au = AssemblyUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
