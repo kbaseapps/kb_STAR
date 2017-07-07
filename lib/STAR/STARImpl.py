@@ -53,6 +53,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # Any configuration parameters that are important should be parsed and
         # saved in the constructor.
         self.config = config
+        self.config['SDK_CALLBACK_URL'] = os.environ['SDK_CALLBACK_URL']
+        self.config['KB_AUTH_TOKEN'] = os.environ['KB_AUTH_TOKEN']
+        
         self.workspaceURL = config['workspace-url']
         self.scratch = os.path.abspath(config['scratch'])
         if not os.path.exists(self.scratch):
@@ -126,8 +129,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # return variables are: output
         #BEGIN run_star
         self.log('Running run_star with params:\n' + pformat(params))
-
-        token = ctx['token']
 
         for key, value in params.iteritems():
             if isinstance(value, basestring):
