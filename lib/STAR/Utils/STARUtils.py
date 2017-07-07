@@ -49,20 +49,15 @@ class STARUtil:
     PARAM_IN_READS = 'sampleset_ref'
     PARAM_IN_GENOME = 'genome_ref'
 
-    def _mkdir_p(self, path):
+    def _mkdir_p(self, dir):
         """
         _mkdir_p: make directory for given path
         """
-        if not path:
+        log('Creating a new dir: ' + dir)
+        if not dir:
             return
-        try:
-            os.makedirs(path)
-        except OSError as exc:
-            if exc.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
-
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
     def _process_params(self, params):
         """
@@ -173,7 +168,7 @@ class STARUtil:
 	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
-		
+
         # STEP 3: appending the advanced optional inputs
         quant_modes = ["TranscriptomeSAM", "GeneCounts"]
         if (params.get('quantMode', None) is not None
@@ -250,9 +245,8 @@ class STARUtil:
         self.scratch = config['scratch']
         self.working_dir = self.scratch
 
-    def _exec_star(self, params, star_outdir):
-	outdir = os.path.join(self.scratch, star_outdir)
-        #outdir = os.path.join(self.scratch, "star_output_dir")
+    def _exec_star(self, params):
+        outdir = os.path.join(self.scratch, "star_output_dir")
         self._mkdir_p(outdir)
 
         # build the parameters
@@ -408,7 +402,6 @@ class STARUtil:
 
         readsInfo = list()
 	readsFiles = list()
-        readsNames = list()
 	for source_reads in reads_refs:
             try:
                 print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
@@ -416,8 +409,7 @@ class STARUtil:
                 ret_fwd = ret_reads.get("file_fwd", None)
 		if ret_fwd is not None:
                     print("Done fetching FASTA file with name = {}".format(ret_fwd))
-		    readsFiles.append(ret_reads["file_fwd"])
-                    readsNames.append(os.path.basename(ret_reads["file_fwd"]))
+                    readsFiles.append(ret_reads["file_fwd"])
                     if ret_reads.get("file_rev", None) is not None:
                         readsFiles.append(ret_reads["file_rev"])
             except ValueError:
@@ -469,7 +461,7 @@ class STARUtil:
                     params['sjdbOverhang'] = input_params['sjdbOverhang']
 
 	# STEP 2: Running star
-	star_out = self._exec_star(params, readsNames[0])
+	star_out = self._exec_star(params)
 
 	# STEP 3: Uploading the alignment and generating report
         if not isinstance(star_out, int):
@@ -491,7 +483,7 @@ class STARUtil:
             print("STAR failed with error!!!")
             returnVal = {
                 'output_folder': 'star_raised an error',
-                'alignment_ref': 'star error'
+                'alignment_ref': None
             }
         return returnVal
 
