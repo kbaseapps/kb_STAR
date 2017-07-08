@@ -142,7 +142,7 @@ class STARUtil:
 	if params.get(self.STAR_OUT_DIR, None) is None:
             star_out_dir = self.scratch
 	else:
-	    star_out_dir = params[self.STAR_OUT_DIR]
+            star_out_dir = params[self.STAR_OUT_DIR]
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -181,7 +181,7 @@ class STARUtil:
             mp_cmd.append('--alignSJoverhangMin')
             mp_cmd.append(str(params['alignSJoverhangMin']))
         if (params.get('alignSJDBoverhangMin', None) is not None
-		and isinstance(params['alignSJDBoverhangMin'], int)
+                and isinstance(params['alignSJDBoverhangMin'], int)
                 and params['alignSJDBoverhangMin'] > 0):
             mp_cmd.append('--alignSJDBoverhangMin')
             mp_cmd.append(str(params['alignSJDBoverhangMin']))
@@ -330,9 +330,9 @@ class STARUtil:
         _get_output_file_list: zip result files and generate file_links for report
         """
 	if os.path.splitext(out_filename) != '.zip':
-	    out_filename += '.zip'
+            out_filename += '.zip'
         log('Start packing result files to ' + out_filename)
-	
+
         output_files = list()
 
         output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
@@ -358,7 +358,7 @@ class STARUtil:
         generate_report: generate a summary STAR report, including index files and alignment output files
         """
         log('Generating summary report...')
-	
+
         created_objects = list()
         created_objects.append({
             "ref": obj_ref,
@@ -370,10 +370,11 @@ class STARUtil:
         report_params = {
               'message': 'Created one alignment from the given sample set.',
               'workspace_name': params.get('workspace_name'),
-	      'objects_created': created_objects,
+              'objects_created': created_objects,
               'file_links': index_files + output_files,
               'direct_html_link_index': 0,
-              'html_window_height': 366,
+              'html_window_height': 0,
+              'summary_window_height': 366,
               'report_object_name': 'kb_star_report_' + str(uuid.uuid4())
 	}
 
@@ -503,13 +504,14 @@ class STARUtil:
             # Upload the alignment with ONLY the first reads_ref for now
             alignment_ref = self.upload_STARalignment(input_params, readsInfo[0], alignment_file)
 
-            reportVal = self._generate_extended_report(alignment_ref, input_params, star_ret)
-
             returnVal = {
                 'output_folder': star_ret['STAR_output'],
                 'alignment_ref': alignment_ref
             }
-            returnVal.update(reportVal)
+
+            report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
+
+            returnVal.update(report_out)
         else:
             print("STAR failed with error!!!")
             returnVal = {
