@@ -334,7 +334,7 @@ class STARUtil:
         """
         _get_output_file_list: zip result files and generate file_links for report
         """
-	if os.path.splitext(out_filename) != '.zip'
+	if os.path.splitext(out_filename) != '.zip':
 	    out_filename += '.zip'
         log('Start packing result files to ' + out_filename)
 	
