@@ -378,8 +378,8 @@ class STARUtil:
               'objects_created': created_objects,
               'file_links': index_files + output_files,
               'direct_html_link_index': 0,
-              'html_window_height': 0,
-              'summary_window_height': 366,
+              'html_window_height': 0,#366,
+              'summary_window_height': 0,#366,
               'report_object_name': 'kb_star_report_' + str(uuid.uuid4())
 	}
 
