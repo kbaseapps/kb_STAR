@@ -364,8 +364,13 @@ class STARUtil:
             "ref": obj_ref,
             "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
         })
+        t0 = time.clock()
 	index_files = self._get_output_file_list(self.STAR_IDX_DIR, star_ret['STAR_idx'])
+        t1 = time.clock()
         output_files = self._get_output_file_list(self.STAR_OUT_DIR, star_ret['STAR_output'])
+        t2 = time.clock()
+        pprint( "Zipping index files used {} seconds ".format(t1-t0))
+        pprint( "Zipping output files used {} seconds ".format(t2-t1))
 
         report_params = {
               'message': 'Created one alignment from the given sample set.',
@@ -381,9 +386,11 @@ class STARUtil:
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
         report_info = kbase_report_client.create_extended_report(report_params)
 
+        t3 = time.clock()
+        pprint( "Creating report used {} seconds ".format(t3-t2))
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def _generate_report(self, params, obj_ref):
+    def _generate_report(self, obj_ref, params):
         """
         Creates a brief STAR report.
         """
@@ -497,7 +504,7 @@ class STARUtil:
 
 	# STEP 3: Uploading the alignment and generating report
         if not isinstance(star_ret, int):
-            print("Uploading STAR output object and report...")
+            #print("Uploading STAR output object...")
             alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
             alignment_file = os.path.join(star_ret['STAR_output'], alignment_file)
 
@@ -509,7 +516,9 @@ class STARUtil:
                 'alignment_ref': alignment_ref
             }
 
-            report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
+            #print("Creating STAR output report...")
+            #report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
+            report_out = self._generate_report(alignment_ref, input_params)
 
             returnVal.update(report_out)
         else:
