@@ -369,7 +369,7 @@ class STARUtil:
             "ref": obj_ref,
             "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
         })
-	index_files = self._get_output_file_list(self.STAR_IDX_DIR, star_ret['STAR_IDX'])
+	index_files = self._get_output_file_list(self.STAR_IDX_DIR, star_ret['STAR_idx'])
         output_files = self._get_output_file_list(self.STAR_OUT_DIR, star_ret['STAR_output'])
 
         report_params = {
