@@ -214,7 +214,7 @@ class STARTest(unittest.TestCase):
         result = self.getImpl().run_star(self.getContext(), params)
         self.assertIn('output_folder', result[0])
 
-        if not result[0]['report_ref'] is None:
+        if result[0].get('report_ref', None) is not None:
             rep = self.ws.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
             print('REPORT object:')
             pprint(rep)
