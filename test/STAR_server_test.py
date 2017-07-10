@@ -202,7 +202,7 @@ class STARTest(unittest.TestCase):
             'workspace_name': self.getWsName(),
             'output_name': 'Aligned_reads',
             'outFileNamePrefix': 'STARtest_',
-            'genome_ref': self.loadGenome(),
+            'genome_ref': self.loadAssembly(), #loadGenome(),
             'sampleset_ref': self.loadSEReads()
             #'runMode': 'genomeGenerate',
             #'runThreadN': 4,
