@@ -119,7 +119,6 @@ class STARTest(unittest.TestCase):
         return reads_ref
 
 
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def load_fasta_file(self, filename, obj_name, contents):
         f = open(filename, 'w')
         f.write(contents)
