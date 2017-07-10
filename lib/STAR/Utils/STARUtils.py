@@ -98,7 +98,18 @@ class STARUtil:
 	elif params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
             raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
-	return params
+        if params.get('outFilterType', None) is None:
+            params['outFilterType'] = "\"BySJout\""
+        if params.get('outFilterMultimapNmax', None) is None:
+            params['outFilterMultimapNmax'] = 20
+        if params.get('outSAMtype', None) is not None:
+            params['outSAMtype'] = "BAM" #SortedByCoordinate
+        if params.get('outSAMattrIHstart', None) is None:
+            params['outSAMattrIHstart'] = 0
+        if params.get('outSAMstrandField', None) is None:
+            params['outSAMstrandField'] = "intronMotif"
+
+        return params
 
 
     def _construct_indexing_cmd(self, params):
@@ -170,11 +181,39 @@ class STARUtil:
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
         # STEP 3: appending the advanced optional inputs
-        quant_modes = ["TranscriptomeSAM", "GeneCounts"]
+        if (params.get('outFilterType', None) is not None
+                and isinstance(params['outFilterType'], str)):
+            mp_cmd.append('--outFilterType')
+            mp_cmd.append(params['outFilterType'])
+        if (params.get('outFilterMultimapNmax', None) is not None
+                and isinstance(params['outFilterMultimapNmax'], int)
+                and params['outFilterMultimapNmax'] >= 0):
+            mp_cmd.append('--outFilterMultimapNmax')
+            mp_cmd.append(str(params['outFilterMultimapNmax']))
+        if (params.get('outSAMtype', None) is not None
+                and isinstance(params['outSAMtype'], str)):
+            mp_cmd.append('--outSAMType')
+            mp_cmd.append(params['outSAMType'])
+            mp_cmd.append('SortedByCoordinate')#BAM SortedByCoordinate
+        if (params.get('outSAMattrIHstart', None) is not None
+                and isinstance(params['outSAMattrIHstart'], int)
+                and params['outSAMattrIHstart'] >= 0):
+            mp_cmd.append('--outSAMattrIHstart')
+            mp_cmd.append(str(params['outSAMattrIHstart']))
+        if (params.get('outSAMstrandField', None) is not None
+                and isinstance(params['outSAMstrandField'], str)):
+            mp_cmd.append('--outSAMstrandField')
+            mp_cmd.append(params['outSAMstrandField'])
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
         if (params.get('quantMode', None) is not None
                 and params.get('quantMode', None) in quant_modes):
             mp_cmd.append('--quantMode')
-            mp_cmd.append(params['quantMode'])
+            if params['quantMode'] == "Both":
+                mp_cmd.append("TranscriptomeSAM")
+                mp_cmd.append("GeneCounts")
+            else:
+                mp_cmd.append(params['quantMode'])
         if (params.get('alignSJoverhangMin', None) is not None
 		and isinstance(params['alignSJoverhangMin'], int)
                 and params['alignSJoverhangMin'] > 0):
@@ -257,12 +296,6 @@ class STARUtil:
 		self.STAR_IDX_DIR: idxdir,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
-
-        if params.get('sjdbGTFfile', None) is not None:
-            params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
-        if params.get('sjdbOverhang', None) is not None :
-            params_idx['sjdbOverhang'] = params['sjdbOverhang']
-
         params_mp = {
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
@@ -271,6 +304,59 @@ class STARUtil:
 		self.STAR_OUT_DIR: outdir,
 		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX]
         }
+
+        if params.get('sjdbGTFfile', None) is not None:
+            params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
+            params_mp['sjdbGTFfile'] = params['sjdbGTFfile']
+        if params.get('sjdbOverhang', None) is not None :
+            params_idx['sjdbOverhang'] = params['sjdbOverhang']
+            params_mp['sjdbOverhang'] = params['sjdbOverhang']
+
+        if (params.get('outFilterType', None) is not None
+                and isinstance(params['outFilterType'], str)):
+            params_mp['outFilterType'] = params['outFilterType']
+        if (params.get('outFilterMultimapNmax', None) is not None
+                and isinstance(params['outFilterMultimapNmax'], int)):
+            params_mp['outFilterMultimapNmax'] = params['outFilterMultimapNmax']
+        if (params.get('outSAMtype', None) is not None
+                and isinstance(params['outSAMtype'], str)):
+            params_mp['outSAMtype'] = params['outSAMtype']
+        if (params.get('outSAMattrIHstart', None) is not None
+                and isinstance(params['outSAMattrIHstart'], int)):
+            params_mp['outSAMattrIHstart'] = params['outSAMattrIHstart']
+        if (params.get('outSAMstrandField', None) is not None
+                and isinstance(params['outSAMstrandField'], str)):
+            params_mp['outSAMstrandField'] = params['outSAMstrandField']
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (params.get('quantMode', None) is not None
+                and params.get('quantMode', None) in quant_modes):
+            params_mp['quantMode'] = params['quantMode']
+        if (params.get('alignSJoverhangMin', None) is not None
+		and isinstance(params['alignSJoverhangMin'], int)
+                and params['alignSJoverhangMin'] > 0):
+            params_mp['alignSJoverhangMin'] = params['alignSJoverhangMin']
+        if (params.get('alignSJDBoverhangMin', None) is not None
+                and isinstance(params['alignSJDBoverhangMin'], int)
+                and params['alignSJDBoverhangMin'] > 0):
+            params_mp['alignSJDBoverhangMin'] = params['alignSJDBoverhangMin']
+        if (params.get('outFilterMismatchNmax', None) is not None
+		and isinstance(params['outFilterMismatchNmax'], int)
+                and params['outFilterMismatchNmax'] > 0):
+            params_mp['outFilterMismatchNmax'] = params['outFilterMismatchNmax']
+        if (params.get('alignIntronMin', None) is not None
+		and isinstance(params['alignIntronMin'], int)
+                and params['alignIntronMin'] > 0):
+            params_mp['alignIntronMin'] = params['alignIntronMin']
+        if (params.get('alignIntronMax', None) is not None
+		and isinstance(params['alignIntronMax'], int)
+                and params['alignIntronMax'] >= 0):
+            params_mp['alignIntronMax'] = params['alignIntronMax']
+        if (params.get('alignMatesGapMax', None) is not None
+		and isinstance(params['alignMatesGapMax'], int)
+                and params['alignMatesGapMax'] >= 0):
+            params_mp['alignMatesGapMax'] = params['alignMatesGapMax']
+
         ret = 1
         try:
             if params[self.PARAM_IN_STARMODE]=='genomeGenerate':

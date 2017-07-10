@@ -53,6 +53,11 @@ module STAR {
 	int alignIntronMax: maximum intron length, default to 1000000
 	int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
 		
+        @optional outFilterType
+        @optional outFilterMultimapNmax
+        @optional outSAMtype
+        @optional outSAMattrIHstart
+        @optional outSAMstrandField
 	@optional quantMode
 	@optional alignSJoverhangMin
 	@optional alignSJDBoverhangMin
@@ -68,6 +73,10 @@ module STAR {
         string workspace_name;
 	string output_name;
     
+        string outFilterType;
+        string outSAMtype;
+        int outSAMattrIHstart;
+        string outSAMstrandField;
 	string quantMode;
 	int outFilterMultimapNmax;
 	int alignSJoverhangMin;
