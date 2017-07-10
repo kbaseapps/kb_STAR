@@ -505,13 +505,44 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-	# STEP 0: preprocessing the input parameters
+	# STEP 0.1: preprocessing the input parameters
         input_params = self._process_params(input_params)
 	params = {
             'runMode': 'genomeGenerate',
             'runThreadN': input_params[self.PARAM_IN_THREADN],
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
 	}
+
+        # STEP 0.2 Adding other parameters from input_params to params
+        if input_params.get('outFilterType', None) is not None:
+            params['outFilterType'] = input_params['outFilterType']
+        if input_params.get('outFilterMultimapNmax', None) is not None:
+            params['outFilterMultimapNmax'] = input_params['outFilterMultimapNmax']
+        if input_params.get('outSAMtype', None) is not None:
+            params['outSAMType'] = input_params['outSAMType']
+        if input_params.get('outSAMattrIHstart', None) is not None:
+            params['outSAMattrIHstart'] = input_params['outSAMattrIHstart']
+        if input_params.get('outSAMstrandField', None) is not None:
+            params['outSAMstrandField'] = input_params['outSAMstrandField']
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (input_params.get('quantMode', None) is not None
+                and input_params.get('quantMode', None) in quant_modes):
+            params['quantMode'] = input_params['quantMode']
+        if input_params.get('alignSJoverhangMin', None) is not None:
+            params['alignSJoverhangMin'] = input_params['alignSJoverhangMin']
+        if (input_params.get('alignSJDBoverhangMin', None) is not None
+                and isinstance(input_params['alignSJDBoverhangMin'], int)
+                and input_params['alignSJDBoverhangMin'] > 0):
+            params['alignSJDBoverhangMin'] = input_params['alignSJDBoverhangMin']
+        if input_params.get('outFilterMismatchNmax', None) is not None:
+            params['outFilterMismatchNmax'] = input_params['outFilterMismatchNmax']
+        if input_params.get('alignIntronMin', None) is not None:
+            params['alignIntronMin'] = input_params['alignIntronMin']
+        if input_params.get('alignIntronMax', None) is not None:
+            params['alignIntronMax'] = input_params['alignIntronMax']
+        if input_params.get('alignMatesGapMax', None) is not None:
+            params['alignMatesGapMax'] = input_params['alignMatesGapMax']
 
 	# STEP 1: Converting refs to file locations in the scratch area
         smplset_ref = input_params.get(self.PARAM_IN_READS, None)
