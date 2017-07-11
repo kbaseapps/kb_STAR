@@ -52,6 +52,21 @@ class STARUtil:
     PARAM_IN_READS = 'sampleset_ref'
     PARAM_IN_GENOME = 'genome_ref'
 
+    def __init__(self, config, logger=None):
+        self.config = config
+        self.logger = logger
+        self.workspace_url = config['workspace-url']
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
+        self.token = config['KB_AUTH_TOKEN']
+        self.shock_url = config['shock-url']
+        self.ws_client = Workspace(self.workspace_url, token=self.token)
+        self.au = AssemblyUtil(self.callback_url)
+        self.dfu = DataFileUtil(self.callback_url)
+        self.scratch = config['scratch']
+        self.working_dir = self.scratch
+        self.gff_utils = GFFUtils(config, logger)
+
+
     def _mkdir_p(self, dir):
         """
         _mkdir_p: make directory for given path
@@ -83,7 +98,7 @@ class STARUtil:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
                 else:
-                    params['sjdbGTFfile'] = self._get_gtf_file( params[self.PARAM_IN_GENOME])
+                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME])
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -121,7 +136,8 @@ class STARUtil:
 
         return params
 
-    def _get_gtf_file(self, gnm_ref):
+
+    def _get_genome_gtf_file(self, gnm_ref):
         """
         Get data from genome object ref and return the GTF filename (with path)
         for STAR indexing and mapping.
@@ -296,21 +312,6 @@ class STARUtil:
 
         return p.returncode
 
-    def __init__(self, config, services, logger=None):
-        self.config = config
-        self.logger = logger
-	self.workspace_url = config['workspace-url']
-        self.callback_url = os.environ['SDK_CALLBACK_URL']
-	self.token = config['KB_AUTH_TOKEN']
-        self.shock_url = config['shock-url']
-        self.services = services
-        self.ws_client = Workspace(self.services['workspace_service_url'])
-        self.au = AssemblyUtil(self.callback_url)
-        self.dfu = DataFileUtil(self.callback_url)
-        self.gfu = GenomeFileUtil(self.callback_url)
-        self.scratch = config['scratch']
-        self.working_dir = self.scratch
-        self.gff_utils = GFFUtils(config, logger)
 
     def _exec_star(self, params):
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
