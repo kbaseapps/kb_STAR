@@ -27,7 +27,7 @@
         "default_values" : [ "" ],
         "field_type" : "text",
         "text_options" : {
-            "valid_ws_types" : ["KBaseGenomes.Genome", "KBaseGenomeAnnotations.Assembly" ]
+            "valid_ws_types" : ["KBaseGenomes.Genome"]
         }
      }, {
         "id" : "output_obj_name",
@@ -58,7 +58,7 @@
                 "id": "GeneCounts",
                 "ui_name": "GeneCounts"
             },{
-                "value": "",
+                "value": "Both",
                 "display": "Both",
                 "id": "Both",
                 "ui_name": "Both"

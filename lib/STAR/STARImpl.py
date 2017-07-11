@@ -49,14 +49,26 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     # be found
     def __init__(self, config):
         #BEGIN_CONSTRUCTOR
-        
+
         # Any configuration parameters that are important should be parsed and
         # saved in the constructor.
         self.config = config
         self.config['SDK_CALLBACK_URL'] = os.environ['SDK_CALLBACK_URL']
         self.config['KB_AUTH_TOKEN'] = os.environ['KB_AUTH_TOKEN']
-        
-        self.workspaceURL = config['workspace-url']
+
+        if 'workspace-url' in config:
+            self.workspaceURL = config['workspace-url']
+        if 'shock-url' in config:
+            self.__SHOCK_URL = config['shock-url']
+        if 'handle-service-url' in config:
+            self.__HS_URL = config['handle-service-url']
+        self.__CALLBACK_URL = os.environ['SDK_CALLBACK_URL']
+
+        self.__SERVICES = {'workspace_service_url': self.workspaceURL,
+                           'shock_service_url': self.__SHOCK_URL,
+                           'handle_service_url': self.__HS_URL,
+                           'callback_url': self.__CALLBACK_URL}
+
         self.scratch = os.path.abspath(config['scratch'])
         if not os.path.exists(self.scratch):
             os.makedirs(self.scratch)
@@ -139,7 +151,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if isinstance(value, basestring):
                 params[key] = value.strip()
 
-        star_runner = STARUtil(self.config)
+        star_runner = STARUtil(self.config, self.__SERVICES)
         output = star_runner.run_star(params)
         #END run_star
 
