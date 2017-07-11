@@ -202,10 +202,10 @@ class STARTest(unittest.TestCase):
             'workspace_name': self.getWsName(),
             'output_name': 'Aligned_reads',
             'outFileNamePrefix': 'STARtest_',
-            'genome_ref': self.loadAssembly(), #loadGenome(),
-            'sampleset_ref': self.loadSEReads()
-            #'runMode': 'genomeGenerate',
-            #'runThreadN': 4,
+            'genome_ref': self.loadGenome(),
+            'sampleset_ref': self.loadSEReads(),
+            'runMode': 'genomeGenerate',
+            'runThreadN': 4
             #'genomeFastaFile_refs': [self.loadAssembly()],
             #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }

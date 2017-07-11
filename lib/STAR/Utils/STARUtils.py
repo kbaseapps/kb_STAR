@@ -11,6 +11,7 @@ import sys
 import zipfile
 from pprint import pprint, pformat
 
+from gff_utils import GFFUtils
 #from DataFileUtil.DataFileUtilClient import DataFileUtil
 from KBaseReport.KBaseReportClient import KBaseReport
 #from ReadsUtils.ReadsUtilsClient import ReadsUtils
@@ -78,8 +79,10 @@ class STARUtil:
 	else:
             if params[self.PARAM_IN_STARMODE] == "genomeGenerate":
 		if params.get(self.PARAM_IN_GENOME, None) is None:
-                   raise ValueError(self.PARAM_IN_GENOME +
+                    raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
+                else:
+                    params['sjdbGTFfile'] = self._get_gtf_file( params[self.PARAM_IN_GENOME])
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -98,6 +101,12 @@ class STARUtil:
 	elif params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
             raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
+        return self._setDefaultParameters(params)
+
+
+    def _setDefaultParameters(self, params):
+        """set default for this group of parameters
+        """
         if params.get('outFilterType', None) is None:
             params['outFilterType'] = "\"BySJout\""
         if params.get('outFilterMultimapNmax', None) is None:
@@ -110,6 +119,18 @@ class STARUtil:
             params['outSAMstrandField'] = "intronMotif"
 
         return params
+
+    def _get_gtf_file(self, gnm_ref):
+        """
+        Get data from genome object ref and return the GTF filename (with path)
+        for STAR indexing and mapping.
+        STAR uses the reference annotation to guide assembly and for creating alignment
+        """
+        genome_data = self.ws_client.get_objects2({
+                        'objects': [{'ref': gnm_ref}]
+            })['data'][0]['data']
+
+        return self.gff_utils.get_gtf_file(genome_data.get('genome_id'))
 
 
     def _construct_indexing_cmd(self, params):
@@ -274,7 +295,9 @@ class STARUtil:
 
         return p.returncode
 
-    def __init__(self, config):
+    def __init__(self, config, logger=None):
+        self.config = config
+        self.logger = logger
 	self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
 	self.token = config['KB_AUTH_TOKEN']
@@ -282,6 +305,7 @@ class STARUtil:
         self.au = AssemblyUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
+        self.gff_utils = GFFUtils(config, logger)
 
     def _exec_star(self, params):
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
@@ -498,51 +522,16 @@ class STARUtil:
         })
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def run_star(self, input_params):
+    def _convert_params(self, input_params):
         """
-        run_star: run the STAR app
+        Convert input parameters with KBase ref format into STAR parameters,
+        and add the advanced options.
         """
-        log('--->\nrunning STARUtil.run_star\n' +
-            'params:\n{}'.format(json.dumps(input_params, indent=1)))
-
-	# STEP 0.1: preprocessing the input parameters
-        input_params = self._process_params(input_params)
 	params = {
             'runMode': 'genomeGenerate',
             'runThreadN': input_params[self.PARAM_IN_THREADN],
             'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
 	}
-
-        # STEP 0.2 Adding other parameters from input_params to params
-        if input_params.get('outFilterType', None) is not None:
-            params['outFilterType'] = input_params['outFilterType']
-        if input_params.get('outFilterMultimapNmax', None) is not None:
-            params['outFilterMultimapNmax'] = input_params['outFilterMultimapNmax']
-        if input_params.get('outSAMtype', None) is not None:
-            params['outSAMType'] = input_params['outSAMType']
-        if input_params.get('outSAMattrIHstart', None) is not None:
-            params['outSAMattrIHstart'] = input_params['outSAMattrIHstart']
-        if input_params.get('outSAMstrandField', None) is not None:
-            params['outSAMstrandField'] = input_params['outSAMstrandField']
-
-        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (input_params.get('quantMode', None) is not None
-                and input_params.get('quantMode', None) in quant_modes):
-            params['quantMode'] = input_params['quantMode']
-        if input_params.get('alignSJoverhangMin', None) is not None:
-            params['alignSJoverhangMin'] = input_params['alignSJoverhangMin']
-        if (input_params.get('alignSJDBoverhangMin', None) is not None
-                and isinstance(input_params['alignSJDBoverhangMin'], int)
-                and input_params['alignSJDBoverhangMin'] > 0):
-            params['alignSJDBoverhangMin'] = input_params['alignSJDBoverhangMin']
-        if input_params.get('outFilterMismatchNmax', None) is not None:
-            params['outFilterMismatchNmax'] = input_params['outFilterMismatchNmax']
-        if input_params.get('alignIntronMin', None) is not None:
-            params['alignIntronMin'] = input_params['alignIntronMin']
-        if input_params.get('alignIntronMax', None) is not None:
-            params['alignIntronMax'] = input_params['alignIntronMax']
-        if input_params.get('alignMatesGapMax', None) is not None:
-            params['alignMatesGapMax'] = input_params['alignMatesGapMax']
 
 	# STEP 1: Converting refs to file locations in the scratch area
         smplset_ref = input_params.get(self.PARAM_IN_READS, None)
@@ -599,22 +588,58 @@ class STARUtil:
             else:
 		params[self.PARAM_IN_FASTA_FILES].append(genome_fasta_file["path"])
 
-        sjdbGTFfile_ref = input_params.get("sjdbGTFfile_ref", None)
-	if sjdbGTFfile_ref is not None:
-            try:
-		print("Fetching FASTA file from object {}".format(sjdbGTFfile_ref))
-		sjdbGTFfile = fetch_fasta_from_object(sjdbGTFfile_ref, self.workspace_url, self.callback_url)
-		print("Done fetching FASTA file! Path = {}".format(sjdbGTFfile.get("path", None)))
-            except ValueError:
-		print("Incorrect object type for fetching a FASTA file!")
-		raise
-
-            if sjdbGTFfile.get("path", None) is None:
-		raise RuntimeError("FASTA file fetched from object {} doesn't seem to exist!".format(sjdbGTFfile_ref))
+        # STEP 2: Add advanced options from input_params to params
+        sjdbGTFfile = input_params.get("sjdbGTFfile", None)
+	if sjdbGTFfile is not None:
+            params['sjdbGTFfile'] = sjdbGTFfile
+            if input_params.get('sjdbOverhang', None) is not None :
+                params['sjdbOverhang'] = input_params['sjdbOverhang']
             else:
-		params['sjdbGTFfile'] = sjdbGTFfile["path"]
-                if input_params.get('sjdbOverhang', None) is not None :
-                    params['sjdbOverhang'] = input_params['sjdbOverhang']
+                params['sjdbOverhang'] = 100
+
+        if input_params.get('outFilterType', None) is not None:
+            params['outFilterType'] = input_params['outFilterType']
+        if input_params.get('outFilterMultimapNmax', None) is not None:
+            params['outFilterMultimapNmax'] = input_params['outFilterMultimapNmax']
+        if input_params.get('outSAMtype', None) is not None:
+            params['outSAMType'] = input_params['outSAMType']
+        if input_params.get('outSAMattrIHstart', None) is not None:
+            params['outSAMattrIHstart'] = input_params['outSAMattrIHstart']
+        if input_params.get('outSAMstrandField', None) is not None:
+            params['outSAMstrandField'] = input_params['outSAMstrandField']
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (input_params.get('quantMode', None) is not None
+                and input_params.get('quantMode', None) in quant_modes):
+            params['quantMode'] = input_params['quantMode']
+        if input_params.get('alignSJoverhangMin', None) is not None:
+            params['alignSJoverhangMin'] = input_params['alignSJoverhangMin']
+        if (input_params.get('alignSJDBoverhangMin', None) is not None
+                and isinstance(input_params['alignSJDBoverhangMin'], int)
+                and input_params['alignSJDBoverhangMin'] > 0):
+            params['alignSJDBoverhangMin'] = input_params['alignSJDBoverhangMin']
+        if input_params.get('outFilterMismatchNmax', None) is not None:
+            params['outFilterMismatchNmax'] = input_params['outFilterMismatchNmax']
+        if input_params.get('alignIntronMin', None) is not None:
+            params['alignIntronMin'] = input_params['alignIntronMin']
+        if input_params.get('alignIntronMax', None) is not None:
+            params['alignIntronMax'] = input_params['alignIntronMax']
+        if input_params.get('alignMatesGapMax', None) is not None:
+            params['alignMatesGapMax'] = input_params['alignMatesGapMax']
+
+        return params
+
+
+    def run_star(self, input_params):
+        """
+        run_star: run the STAR app
+        """
+        log('--->\nrunning STARUtil.run_star\n' +
+            'params:\n{}'.format(json.dumps(input_params, indent=1)))
+
+	# STEP 1: preprocessing the input parameters
+        input_params = self._process_params(input_params)
+        params = self._convert_params(input_params)
 
 	# STEP 2: Running star
 	star_ret = self._exec_star(params)
