@@ -64,8 +64,9 @@ class STARUtil:
         self.dfu = DataFileUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
-        self.gff_utils = GFFUtils(config)
-
+        self.gff_utils = GFFUtils(config) 
+        self.STAR_output = ''
+        self.STAR_idx = ''
 
     def _mkdir_p(self, dir):
         """
@@ -98,7 +99,7 @@ class STARUtil:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
                 else:
-                    genome_ann_file_path = os.join(self.STAR_IDX_DIR, self.GENOME_ANN_GTF)
+                    genome_ann_file_path = os.path.join(self.STAR_idx, self.GENOME_ANN_GTF)
                     params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], genome_ann_file_path)
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
@@ -318,15 +319,15 @@ class STARUtil:
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
-		self.STAR_IDX_DIR: idxdir,
+		self.STAR_IDX_DIR: self.STAR_idx,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
         params_mp = {
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': params[self.PARAM_IN_READS_FILES],
-		self.STAR_IDX_DIR: idxdir,
-		self.STAR_OUT_DIR: outdir,
+		self.STAR_IDX_DIR: self.STAR_idx,
+		self.STAR_OUT_DIR: self.STAR_output,
 		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX]
         }
 
@@ -643,6 +644,8 @@ class STARUtil:
         self._mkdir_p(outdir)
         idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
         self._mkdir_p(idxdir)
+        self.STAR_output = outdir
+        self.STAR_idx = idxdir
 
 	# STEP 1: preprocessing the input parameters
         input_params = self._process_params(input_params)
