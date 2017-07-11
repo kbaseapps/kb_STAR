@@ -142,11 +142,7 @@ class STARUtil:
         for STAR indexing and mapping.
         STAR uses the reference annotation to guide assembly and for creating alignment
         """
-        genome_data = self.ws_client.get_objects2({
-                        'objects': [{'ref': gnm_ref}]
-            })['data'][0]['data']
-
-        return self.gff_utils.get_gtf_file(genome_data.get('genome_id'))
+        return self.gff_utils.get_gtf_file(gnm_ref)
 
 
     def _construct_indexing_cmd(self, params):

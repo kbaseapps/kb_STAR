@@ -98,9 +98,8 @@ class GFFUtils:
 
 
     def get_gtf_file(self, genome_ref):
-
-        obj_info = self.ws_client.get_object_info3({'objects':[{'ref':genome_ref}]},
-                                                     includeMetadata = None)[0]
+        pprint('Fetching genome GTF file path for {}'.format(genome_ref))
+        obj_info = self.ws_client.get_object_info3({'objects':[{'ref':genome_ref}]})[0]
         genome_name = obj_info[1]
         ws_id = obj_info[6]
 
