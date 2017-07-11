@@ -35,7 +35,7 @@ class STARUtil:
     STAR_BIN = '/kb/deployment/bin/STAR'
     STAR_IDX_DIR = 'STAR_Genome_index'
     STAR_OUT_DIR = 'STAR_Output'
-    GENOME_ANN_GTF = 'genome_annotation_GTF'
+    GENOME_ANN_GTF = 'genome_annotation.gtf'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_OUTPUT_NAME = 'output_name'
@@ -405,7 +405,7 @@ class STARUtil:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = {'STAR_idx': idxdir, 'STAR_output': outdir}
+                ret = {'STAR_idx': self.STAR_idx, 'STAR_output': self.STAR_output}
         return ret
 
     def upload_STARalignment(self, input_params, reads_info, alignment_file):
