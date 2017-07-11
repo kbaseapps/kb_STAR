@@ -99,20 +99,25 @@ class GFFUtils:
 
     def get_gtf_file(self, genome_ref):
         pprint('Fetching genome GTF file path for {}'.format(genome_ref))
-        obj_info = self.ws_client.get_object_info3({'objects':[{'ref':genome_ref}]})[0]
-        genome_name = obj_info[1]
-        ws_id = obj_info[6]
+        g_info = self.ws_client.get_object_info3({'objects':[{'ref':genome_ref}]})
+        g_obj_info = g_info.get("infos", [[]])[0]
+        if len(g_obj_info) == 0:
+                raise RuntimeError("An error occurred while fetching type info from the Workspace. "
+                                           "No information returned for reference {}".format(genome_ref))
+        genome_name = g_obj_info[1]
+        ws_id = g_obj_info[6]
 
         ws_gtf = genome_name + "_GTF_Annotation"
 
         self.logger.info('GTF file from genome_ref: ' + ws_gtf)
 
         gtf_ref = str(ws_id) + '/' + ws_gtf
-        info = self.ws_client.get_object_info3({'objects': [{'ref': gtf_ref}]})[0]
-        obj_ref = str(info[6]) + '/' + str(info[0])
+        a_info = self.ws_client.get_object_info3({'objects': [{'ref': gtf_ref}]})
+        a_obj_info = a_info.get("infos", [[]])[0]
+        a_obj_ref = str(a_obj_info[6]) + '/' + str(a_obj_info[0])
 
         try:
-            ret_obj = self.dfu.get_objects({'object_refs': [obj_ref]})['data']
+            ret_obj = self.dfu.get_objects({'object_refs': [a_obj_ref]})['data']
         except DFUError as e:
             self.log('Logging stacktrace from workspace exception:\n' + e.data)
             raise
