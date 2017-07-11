@@ -151,7 +151,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if isinstance(value, basestring):
                 params[key] = value.strip()
 
-        star_runner = STARUtil(self.config, self.__SERVICES)
+        star_runner = STARUtil(self.config)
         output = star_runner.run_star(params)
         #END run_star
 

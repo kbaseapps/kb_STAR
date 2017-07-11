@@ -52,19 +52,19 @@ class STARUtil:
     PARAM_IN_READS = 'sampleset_ref'
     PARAM_IN_GENOME = 'genome_ref'
 
-    def __init__(self, config, logger=None):
+    def __init__(self, config):
         self.config = config
         self.logger = logger
         self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.token = config['KB_AUTH_TOKEN']
         self.shock_url = config['shock-url']
-        self.ws_client = Workspace(self.workspace_url, token=self.token)
+        self.ws_client = Workspace(self.workspace_url)
         self.au = AssemblyUtil(self.callback_url)
         self.dfu = DataFileUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
-        self.gff_utils = GFFUtils(config, logger)
+        self.gff_utils = GFFUtils(config)
 
 
     def _mkdir_p(self, dir):

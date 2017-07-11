@@ -99,7 +99,7 @@ class GFFUtils:
 
     def get_gtf_file(self, genome_ref):
 
-        obj_info = self.ws_client.get_object_info([{"ref": genome_ref}],
+        obj_info = self.ws_client.get_object_info3({'objects':[{'ref':genome_ref}]},
                                                      includeMetadata = None)[0]
         genome_name = obj_info[1]
         ws_id = obj_info[6]
@@ -109,7 +109,7 @@ class GFFUtils:
         self.logger.info('GTF file from genome_ref: ' + ws_gtf)
 
         gtf_ref = str(ws_id) + '/' + ws_gtf
-        info = self.ws_client.get_object_info_new({'objects': [{'ref': gtf_ref}]})[0]
+        info = self.ws_client.get_object_info3({'objects': [{'ref': gtf_ref}]})[0]
         obj_ref = str(info[6]) + '/' + str(info[0])
 
         try:
