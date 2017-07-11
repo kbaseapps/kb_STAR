@@ -35,6 +35,7 @@ class STARUtil:
     STAR_BIN = '/kb/deployment/bin/STAR'
     STAR_IDX_DIR = 'STAR_Genome_index'
     STAR_OUT_DIR = 'STAR_Output'
+    GENOME_ANN_GTF = 'genome_annotation_GTF'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
     PARAM_IN_OUTPUT_NAME = 'output_name'
@@ -97,7 +98,8 @@ class STARUtil:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
                 else:
-                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME])
+                    genome_ann_file_path = os.join(self.STAR_IDX_DIR, self.GENOME_ANN_GTF)
+                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], genome_ann_file_path)
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -136,13 +138,16 @@ class STARUtil:
         return params
 
 
-    def _get_genome_gtf_file(self, gnm_ref):
+    def _get_genome_gtf_file(self, gnm_ref, gtf_file_path):
         """
         Get data from genome object ref and return the GTF filename (with path)
         for STAR indexing and mapping.
         STAR uses the reference annotation to guide assembly and for creating alignment
         """
-        return self.gff_utils.get_gtf_file(gnm_ref)
+        if self.gff_utils.convert_genome_to_gtf(gnm_ref, gtf_file_path) == 0:
+            return gtf_file_path
+        else:
+            return None
 
 
     def _construct_indexing_cmd(self, params):
@@ -309,11 +314,6 @@ class STARUtil:
 
 
     def _exec_star(self, params):
-        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
-        self._mkdir_p(outdir)
-        idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
-        self._mkdir_p(idxdir)
-
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -637,6 +637,12 @@ class STARUtil:
         """
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
+
+        # STEP 0: creating the directories for STAR
+        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
+        self._mkdir_p(outdir)
+        idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
+        self._mkdir_p(idxdir)
 
 	# STEP 1: preprocessing the input parameters
         input_params = self._process_params(input_params)
