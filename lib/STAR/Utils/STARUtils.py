@@ -54,7 +54,6 @@ class STARUtil:
 
     def __init__(self, config):
         self.config = config
-        self.logger = logger
         self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.token = config['KB_AUTH_TOKEN']
