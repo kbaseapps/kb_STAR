@@ -629,7 +629,7 @@ class STARUtil:
         if input_params.get('alignMatesGapMax', None) is not None:
             params['alignMatesGapMax'] = input_params['alignMatesGapMax']
 
-        return params
+        return {'input_parameters':params, 'reads_info': readsInfo}
 
 
     def run_star(self, input_params):
@@ -649,7 +649,9 @@ class STARUtil:
 
 	# STEP 1: preprocessing the input parameters
         input_params = self._process_params(input_params)
-        params = self._convert_params(input_params)
+        params_ret = self._convert_params(input_params)
+        params = params_ret.get('input_parameters', None)
+        readsInfo = params_ret.get('reads_info', None)
 
 	# STEP 2: Running star
 	star_ret = self._exec_star(params)
