@@ -109,9 +109,8 @@ class GFFUtils:
 
         ws_gtf = genome_name + "_GTF_Annotation"
 
-        self.logger.info('GTF file from genome_ref: ' + ws_gtf)
-
         gtf_ref = str(ws_id) + '/' + ws_gtf
+        pprint('Fetching genome GTF file path for {}'.format(gtf_ref))
         a_info = self.ws_client.get_object_info3({'objects': [{'ref': gtf_ref}]})
         a_obj_info = a_info.get("infos", [[]])[0]
         a_obj_ref = str(a_obj_info[6]) + '/' + str(a_obj_info[0])
