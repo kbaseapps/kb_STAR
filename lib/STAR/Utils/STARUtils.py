@@ -96,8 +96,7 @@ class STARUtil:
 		if params.get(self.PARAM_IN_GENOME, None) is None:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
-                else:
-                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], self.STAR_idx)
+        params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], self.STAR_idx)
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
