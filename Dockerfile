@@ -44,18 +44,6 @@ RUN \
 #RUN mkdir -p /kb/module/STAR_Genome_index
 #RUN chmod -R a+rw /kb/module/STAR_Genome_index
 
-# For generating GTF file from a genome, the gffread is needed
-
-# Install gffread
-RUN  echo Installing gffread \
-  && cd /opt \
-  && git clone https://github.com/gpertea/gclib \
-  && git clone https://github.com/gpertea/gffread \
-  && cd gffread \
-  && make
-
-ENV PATH $PATH:/opt/gffread
-
 # -----------------------------------------
 COPY ./ /kb/module
 RUN mkdir -p /kb/module/work

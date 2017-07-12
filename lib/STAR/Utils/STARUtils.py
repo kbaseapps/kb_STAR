@@ -1,4 +1,3 @@
-
 import time
 import json
 import os
@@ -11,13 +10,13 @@ import sys
 import zipfile
 from pprint import pprint, pformat
 
-from gff_utils import GFFUtils
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from Workspace.WorkspaceClient import Workspace as Workspace
 from KBaseReport.KBaseReportClient import KBaseReport
 #from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
+from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 
 from file_util import (
     fetch_fasta_from_object,
@@ -64,7 +63,6 @@ class STARUtil:
         self.dfu = DataFileUtil(self.callback_url)
         self.scratch = config['scratch']
         self.working_dir = self.scratch
-        self.gff_utils = GFFUtils(config) 
         self.STAR_output = ''
         self.STAR_idx = ''
 
@@ -99,8 +97,7 @@ class STARUtil:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
                 else:
-                    genome_ann_file_path = os.path.join(self.STAR_idx, self.GENOME_ANN_GTF)
-                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], genome_ann_file_path)
+                    params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], self.STAR_idx)
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -139,16 +136,24 @@ class STARUtil:
         return params
 
 
-    def _get_genome_gtf_file(self, gnm_ref, gtf_file_path):
+    def _get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
         """
         Get data from genome object ref and return the GTF filename (with path)
         for STAR indexing and mapping.
         STAR uses the reference annotation to guide assembly and for creating alignment
         """
-        if self.gff_utils.convert_genome_to_gtf(gnm_ref, gtf_file_path) == 0:
-            return gtf_file_path
-        else:
+        log("Converting genome {0} to GFF file {1}".format(gnm_ref, gtf_file_dir))
+        gfu = GenomeFileUtil(self.callback_url)
+        try:
+            gfu_ret = gfu.genome_to_gff({'genome_ref': gnm_ref,
+                                           'is_gtf': 1,
+                                           'target_dir': gtf_file_dir})
+        except ValueError as egfu:
+            log('GFU getting GTF file raised error:\n')
+            pprint(egfu)
             return None
+        else:#no exception raised
+            return gfu_ret.get('file_path')
 
 
     def _construct_indexing_cmd(self, params):
@@ -167,7 +172,7 @@ class STARUtil:
             for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
                 idx_cmd.append(fasta_file)
 
-	# appending the standard optional inputs
+	# STEP 2: append the standard optional inputs
         if params.get('sjdbGTFfile', None) is not None:
             idx_cmd.append('--sjdbGTFfile')
             idx_cmd.append(params['sjdbGTFfile'])
@@ -175,8 +180,6 @@ class STARUtil:
 		and params['sjdbOverhang'] > 0):
             idx_cmd.append('--sjdbOverhang')
             idx_cmd.append(str(params['sjdbOverhang']))
-
-        # STEP 2: appending the advanced optional inputs--TODO
 
         # STEP 3: return idx_cmd
         print ('STAR indexing CMD:')
@@ -220,6 +223,14 @@ class STARUtil:
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
         # STEP 3: appending the advanced optional inputs
+        if params.get('sjdbGTFfile', None) is not None:
+            mp_cmd.append('--sjdbGTFfile')
+            mp_cmd.append(params['sjdbGTFfile'])
+        if (params.get('sjdbOverhang', None) is not None
+		and params['sjdbOverhang'] > 0):
+            mp_cmd.append('--sjdbOverhang')
+            mp_cmd.append(str(params['sjdbOverhang']))
+
         if (params.get('outFilterType', None) is not None
                 and isinstance(params['outFilterType'], str)):
             mp_cmd.append('--outFilterType')
