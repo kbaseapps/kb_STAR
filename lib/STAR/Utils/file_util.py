@@ -116,6 +116,7 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url):
           "KBaseAssembly.PairedEndLibrary" in obj_type or
           "KBaseFile.PairedEndLibrary" in obj_type or
           "KBaseFile.PairedEndLibrary-2.0" in obj_type or
+          "KBaseGenomeAnnotations.Assembly-5.0" in obj_type or
           "KBaseFile.PairedEndLibrary-2.1" in obj_type):
         refs.append({
             "ref": ref
