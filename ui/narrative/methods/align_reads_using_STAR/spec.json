@@ -44,7 +44,7 @@
         "optional": true,
         "advanced": true,
         "allow_multiple": false,
-        "default_values": [ "SAM/BAM alignment to transcripts" ],
+        "default_values": [ "TranscriptomeSAM" ],
         "field_type" : "dropdown",
         "dropdown_options":{
             "options": [{
