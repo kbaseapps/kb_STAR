@@ -17,7 +17,7 @@
         "default_values" : [ "" ],
         "field_type" : "text",
         "text_options" : {
-            "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet", "KBaseGenomeAnnotations.Assembly", "KBaseAssembly.ReferenceAssembly", "KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary", "KBaseFile.SingleEndLibrary-2.0", "KBaseFile.PairedEndLibrary-2.0", "KBaseFile.SingleEndLibrary-2.1", "KBaseFile.PairedEndLibrary-2.1"]
+            "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet","KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary", "KBaseFile.SingleEndLibrary-2.0", "KBaseFile.PairedEndLibrary-2.0", "KBaseFile.SingleEndLibrary-2.1", "KBaseFile.PairedEndLibrary-2.1"]
         }
     }, {
         "id" : "genome_ref",
