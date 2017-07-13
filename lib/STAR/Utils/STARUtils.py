@@ -37,7 +37,7 @@ class STARUtil:
     GENOME_ANN_GTF = 'genome_annotation.gtf'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
-    PARAM_IN_OUTPUT_NAME = 'alignmentset_name'
+    PARAM_IN_OUTPUT_NAME = 'output_obj_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
@@ -83,12 +83,13 @@ class STARUtil:
         """
         log('Start validating run_star parameters')
 
-        if (self.PARAM_IN_WS not in params or
-                not params[self.PARAM_IN_WS]):
+        if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-        if (self.PARAM_IN_OUTPUT_NAME not in params or
-                not params[self.PARAM_IN_OUTPUT_NAME]):
-            raise ValueError(self.PARAM_IN_OUTPUT_NAME + ' parameter is required')
+        if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
+                not self.valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
+            raise ValueError("Parameter alignment output_obj_name must be a valid Workspace object string, "
+
+                      "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 	else:
@@ -110,13 +111,29 @@ class STARUtil:
 	else:
              params[self.PARAM_IN_THREADN] = 2
 
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
-             params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'
-	elif params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
-            raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
+                raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
         return self._setDefaultParameters(params)
 
+    def valid_string(self, s, is_ref=False):
+        is_valid = isinstance(s, basestring) and len(s.strip()) > 0
+        if is_valid and is_ref:
+            is_valid = check_reference(s)
+        return is_valid
+
+    def check_reference(self, ref):
+        """
+        Tests the given ref string to make sure it conforms to the expected
+        object reference format. Returns True if it passes, False otherwise.
+        """
+        obj_ref_regex = re.compile("^(?P<wsid>\d+)\/(?P<objid>\d+)(\/(?P<ver>\d+))?$")
+        ref_path = ref.strip().split(";")
+        for step in ref_path:
+            if not obj_ref_regex.match(step):
+                return False
+        return True
 
     def _setDefaultParameters(self, params):
         """set default for this group of parameters
@@ -217,11 +234,16 @@ class STARUtil:
 			mp_cmd.append('gunzip')
 			mp_cmd.append('-c')
 
+		if readsExtension == '.bz2':
+			mp_cmd.append('--readFilesCommand')
+			mp_cmd.append('bunzip2')
+			mp_cmd.append('-c')
+
+        # STEP 3: appending the advanced optional inputs
 	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
-        # STEP 3: appending the advanced optional inputs
         if params.get('sjdbGTFfile', None) is not None:
             mp_cmd.append('--sjdbGTFfile')
             mp_cmd.append(params['sjdbGTFfile'])
@@ -337,8 +359,7 @@ class STARUtil:
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': params[self.PARAM_IN_READS_FILES],
 		self.STAR_IDX_DIR: self.STAR_idx,
-		self.STAR_OUT_DIR: self.STAR_output,
-		'outFileNamePrefix': params[self.PARAM_IN_OUTFILE_PREFIX]
+		self.STAR_OUT_DIR: self.STAR_output
         }
 
         if params.get('sjdbGTFfile', None) is not None:
@@ -347,6 +368,9 @@ class STARUtil:
         if params.get('sjdbOverhang', None) is not None :
             params_idx['sjdbOverhang'] = params['sjdbOverhang']
             params_mp['sjdbOverhang'] = params['sjdbOverhang']
+
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            params_mp[self.PARAM_IN_OUTFILE_PREFIX] = params[self.PARAM_IN_OUTFILE_PREFIX]
 
         if (params.get('outFilterType', None) is not None
                 and isinstance(params['outFilterType'], str)):
@@ -541,8 +565,7 @@ class STARUtil:
         """
 	params = {
             'runMode': 'genomeGenerate',
-            'runThreadN': input_params[self.PARAM_IN_THREADN],
-            'outFileNamePrefix': input_params[self.PARAM_IN_OUTFILE_PREFIX]
+            'runThreadN': input_params[self.PARAM_IN_THREADN]
 	}
 
 	# STEP 1: Converting refs to file locations in the scratch area
@@ -609,6 +632,8 @@ class STARUtil:
             else:
                 params['sjdbOverhang'] = 100
 
+        if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = input_params[self.PARAM_IN_OUTFILE_PREFIX]
         if input_params.get('outFilterType', None) is not None:
             params['outFilterType'] = input_params['outFilterType']
         if input_params.get('outFilterMultimapNmax', None) is not None:
@@ -669,7 +694,12 @@ class STARUtil:
 	# STEP 3: Uploading the alignment and generating report
         if not isinstance(star_ret, int):
             #print("Uploading STAR output object...")
-            alignment_file = "{}Aligned.out.sam".format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+            if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+                prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+                alignment_file = "{}Aligned.out.sam".format(prefix)
+            else:
+                alignment_file = "Aligned.out.sam"
+
             alignment_file = os.path.join(star_ret['STAR_output'], alignment_file)
 
             # Upload the alignment with ONLY the first reads_ref for now
