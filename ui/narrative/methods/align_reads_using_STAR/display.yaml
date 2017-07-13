@@ -29,17 +29,17 @@ suggestions:
 parameters :
     sampleset_ref :
         ui-name : |
-            RNA-seq Sample or Sample Set
+            RNA-seq Sample Set or Read Library
         short-hint : |
-            Select the RNA-seq sample set or reads set
+            Select the RNA-seq sampleSet or reads set
         long-hint : |
             Select the RNA-seq sample set or reads set (If you have only one sample of RNA-seq reads, select the corresponding library object.)
-    genome_ref :
+    assembly_or_genome_ref :
         ui-name : |
-            Genome
+            Assembly or Genome
         short-hint : |
-            Select the Genome to align the reads
-    alignment_output :
+            Select the assembly or genome on which to align to
+    output_obj_name :
         ui-name : |
             Output Alignment Name
         short-hint : |
