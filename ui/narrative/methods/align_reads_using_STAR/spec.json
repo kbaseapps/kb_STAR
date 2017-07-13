@@ -159,8 +159,8 @@
                     "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
-                    "input_parameter" : "output_obj_name",
-                    "target_property" : "output_name"
+                    "input_parameter" : "alignment_output",
+                    "target_property" : "alignmentset_name"
                 }, {
                     "input_parameter": "quantMode",
                     "target_property": "quantMode"
@@ -188,6 +188,10 @@
                 }
             ],
             "output_mapping": [
+                {
+                    "service_method_output_path": [0,"alignment_ref"],
+                    "target_property": "output"
+                },
                 {
                     "service_method_output_path": [0,"report_name"],
                     "target_property": "report_name"
