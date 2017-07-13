@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "f54acfa3c63c5ab05f625065c38adb02de75380d"
+    GIT_COMMIT_HASH = "a178ca79efc97cd3c91e787626e28a835047529e"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -92,8 +92,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            sampleset of reads to align, referring to either a
            SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
            string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string output_obj_name -
-           name of the output ReadsAlignment or ReadsAlignmentSet object int
+           narrative for housing output in KBase string output_name - name of
+           the output ReadsAlignment or ReadsAlignmentSet object int
            runThreadN - the number of threads for STAR to use (default to 2)
            string outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
@@ -119,9 +119,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            "obj_ref" (An X/Y/Z style reference), parameter
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
            reference), parameter "workspace_name" of String, parameter
-           "runThreadN" of Long, parameter "output_obj_name" of String,
-           parameter "outFilterType" of String, parameter "outSAMtype" of
-           String, parameter "outSAMattrIHstart" of Long, parameter
+           "runThreadN" of Long, parameter "output_name" of String, parameter
+           "outFilterType" of String, parameter "outSAMtype" of String,
+           parameter "outSAMattrIHstart" of Long, parameter
            "outSAMstrandField" of String, parameter "quantMode" of String,
            parameter "outFilterMultimapNmax" of Long, parameter
            "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
@@ -182,8 +182,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            sampleset of reads to align, referring to either a
            SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
            string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string output_obj_name -
-           name of the output ReadsAlignment or ReadsAlignmentSet object int
+           narrative for housing output in KBase string output_name - name of
+           the output ReadsAlignment or ReadsAlignmentSet object int
            runThreadN - the number of threads for STAR to use (default to 2)
            string outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
@@ -209,9 +209,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            "obj_ref" (An X/Y/Z style reference), parameter
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
            reference), parameter "workspace_name" of String, parameter
-           "runThreadN" of Long, parameter "output_obj_name" of String,
-           parameter "outFilterType" of String, parameter "outSAMtype" of
-           String, parameter "outSAMattrIHstart" of Long, parameter
+           "runThreadN" of Long, parameter "output_name" of String, parameter
+           "outFilterType" of String, parameter "outSAMtype" of String,
+           parameter "outSAMattrIHstart" of Long, parameter
            "outSAMstrandField" of String, parameter "quantMode" of String,
            parameter "outFilterMultimapNmax" of Long, parameter
            "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of

@@ -37,7 +37,7 @@ class STARUtil:
     GENOME_ANN_GTF = 'genome_annotation.gtf'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
-    PARAM_IN_OUTPUT_NAME = 'output_obj_name'
+    PARAM_IN_OUTPUT_NAME = 'output_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
@@ -87,7 +87,7 @@ class STARUtil:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
         if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
                 not self.valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
-            raise ValueError("Parameter alignment output_obj_name must be a valid Workspace object string, "
+            raise ValueError("Parameter alignment output_name must be a valid Workspace object string, "
 
                       "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
         if params.get(self.PARAM_IN_STARMODE, None) is None:
