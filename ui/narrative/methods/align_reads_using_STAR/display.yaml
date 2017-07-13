@@ -39,7 +39,7 @@ parameters :
             Genome
         short-hint : |
             Select the Genome to align the reads
-    Alignment_output :
+    alignment_output :
         ui-name : |
             Output Alignment Name
         short-hint : |
