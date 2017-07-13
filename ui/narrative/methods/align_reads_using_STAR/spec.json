@@ -130,16 +130,6 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-    }, {
-            "id": "outFileNamePrefix",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "STARoutput_" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "text"
-            }
     }],
     "behavior": {
         "service-mapping": {
@@ -185,9 +175,6 @@
                 }, {
                     "input_parameter": "alignMatesGapMax",
                     "target_property": "alignMatesGapMax"
-                }, {
-                    "input_parameter": "outFileNamePrefix",
-                    "target_property": "outFileNamePrefix"
                 }
             ],
             "output_mapping": [
