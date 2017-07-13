@@ -30,15 +30,15 @@
             "valid_ws_types" : ["KBaseGenomes.Genome"]
         }
      }, {
-        "id" : "output_obj_name",
-        "optional" : false,
-        "advanced" : false,
-        "allow_multiple" : false,
-        "default_values" : [ "" ],
-        "field_type" : "text",
-        "text_options" : {
-        "is_output_name" : true
-       } 
+        "id": "alignment_output",
+        "optional": false,
+        "advanced": false,
+        "allow_multiple": false,
+        "default_values": [""],
+        "field_type": "text",
+        "text_options": {
+            "is_output_name": true
+        }
     }, {
         "id": "quantMode",
         "optional": true,
@@ -64,7 +64,7 @@
                 "ui_name": "Both"
             }]
         }
-        }, {
+    }, {
             "id": "alignSJoverhangMin",
             "optional": true,
             "advanced": true,
@@ -75,7 +75,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+   }, {
             "id": "alignSJDBoverhangMin",
             "optional": true,
             "advanced": true,
@@ -86,7 +86,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+   }, {
             "id": "outFilterMismatchNmax",
             "optional": true,
             "advanced": true,
@@ -97,7 +97,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+    }, {
             "id": "alignIntronMin",
             "optional": true,
             "advanced": true,
@@ -108,7 +108,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+    }, {
             "id": "alignIntronMax",
             "optional": true,
             "advanced": true,
@@ -119,7 +119,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+    }, {
             "id": "alignMatesGapMax",
             "optional": true,
             "advanced": true,
@@ -130,7 +130,7 @@
                 "validate_as": "int",
                 "min_int" : 0
             }
-        }, {
+    }, {
             "id": "outFileNamePrefix",
             "optional": true,
             "advanced": true,
@@ -140,8 +140,7 @@
             "text_options": {
                 "validate_as": "text"
             }
-        }
-    ],
+    }],
     "behavior": {
         "service-mapping": {
             "url": "",
