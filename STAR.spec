@@ -39,8 +39,8 @@ module STAR {
 	obj_ref sampleset_ref: the workspace reference for the sampleset of reads to align, referring to 
 		either a SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
 	string workspace_name: the workspace name provided by the narrative for housing output in KBase
-	string output_name - name of the output ReadsAlignment or ReadsAlignmentSet
-	
+	string alignmentset_name - name of the output ReadsAlignment or ReadsAlignmentSet object
+        int runThreadN - the number of threads for STAR to use (default to 2)	
 	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
                 By default, this parameter is ./, i.e. all output files are written in current directory without a prefix
 	string quantMode: types of quantification requested--none/TranscriptomeSAM/GeneCounts
@@ -72,6 +72,8 @@ module STAR {
         obj_ref sampleset_ref;
         obj_ref genome_ref;
         string workspace_name;
+        int runThreadN;
+        string alignmentset_name;
 	string output_name;
    
         string outFilterType;

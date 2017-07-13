@@ -37,7 +37,7 @@ class STARUtil:
     GENOME_ANN_GTF = 'genome_annotation.gtf'
     #STAR_DATA = '/kb/module/testReads'
     PARAM_IN_WS = 'workspace_name'
-    PARAM_IN_OUTPUT_NAME = 'output_name'
+    PARAM_IN_OUTPUT_NAME = 'alignmentset_name'
     PARAM_IN_FASTA_REFS = 'genomeFastaFile_refs'
     PARAM_IN_FASTA_FILES = 'genomeFastaFiles'
     PARAM_IN_OUTFILE_PREFIX = 'outFileNamePrefix'
@@ -108,7 +108,7 @@ class STARUtil:
             if not isinstance(params[self.PARAM_IN_THREADN], int):
                 raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
 	else:
-             params[self.PARAM_IN_THREADN] = 1
+             params[self.PARAM_IN_THREADN] = 2
 
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
              params[self.PARAM_IN_OUTFILE_PREFIX] = 'STARoutput_'

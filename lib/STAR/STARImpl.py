@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "7e2918d177534ecb4fe8d8b06a1f59e9f163110f"
+    GIT_COMMIT_HASH = "00cef08012550b3fc2301a560b058630d94de38d"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -95,9 +95,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            sampleset of reads to align, referring to either a
            SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
            string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string output_name - name of
-           the output ReadsAlignment or ReadsAlignmentSet string
-           outFileNamePrefix: you can change the file prefixes using
+           narrative for housing output in KBase string alignmentset_name -
+           name of the output ReadsAlignment or ReadsAlignmentSet object int
+           runThreadN - the number of threads for STAR to use (default to 2)
+           string outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
            parameter is ./, i.e. all output files are written in current
            directory without a prefix string quantMode: types of
@@ -120,11 +121,12 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            outFileNamePrefix) -> structure: parameter "sampleset_ref" of type
            "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
            type "obj_ref" (An X/Y/Z style reference), parameter
-           "workspace_name" of String, parameter "output_name" of String,
-           parameter "outFilterType" of String, parameter "outSAMtype" of
-           String, parameter "outSAMattrIHstart" of Long, parameter
-           "outSAMstrandField" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
+           "workspace_name" of String, parameter "runThreadN" of Long,
+           parameter "alignmentset_name" of String, parameter "output_name"
+           of String, parameter "outFilterType" of String, parameter
+           "outSAMtype" of String, parameter "outSAMattrIHstart" of Long,
+           parameter "outSAMstrandField" of String, parameter "quantMode" of
+           String, parameter "outFilterMultimapNmax" of Long, parameter
            "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
            Long, parameter "outFilterMismatchNmax" of Long, parameter
            "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
