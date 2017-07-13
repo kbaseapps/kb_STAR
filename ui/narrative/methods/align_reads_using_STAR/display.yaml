@@ -84,13 +84,7 @@ parameters :
             Max genomic distance between mates
         short-hint : |
             Maximum genomic distance between mates
-    outFileNamePrefix :
-        ui-name : |
-            Prefix for alignment output file names
-        short-hint : |
-            Prefix for all STAR output file names
-        long-hint : |
-            STAR produces multiple output files. All files have standard name, however, you can change the file prefixes
+
             
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
