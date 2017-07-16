@@ -448,7 +448,7 @@ class STARUtil:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = {'STAR_idx': self.STAR_idx, 'STAR_output': outdir}
+                ret = {'star_idx': self.STAR_idx, 'star_output': outdir}
         return ret
 
     def upload_STARalignment(self, input_params, reads_info, alignment_file):
@@ -508,13 +508,15 @@ class STARUtil:
 
         return output_files
 
-    def _generate_extended_report(self, obj_ref, params, star_ret):
+    def _generate_extended_report(self, obj_ref, params, star_dirs):
         """
         generate_report: generate a summary STAR report, including index files and alignment output files
         """
         log('Generating summary report...')
 
         created_objects = list()
+        index_files = list()
+        output_files = list()
         for oref in obj_refs:
             created_objects.append({
                 "ref": oref,
@@ -522,12 +524,13 @@ class STARUtil:
             })
 
         t0 = time.clock()
-	index_files = self._get_output_file_list(self.STAR_IDX_DIR, star_ret['STAR_idx'])
-        t1 = time.clock()
-        output_files = self._get_output_file_list(self.STAR_OUT_DIR, star_ret['STAR_output'])
-        t2 = time.clock()
-        pprint( "Zipping index files used {} seconds ".format(t1-t0))
-        pprint( "Zipping output files used {} seconds ".format(t2-t1))
+        for out_dir in star_dirs:
+            index_files += self._get_output_file_list(self.STAR_IDX_DIR, out_dir['star_idx'])
+            t1 = time.clock()
+            output_files += self._get_output_file_list(self.STAR_OUT_DIR, out_dir['str_output'])
+            t2 = time.clock()
+            pprint( "Zipping index files used {} seconds ".format(t1-t0))
+            pprint( "Zipping output files used {} seconds ".format(t2-t1))
 
         report_params = {
               'message': 'Created one alignment from the given sample set.',
@@ -698,6 +701,7 @@ class STARUtil:
 	# STEP 2: Running star
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
         alignment_set = list()
+        star_out_dirs = list()
         for rds in readsInfo:
             rdsFiles = list()
             rdsName = ''
@@ -723,6 +727,7 @@ class STARUtil:
                 # Upload the alignment
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
                 alignment_set.append(alignment_ref)
+                star_out_dirs.append(star_ret)
 
 	# STEP 3: Generating report
         returnVal = {
@@ -730,8 +735,8 @@ class STARUtil:
                 'alignment_set': alignment_set
         }
 
-        #report_out = self._generate_extended_report(alignment_set, input_params, star_ret)
-        report_out = self._generate_report(alignment_set, input_params)
+        #report_out = self._generate_extended_report(alignment_set, input_params, star_out_dirs)
+        report_out = self._generate_report(alignment_set, input_params, star_out_dirs)
         returnVal.update(report_out)
 
         return returnVal
