@@ -239,12 +239,8 @@ class STARUtil:
 			mp_cmd.append('-c')
 
         # STEP 3: appending the advanced optional inputs
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir + '/star_'
-        else:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX])
         mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
-        mp_cmd.append(params[self.PARAM_IN_OUTFILE_PREFIX])
+        mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
         if params.get('sjdbGTFfile', None) is not None:
             mp_cmd.append('--sjdbGTFfile')
@@ -633,6 +629,9 @@ class STARUtil:
 
         if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             params[self.PARAM_IN_OUTFILE_PREFIX] = input_params[self.PARAM_IN_OUTFILE_PREFIX]
+        else:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
+
         if input_params.get('outFilterType', None) is not None:
             params['outFilterType'] = input_params['outFilterType']
         if input_params.get('outFilterMultimapNmax', None) is not None:
@@ -697,7 +696,7 @@ class STARUtil:
             star_ret = self._exec_star(params, rdsFiles, rdsName)
             if not isinstance(star_ret, int):
                 #print("Uploading STAR output object...")
-                if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+                if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
                     prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
                     alignment_file = "{}Aligned.out.sam".format(prefix)
                 else:
