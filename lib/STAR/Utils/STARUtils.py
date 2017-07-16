@@ -51,7 +51,7 @@ class STARUtil:
     INVALID_WS_OBJ_NAME_RE = re.compile('[^\\w\\|._-]')
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
-    PARAM_IN_READS = 'sampleset_ref'
+    PARAM_IN_READS = 'readsset_ref'
     PARAM_IN_GENOME = 'assembly_or_genome_ref'
 
     def __init__(self, config):
