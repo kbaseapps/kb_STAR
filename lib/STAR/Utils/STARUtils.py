@@ -240,7 +240,7 @@ class STARUtil:
 
         # STEP 3: appending the advanced optional inputs
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir
+            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir + '/'
         else:
             params[self.PARAM_IN_OUTFILE_PREFIX] = os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX])
         mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
@@ -593,13 +593,6 @@ class STARUtil:
             try:
                 print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
                 ret_reads = fetch_reads_from_reference(source_reads['ref'], self.callback_url)
-                # remove the following 6 lines later TODO
-                ret_fwd = ret_reads.get("file_fwd", None)
-		if ret_fwd is not None:
-                    print("Done fetching FASTA file with name = {}".format(ret_fwd))
-                    readsFiles.append(ret_reads["file_fwd"])
-                    if ret_reads.get("file_rev", None) is not None:
-                        readsFiles.append(ret_reads["file_rev"])
             except ValueError:
                 print("Incorrect object type for fetching a FASTA file!")
                 raise
@@ -612,9 +605,6 @@ class STARUtil:
                 else:
                     ret_reads["condition"] = "N/A"
                 readsInfo.append(ret_reads)
-
-        #params[self.PARAM_IN_READS_FILES] = readsFiles
-        #params[self.PARAM_IN_READS_INFO] = readsInfo
 
         params[self.PARAM_IN_FASTA_FILES] = list()
         genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
