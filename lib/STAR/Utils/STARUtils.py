@@ -91,9 +91,14 @@ class STARUtil:
         log('Start validating run_star parameters')
 
         # STEP 0: creating the directories for STAR
+        # the index directory
         idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
         self._mkdir_p(idxdir)
         self.STAR_idx = idxdir
+        # the output directory
+        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
+        self._mkdir_p(outdir)
+        self.STAR_output = outdir
 
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
@@ -202,10 +207,10 @@ class STARUtil:
 
         # STEP 1: set the working folder housing the STAR output results as well as the reads info
         star_out_dir = ''
-	if params.get(self.STAR_output, None) is None:
+	if params.get('align_output', None) is None:
             star_out_dir = self.scratch
 	else:
-            star_out_dir = params[self.STAR_output]
+            star_out_dir = params['align_output']
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -325,13 +330,6 @@ class STARUtil:
 
         exitCode = self.star_runner.run(idx_cmd, self.scratch)
 
-        #p = subprocess.Popen(idx_cmd, cwd=self.scratch, shell=False)
-        #retcode = p.wait()
-
-        #log('Return code: ' + str(retcode))
-        #if p.returncode != 0:
-            #raise ValueError('Error running STAR index generating, return code: ' + str(retcode) + '\n')
-
         return exitCode
 
     def _exec_mapping(self, params):
@@ -341,24 +339,9 @@ class STARUtil:
 
         exitCode = self.star_runner.run(mp_cmd, self.scratch)
 
-        #p = subprocess.Popen(mp_cmd, cwd=self.scratch, shell=False)
-        #retcode = p.wait()
-        #log('Return code: ' + str(p.returncode))
-        #if p.returncode != 0:
-            #raise ValueError('Error running STAR mapping, return code: ' + str(p.returncode) + '\n')
-
         return exitCode
 
     def _exec_star(self, params, rds_files, rds_name):
-        # create the output directory
-        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
-        self._mkdir_p(outdir)
-        self.STAR_output = outdir
-        if rds_name:
-            outdir = os.path.join(self.STAR_output, rds_name)
-            self._mkdir_p(outdir)
-            print '\nSTAR output directory created: ' + outdir
-
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -366,13 +349,17 @@ class STARUtil:
 		self.STAR_IDX_DIR: self.STAR_idx,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
-
+        aligndir = self.STAR_output
+        if rds_name:
+            aligndir = os.path.join(self.STAR_output, rds_name)
+            self._mkdir_p(aligndir)
+            print '\nSTAR output directory created: ' + aligndir
         params_mp = {
                 'runMode': params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': rds_files,#params[self.PARAM_IN_READS_FILES],
 		self.STAR_IDX_DIR: self.STAR_idx,
-		self.STAR_output: outdir
+		'align_output': aligndir
         }
 
         if params.get('sjdbGTFfile', None) is not None:
@@ -452,7 +439,7 @@ class STARUtil:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = {'star_idx': self.STAR_idx, 'star_output': outdir}
+                ret = {'star_idx': self.STAR_idx, 'star_output': aligndir}
         return ret
 
     def upload_STARalignment(self, input_params, reads_info, alignment_file):
