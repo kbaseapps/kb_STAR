@@ -147,7 +147,7 @@
                     "target_property" : "runThreadN"
                 }, {
                     "input_parameter" : "sampleset_ref",
-                    "target_property" : "sampleset_ref",
+                    "target_property" : "readsset_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
                     "input_parameter" : "assembly_or_genome_ref",
