@@ -34,7 +34,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "a178ca79efc97cd3c91e787626e28a835047529e"
+    GIT_COMMIT_HASH = "8950d8c35628d39d96a9da82496a142e78229cec"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -88,14 +88,14 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            ReadsAlignment object, or in the case of a SampleSet, a
            ReadsAlignmentSet object obj_ref assembly_or_genome_ref: KBase
            workspace reference Genome, ContigSet or Assembly to align reads
-           against obj_ref sampleset_ref: the workspace reference for the
-           sampleset of reads to align, referring to either a
-           SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
-           string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string output_name - name of
-           the output ReadsAlignment or ReadsAlignmentSet object int
-           runThreadN - the number of threads for STAR to use (default to 2)
-           string outFileNamePrefix: you can change the file prefixes using
+           against obj_ref readsset_ref: the workspace reference for the set
+           of reads to align, referring to either a SingleEnd/PairedEnd
+           reads, or a ReadsSet input string output_workspace - name or id of
+           the WS to save the results to, provided by the narrative for
+           housing output in KBase string output_name - name of the output
+           ReadsAlignment or ReadsAlignmentSet object int runThreadN - the
+           number of threads for STAR to use (default to 2) string
+           outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
            parameter is ./, i.e. all output files are written in current
            directory without a prefix string quantMode: types of
@@ -115,10 +115,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            @optional alignSJoverhangMin @optional alignSJDBoverhangMin
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
            alignIntronMax @optional alignMatesGapMax @optional
-           outFileNamePrefix) -> structure: parameter "sampleset_ref" of type
+           outFileNamePrefix) -> structure: parameter "readsset_ref" of type
            "obj_ref" (An X/Y/Z style reference), parameter
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "workspace_name" of String, parameter
+           reference), parameter "output_workspace" of String, parameter
            "runThreadN" of Long, parameter "output_name" of String, parameter
            "outFilterType" of String, parameter "outSAMtype" of String,
            parameter "outSAMattrIHstart" of Long, parameter
@@ -178,14 +178,14 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            ReadsAlignment object, or in the case of a SampleSet, a
            ReadsAlignmentSet object obj_ref assembly_or_genome_ref: KBase
            workspace reference Genome, ContigSet or Assembly to align reads
-           against obj_ref sampleset_ref: the workspace reference for the
-           sampleset of reads to align, referring to either a
-           SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
-           string workspace_name: the workspace name provided by the
-           narrative for housing output in KBase string output_name - name of
-           the output ReadsAlignment or ReadsAlignmentSet object int
-           runThreadN - the number of threads for STAR to use (default to 2)
-           string outFileNamePrefix: you can change the file prefixes using
+           against obj_ref readsset_ref: the workspace reference for the set
+           of reads to align, referring to either a SingleEnd/PairedEnd
+           reads, or a ReadsSet input string output_workspace - name or id of
+           the WS to save the results to, provided by the narrative for
+           housing output in KBase string output_name - name of the output
+           ReadsAlignment or ReadsAlignmentSet object int runThreadN - the
+           number of threads for STAR to use (default to 2) string
+           outFileNamePrefix: you can change the file prefixes using
            --outFileNamePrefix /path/to/output/dir/prefix By default, this
            parameter is ./, i.e. all output files are written in current
            directory without a prefix string quantMode: types of
@@ -205,10 +205,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            @optional alignSJoverhangMin @optional alignSJDBoverhangMin
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
            alignIntronMax @optional alignMatesGapMax @optional
-           outFileNamePrefix) -> structure: parameter "sampleset_ref" of type
+           outFileNamePrefix) -> structure: parameter "readsset_ref" of type
            "obj_ref" (An X/Y/Z style reference), parameter
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "workspace_name" of String, parameter
+           reference), parameter "output_workspace" of String, parameter
            "runThreadN" of Long, parameter "output_name" of String, parameter
            "outFilterType" of String, parameter "outSAMtype" of String,
            parameter "outSAMattrIHstart" of Long, parameter

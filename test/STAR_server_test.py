@@ -199,7 +199,7 @@ class STARTest(unittest.TestCase):
 
         # STAR input parameters
         params = {
-            'workspace_name': self.getWsName(),
+            'output_workspace': self.getWsName(),
             'output_name': 'Aligned_reads',
             'outFileNamePrefix': 'STARtest_',
             'genome_ref': self.loadGenome(),

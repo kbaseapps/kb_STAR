@@ -28,7 +28,7 @@ RUN pip install cffi --upgrade \
 #  untar and build STAR.
 
 WORKDIR /kb/module
-RUN \
+RUN VERSION=2.5.3a && \
   wget https://github.com/alexdobin/STAR/archive/2.5.3a.tar.gz && \
   tar -zxf 2.5.3a.tar.gz && \
   ln -s STAR-2.5.3a STAR && \

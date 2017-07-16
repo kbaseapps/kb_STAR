@@ -152,7 +152,8 @@ def fetch_reads_from_reference(ref, callback_url):
         ret_reads = {
             "object_ref": ref,
             "style": reads_files["type"],
-            "file_fwd": reads_files["fwd"]
+            "file_fwd": reads_files["fwd"],
+            "file_name": reads_files["fwd_name"]
         }
         if reads_files.get("rev", None) is not None:
             ret_reads["file_rev"] = reads_files["rev"]
