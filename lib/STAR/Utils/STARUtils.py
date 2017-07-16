@@ -52,7 +52,7 @@ class STARUtil:
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
     PARAM_IN_READS = 'sampleset_ref'
-    PARAM_IN_GENOME = 'genome_ref'
+    PARAM_IN_GENOME = 'assembly_or_genome_ref'
 
     def __init__(self, config):
         self.config = config
@@ -562,6 +562,7 @@ class STARUtil:
         """
         Creates a brief STAR report.
         """
+        print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
         report_client = KBaseReport(self.callback_url, token=self.token)
         report_text = None
         created_objects = list()
@@ -739,7 +740,6 @@ class STARUtil:
                 'alignment_set': alignment_set
         }
 
-        print("Creating STAR output report...in workspace " + input_params[self.PARAM_IN_WS])
         #report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
         report_out = self._generate_report(alignment_set, input_params)
 
