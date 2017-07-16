@@ -706,7 +706,7 @@ class STARUtil:
 
 	# STEP 2: Running star
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
-        alignement_set = list()
+        alignment_set = list()
         for rds in readsInfo:
             rdsFiles = list()
             rdsName = ''
