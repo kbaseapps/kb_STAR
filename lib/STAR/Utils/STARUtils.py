@@ -202,10 +202,10 @@ class STARUtil:
 
         # STEP 1: set the working folder housing the STAR output results as well as the reads info
         star_out_dir = ''
-	if params.get(self.STAR_OUT_DIR, None) is None:
+	if params.get(self.STAR_output, None) is None:
             star_out_dir = self.scratch
 	else:
-            star_out_dir = params[self.STAR_OUT_DIR]
+            star_out_dir = params[self.STAR_output]
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -234,9 +234,12 @@ class STARUtil:
 			mp_cmd.append('-c')
 
         # STEP 3: appending the advanced optional inputs
-	if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
-            mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir
+        else:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX])
+        mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
+        mp_cmd.append(params[self.PARAM_IN_OUTFILE_PREFIX])
 
         if params.get('sjdbGTFfile', None) is not None:
             mp_cmd.append('--sjdbGTFfile')
@@ -369,7 +372,7 @@ class STARUtil:
 		'runThreadN': params[self.PARAM_IN_THREADN],
                 'readFilesIn': rds_files,#params[self.PARAM_IN_READS_FILES],
 		self.STAR_IDX_DIR: self.STAR_idx,
-		self.STAR_OUT_DIR: outdir
+		self.STAR_output: outdir
         }
 
         if params.get('sjdbGTFfile', None) is not None:
