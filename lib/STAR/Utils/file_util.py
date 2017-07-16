@@ -136,6 +136,7 @@ def fetch_reads_from_reference(ref, callback_url):
     {
         "style": "paired", "single", or "interleaved",
         "file_fwd": path_to_file,
+        "file_name": name of the reads,
         "file_rev": path_to_file, only if paired end,
         "object_ref": reads reference for downstream convenience.
     }

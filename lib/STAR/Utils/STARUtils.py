@@ -710,7 +710,7 @@ class STARUtil:
             if ret_fwd is not None:
                 print("Done fetching FASTA file with name = {}".format(ret_fwd))
                 rdsFiles.append(ret_fwd)
-                rdsName = rds['file_name']
+                rdsName = rds['file_name'].split('.')[0]
                 if rds.get('file_rev', None) is not None:
                     rdsFiles.append(rds['file_rev'])
 
@@ -737,7 +737,7 @@ class STARUtil:
         }
 
         #report_out = self._generate_extended_report(alignment_set, input_params, star_out_dirs)
-        report_out = self._generate_report(alignment_set, input_params, star_out_dirs)
+        report_out = self._generate_report(alignment_set, input_params)
         returnVal.update(report_out)
 
         return returnVal
