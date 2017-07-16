@@ -3,8 +3,9 @@
     "authors": [
         "qzhang"
     ],
-    "contact": "https://kbase.us/contact-us/",
-    "categories": ["active"],
+    "contact": "help@kbase.us",
+    "visible" : true,
+    "categories": ["active","expression","sequence"],
     "widgets": {
         "input": null,
         "output": "no-display"
@@ -37,7 +38,7 @@
         "default_values": [""],
         "field_type": "text",
         "text_options": {
-        "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment" ],
+            "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment" ],
             "is_output_name": true
         }
     }, {
