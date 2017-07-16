@@ -351,9 +351,10 @@ class STARUtil:
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
         self._mkdir_p(outdir)
         self.STAR_output = outdir
-        outdir = os.path.join(self.STAR_output, rds_name)
-        self._mkdir_p(outdir)
-        print '\nSTAR output directory created: ' + outdir
+        if rds_name:
+            outdir = os.path.join(self.STAR_output, rds_name)
+            self._mkdir_p(outdir)
+            print '\nSTAR output directory created: ' + outdir
 
         # build the parameters
         params_idx = {
@@ -709,9 +710,9 @@ class STARUtil:
             if ret_fwd is not None:
                 print("Done fetching FASTA file with name = {}".format(ret_fwd))
                 rdsFiles.append(ret_fwd)
+                rdsName = rds['file_name']
                 if rds.get('file_rev', None) is not None:
                     rdsFiles.append(rds['file_rev'])
-                    rdsName = rds['file_name']
 
             star_ret = self._exec_star(params, rdsFiles, rdsName)
             if not isinstance(star_ret, int):
@@ -722,7 +723,7 @@ class STARUtil:
                 else:
                     alignment_file = "Aligned.out.sam"
 
-                alignment_file = os.path.join(star_ret['STAR_output'], alignment_file)
+                alignment_file = os.path.join(star_ret['star_output'], alignment_file)
 
                 # Upload the alignment
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
