@@ -36,9 +36,9 @@ module STAR {
         object
 
 	obj_ref assembly_or_genome_ref: KBase workspace reference Genome, ContigSet or Assembly to align reads against
-	obj_ref sampleset_ref: the workspace reference for the sampleset of reads to align, referring to 
-		either a SingleEnd/PairedEnd reads, or a SampleSet, or a ReadsSet input
-	string workspace_name: the workspace name provided by the narrative for housing output in KBase
+	obj_ref readsset_ref: the workspace reference for the set of reads to align, referring to 
+		either a SingleEnd/PairedEnd reads, or a ReadsSet input
+	string output_workspace - name or id of the WS to save the results to, provided by the narrative for housing output in KBase
 	string output_name - name of the output ReadsAlignment or ReadsAlignmentSet object
         int runThreadN - the number of threads for STAR to use (default to 2)	
 	string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
@@ -69,9 +69,9 @@ module STAR {
 	@optional outFileNamePrefix
     */
     typedef structure {
-        obj_ref sampleset_ref;
+        obj_ref readsset_ref;
         obj_ref assembly_or_genome_ref;
-        string workspace_name;
+        string output_workspace;
         int runThreadN;
 	string output_name;
    

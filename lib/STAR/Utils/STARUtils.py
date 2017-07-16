@@ -353,7 +353,7 @@ class STARUtil:
 
         return exitCode
 
-    def _exec_star(self, params, rds_files):
+    def _exec_star(self, params, rds_files, rds_name):
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -362,9 +362,8 @@ class STARUtil:
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
-        outdir = os.path.join(outdir, rds_files.get('file_name', None))
+        outdir = os.path.join(outdir, rds_name)
         self._mkdir_p(outdir)
-        #self.STAR_output = outdir
 
         params_mp = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -707,15 +706,16 @@ class STARUtil:
         alignement_set = list()
         for rds in readsInfo:
             rdsFiles = list()
+            rdsName = ''
             ret_fwd = rds.get("file_fwd", None)
             if ret_fwd is not None:
                 print("Done fetching FASTA file with name = {}".format(ret_fwd))
                 rdsFiles.append(ret_fwd)
-                rdsFiles.append(rds['file_name'])
-                if rds.get("file_rev", None) is not None:
-                    rdsFiles.append(rds["file_rev"])
+                if rds.get('file_rev', None) is not None:
+                    rdsFiles.append(rds['file_rev'])
+                    rdsName = rds['file_name']
 
-            star_ret = self._exec_star(params, rdsFiles)
+            star_ret = self._exec_star(params, rdsFiles, rdsName)
             if not isinstance(star_ret, int):
                 #print("Uploading STAR output object...")
                 if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
