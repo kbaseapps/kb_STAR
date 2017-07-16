@@ -88,6 +88,11 @@ class STARUtil:
         """
         log('Start validating run_star parameters')
 
+        # STEP 0: creating the directories for STAR
+        idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
+        self._mkdir_p(idxdir)
+        self.STAR_idx = idxdir
+
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
         if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
@@ -328,11 +333,12 @@ class STARUtil:
 
     def _exec_indexing(self, params):
         log('Running STAR index generating with params:\n' + pformat(params))
+
         idx_cmd = self._construct_indexing_cmd(params)
 
         exitCode = self.star_runner.run(idx_cmd, self.scratch)
 
-        #p = subprocess.Popen(STAR_cmd, cwd=self.scratch, shell=False)
+        #p = subprocess.Popen(idx_cmd, cwd=self.scratch, shell=False)
         #retcode = p.wait()
 
         #log('Return code: ' + str(retcode))
@@ -343,9 +349,12 @@ class STARUtil:
 
     def _exec_mapping(self, params):
         log('Running STAR mapping with params:\n' + pformat(params))
+
         mp_cmd = self._construct_mapping_cmd(params)
-        exitCode = self.star_runner(mp_cmd)
-        #p = subprocess.Popen(STAR_cmd, cwd=self.scratch, shell=False)
+
+        exitCode = self.star_runner.run(mp_cmd, self.scratch)
+
+        #p = subprocess.Popen(mp_cmd, cwd=self.scratch, shell=False)
         #retcode = p.wait()
         #log('Return code: ' + str(p.returncode))
         #if p.returncode != 0:
@@ -354,6 +363,10 @@ class STARUtil:
         return exitCode
 
     def _exec_star(self, params, rds_files, rds_name):
+        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
+        self._mkdir_p(outdir)
+
+        self.STAR_output = outdir
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -686,14 +699,6 @@ class STARUtil:
         """
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
-
-        # STEP 0: creating the directories for STAR
-        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
-        self._mkdir_p(outdir)
-        idxdir = os.path.join(self.scratch, self.STAR_IDX_DIR)
-        self._mkdir_p(idxdir)
-        self.STAR_output = outdir
-        self.STAR_idx = idxdir
 
 	# STEP 1: preprocessing the input parameters
         input_params = self._process_params(input_params)
