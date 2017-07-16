@@ -21,6 +21,8 @@ from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from KBParallel.KBParallelClient import KBParallel
 
 from file_util import (
+    valid_string,
+    check_reference,
     fetch_fasta_from_object,
     fetch_reads_refs_from_sampleset,
     fetch_reads_from_reference
@@ -96,7 +98,7 @@ class STARUtil:
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
         if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
-                not self.valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
+                not valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
             raise ValueError("Parameter alignment output_name must be a valid Workspace object string, "
 
                       "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
@@ -126,24 +128,6 @@ class STARUtil:
                 raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
         return self._setDefaultParameters(params)
-
-    def valid_string(self, s, is_ref=False):
-        is_valid = isinstance(s, basestring) and len(s.strip()) > 0
-        if is_valid and is_ref:
-            is_valid = check_reference(s)
-        return is_valid
-
-    def check_reference(self, ref):
-        """
-        Tests the given ref string to make sure it conforms to the expected
-        object reference format. Returns True if it passes, False otherwise.
-        """
-        obj_ref_regex = re.compile("^(?P<wsid>\d+)\/(?P<objid>\d+)(\/(?P<ver>\d+))?$")
-        ref_path = ref.strip().split(";")
-        for step in ref_path:
-            if not obj_ref_regex.match(step):
-                return False
-        return True
 
     def _setDefaultParameters(self, params):
         """set default for this group of parameters
@@ -363,11 +347,14 @@ class STARUtil:
         return exitCode
 
     def _exec_star(self, params, rds_files, rds_name):
+        # create the output directory
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
         self._mkdir_p(outdir)
         self.STAR_output = outdir
         outdir = os.path.join(self.STAR_output, rds_name)
         self._mkdir_p(outdir)
+        print '\nSTAR output directory created: ' + outdir
+
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -528,10 +515,12 @@ class STARUtil:
         log('Generating summary report...')
 
         created_objects = list()
-        created_objects.append({
-            "ref": obj_ref,
-            "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
-        })
+        for oref in obj_refs:
+            created_objects.append({
+                "ref": oref,
+                "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+            })
+
         t0 = time.clock()
 	index_files = self._get_output_file_list(self.STAR_IDX_DIR, star_ret['STAR_idx'])
         t1 = time.clock()
@@ -542,11 +531,11 @@ class STARUtil:
 
         report_params = {
               'message': 'Created one alignment from the given sample set.',
-              self.PARAM_IN_WS: params.get('workspace_name'),
+              'workspace_name': params[self.PARAM_IN_WS],
               'objects_created': created_objects,
               'file_links': index_files + output_files,
               'direct_html_link_index': 0,
-              'html_window_height': 0,#366,
+              'html_window_height': 366,
               'summary_window_height': 0,#366,
               'report_object_name': 'kb_star_report_' + str(uuid.uuid4())
 	}
@@ -558,22 +547,23 @@ class STARUtil:
         pprint( "Creating report used {} seconds ".format(t3-t2))
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def _generate_report(self, obj_ref, params):
+    def _generate_report(self, obj_refs, params):
         """
         Creates a brief STAR report.
         """
         print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
         report_client = KBaseReport(self.callback_url, token=self.token)
-        report_text = None
-        created_objects = list()
-        created_objects.append({
-            "ref": obj_ref,
-            "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
-        })
 
-        report_text = "Created one alignment from the given sample set."
+        created_objects = list()
+        for oref in obj_refs:
+            created_objects.append({
+                "ref": oref,
+                "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+            })
+
+        report_text = "Created one alignment set from the given reads set."
         report_info = report_client.create({
-            self.PARAM_IN_WS: params[self.PARAM_IN_WS],
+            'workspace_name': params[self.PARAM_IN_WS],
             "report": {
                 "objects_created": created_objects,
                 "text_message": report_text
@@ -740,9 +730,8 @@ class STARUtil:
                 'alignment_set': alignment_set
         }
 
-        #report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
+        #report_out = self._generate_extended_report(alignment_set, input_params, star_ret)
         report_out = self._generate_report(alignment_set, input_params)
-
         returnVal.update(report_out)
 
         return returnVal
