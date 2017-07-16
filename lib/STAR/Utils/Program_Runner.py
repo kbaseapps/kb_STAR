@@ -15,12 +15,12 @@ class Program_Runner:
         if not cwd_dir:
           cwd_dir = self.scratch_dir
 
-        print('Running: ' + ' '.join(cmmd))
+        print('\nRunning: ' + ' '.join(cmmd))
         p = subprocess.Popen(cmmd, cwd=cwd_dir, shell=False)
         exitCode = p.wait()
 
         if (exitCode == 0):
-            print(' '.join(cmmd) + ' was executed successfully, exit code was: ' + str(exitCode))
+            print('\n' + ' '.join(cmmd) + ' was executed successfully, exit code was: ' + str(exitCode))
         else:
             raise ValueError('Error running command: ' + ' '.join(cmmd) + '\n' +
                              'Exit Code: ' + str(exitCode))
