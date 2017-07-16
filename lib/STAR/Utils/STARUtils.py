@@ -184,7 +184,7 @@ class STARUtil:
 
     def _construct_indexing_cmd(self, params):
 	# STEP 1: construct the command for running `STAR --runMode genomeGenerate...`
-        idx_cmd = [] #[self.STAR_BIN]
+        idx_cmd = [self.STAR_BIN]
 	idx_cmd.append('--genomeDir')
 	idx_cmd.append(params[self.STAR_IDX_DIR])
 	idx_cmd.append('--' + self.PARAM_IN_STARMODE)
@@ -224,7 +224,7 @@ class STARUtil:
             star_out_dir = params[self.STAR_OUT_DIR]
 
         # STEP 2: construct the command for running STAR mapping
-        mp_cmd = [] #[self.STAR_BIN]
+        mp_cmd = [self.STAR_BIN]
 	mp_cmd.append('--genomeDir')
 	mp_cmd.append(params[self.STAR_IDX_DIR])
 	mp_cmd.append('--' + self.PARAM_IN_STARMODE)
@@ -365,8 +365,9 @@ class STARUtil:
     def _exec_star(self, params, rds_files, rds_name):
         outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
         self._mkdir_p(outdir)
-
         self.STAR_output = outdir
+        outdir = os.path.join(self.STAR_output, rds_name)
+        self._mkdir_p(outdir)
         # build the parameters
         params_idx = {
                 'runMode': params[self.PARAM_IN_STARMODE],
@@ -374,9 +375,6 @@ class STARUtil:
 		self.STAR_IDX_DIR: self.STAR_idx,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
-        outdir = os.path.join(self.scratch, self.STAR_OUT_DIR)
-        outdir = os.path.join(outdir, rds_name)
-        self._mkdir_p(outdir)
 
         params_mp = {
                 'runMode': params[self.PARAM_IN_STARMODE],

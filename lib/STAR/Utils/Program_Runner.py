@@ -8,22 +8,21 @@ class Program_Runner:
         self.scratch_dir = scratch_dir
         self.executableName = cmd
 
-    def run(self, command, cwd=None):
+    def run(self, command, cwd_dir=None):
         ''' options is an array of command-line parameters passed to the RQCFilter App '''
-        cmmd = ' '.join(command)
-        cmmd = self.executableName + ' ' + cmmd
+        cmmd = command
 
-        if not cwd:
-          cwd = self.scratch_dir
+        if not cwd_dir:
+          cwd_dir = self.scratch_dir
 
-        print('Running: ' + cmmd)
-        p = subprocess.Popen(cmmd, cwd=cwd, shell=False)
+        print('Running: ' + ' '.join(cmmd))
+        p = subprocess.Popen(cmmd, cwd=cwd_dir, shell=False)
         exitCode = p.wait()
 
         if (exitCode == 0):
-            print(cmmd + ' was executed successfully, exit code was: ' + str(exitCode))
+            print(' '.join(cmmd) + ' was executed successfully, exit code was: ' + str(exitCode))
         else:
-            raise ValueError('Error running command: ' + cmmd + '\n' +
+            raise ValueError('Error running command: ' + ' '.join(cmmd) + '\n' +
                              'Exit Code: ' + str(exitCode))
 
         return exitCode
