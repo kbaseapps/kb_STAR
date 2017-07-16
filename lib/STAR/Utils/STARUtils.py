@@ -474,7 +474,7 @@ class STARUtil:
             aligner_opts[k] = str(input_params[k])
         pprint(reads_info)
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params['output_workspace'], input_params[self.PARAM_IN_OUTPUT_NAME]),
+            "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], input_params[self.PARAM_IN_OUTPUT_NAME]),
             "file_path": alignment_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
@@ -542,7 +542,7 @@ class STARUtil:
 
         report_params = {
               'message': 'Created one alignment from the given sample set.',
-              'output_workspace': params.get('workspace_name'),
+              self.PARAM_IN_WS: params.get('workspace_name'),
               'objects_created': created_objects,
               'file_links': index_files + output_files,
               'direct_html_link_index': 0,
@@ -572,7 +572,7 @@ class STARUtil:
 
         report_text = "Created one alignment from the given sample set."
         report_info = report_client.create({
-            "output_workspace": params[self.PARAM_IN_WS],
+            self.PARAM_IN_WS: params[self.PARAM_IN_WS],
             "report": {
                 "objects_created": created_objects,
                 "text_message": report_text
@@ -739,7 +739,7 @@ class STARUtil:
                 'alignment_set': alignment_set
         }
 
-        #print("Creating STAR output report...")
+        print("Creating STAR output report...in workspace " + input_params[self.PARAM_IN_WS])
         #report_out = self._generate_extended_report(alignment_ref, input_params, star_ret)
         report_out = self._generate_report(alignment_set, input_params)
 
