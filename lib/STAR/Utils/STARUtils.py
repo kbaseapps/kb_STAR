@@ -240,7 +240,7 @@ class STARUtil:
 
         # STEP 3: appending the advanced optional inputs
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir + '/'
+            params[self.PARAM_IN_OUTFILE_PREFIX] = star_out_dir + '/star_'
         else:
             params[self.PARAM_IN_OUTFILE_PREFIX] = os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX])
         mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
