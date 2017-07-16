@@ -728,7 +728,7 @@ class STARUtil:
                 else:
                     alignment_file = "Aligned.out.sam"
 
-                alignment_file = os.path.join(star_ret['STAR_output'], rdsName + '/' + alignment_file)
+                alignment_file = os.path.join(star_ret['STAR_output'], alignment_file)
 
                 # Upload the alignment
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
