@@ -461,7 +461,7 @@ class STARUtil:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                ret = {'STAR_idx': self.STAR_idx, 'STAR_output': self.STAR_output}
+                ret = {'STAR_idx': self.STAR_idx, 'STAR_output': outdir}
         return ret
 
     def upload_STARalignment(self, input_params, reads_info, alignment_file):
