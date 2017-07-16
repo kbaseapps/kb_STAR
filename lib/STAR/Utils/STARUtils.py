@@ -697,7 +697,7 @@ class STARUtil:
             if not isinstance(star_ret, int):
                 #print("Uploading STAR output object...")
                 if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-                    prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+                    prefix = format(params[self.PARAM_IN_OUTFILE_PREFIX])
                     alignment_file = "{}Aligned.out.sam".format(prefix)
                 else:
                     alignment_file = "Aligned.out.sam"
