@@ -330,7 +330,7 @@ class STARUtil:
         log('Running STAR index generating with params:\n' + pformat(params))
         idx_cmd = self._construct_indexing_cmd(params)
 
-        exitCode = self.star_runner(idx_cmd)
+        exitCode = self.star_runner.run(idx_cmd, self.scratch)
 
         #p = subprocess.Popen(STAR_cmd, cwd=self.scratch, shell=False)
         #retcode = p.wait()
