@@ -731,7 +731,7 @@ class STARUtil:
 
                 # Upload the alignment
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
-                alignmentset.append(alignment_ref)
+                alignment_set.append(alignment_ref)
 
 	# STEP 3: Generating report
         returnVal = {
