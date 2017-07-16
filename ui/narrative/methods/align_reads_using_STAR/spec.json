@@ -194,7 +194,11 @@
                 },
                 {
                     "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
+                    "target_property": "output_workspace"
+                },
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "workspace"
                 }
             ]
         }
