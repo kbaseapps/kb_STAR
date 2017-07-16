@@ -141,7 +141,7 @@
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",
-                    "target_property": "workspace_name"
+                    "target_property": "output_workspace"
                 }, {
                     "constant_value"  : 2,
                     "target_property" : "runThreadN"
@@ -194,7 +194,7 @@
                 },
                 {
                     "narrative_system_variable": "workspace",
-                    "target_property": "output_workspace"
+                    "target_property": "workspace_name"
                 },
                 {
                     "narrative_system_variable": "workspace",
