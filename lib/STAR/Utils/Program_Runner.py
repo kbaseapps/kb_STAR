@@ -11,11 +11,11 @@ class Program_Runner:
 
     def run(self, command, cwd=None):
         ''' options is an array of command-line parameters passed to the RQCFilter App '''
-        command = [os.path.join(self.executableName, command)]
+        command = ' '.join(command)
+        print('In working directory: ' + command)
+        print('Running: ' + command)
 
-        print('In working directory: ' + ' '.join(command))
-        print('Running: ' + ' '.join(command))
-
+        command = os.path.join(self.executableName, command)
 
         if not cwd:
           cwd = self.scratch_dir
@@ -26,7 +26,7 @@ class Program_Runner:
         if (exitCode == 0):
             print(command + ' was executed successfully, exit code was: ' + str(exitCode))
         else:
-            raise ValueError('Error running command: ' + ' '.join(command) + '\n' +
+            raise ValueError('Error running command: ' + command + '\n' +
                              'Exit Code: ' + str(exitCode))
 
         return exitCode
