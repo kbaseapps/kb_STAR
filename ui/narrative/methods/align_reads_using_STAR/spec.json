@@ -42,6 +42,13 @@
             "is_output_name" : true
         }
     }, {
+        "id": "reads_condition",
+        "optional" : true,
+        "advanced": false,
+        "allow_multiple": false,
+        "default_values": [ "unspecified" ],
+        "field_type": "text"
+    }, {
         "id": "quantMode",
         "optional": true,
         "advanced": true,
@@ -180,6 +187,9 @@
                 }, {
                     "input_parameter": "alignMatesGapMax",
                     "target_property": "alignMatesGapMax"
+                }, {
+                    "input_parameter" : "reads_condition",
+                    "target_property" : "condition"
                 }
             ],
             "output_mapping": [
