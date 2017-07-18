@@ -84,7 +84,13 @@ parameters :
             Max genomic distance between mates
         short-hint : |
             Maximum genomic distance between mates
-
+    reads_condition :
+        ui-name : |
+            RNA-seq reads condition
+        short-hint : |
+            Set the condition for the reads input. Ignored for sets of reads, required for singletons.
+        long-hint : |
+            Set the condition associated with the input reads object. This is required for a single sample, but ignored for sets of samples, since that is included in the set.
             
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
