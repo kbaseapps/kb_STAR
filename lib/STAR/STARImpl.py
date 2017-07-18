@@ -260,12 +260,15 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         star_runner = STARUtil(self.config)
 
         # 1. process the input parameters
-        params = star_runner._process_params(params)
+        validated_params = star_runner.process_params(params)
+        input_info = star_runner.determine_input_info(validated_params)
 
 	# 2. convert the input parameters (from refs to file paths, especially)
-        params_ret = star_runner._convert_params(params)
+        params_ret = star_runner.convert_params(validated_params)
         input_params = params_ret.get('input_parameters', None)
-        readsInfo = params_ret.get('reads_info', None)
+        reads = params_ret.get('reads', None)
+        readsRefs = reads.get('readsRefs', None)
+        readsInfo = reads.get('readsInfo', None)
 
         # 3. Run STAR with index and reads.
         alignments = dict()
@@ -276,18 +279,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #  1. make a list of tasks to send to KBParallel.
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
-        if len(readsInfo) == 1:
-            (alignments, output_ref) = star_runner.run_single(readsInfo[0], input_params)
-        else:
-            (alignments, output_ref) = star_runner.run_batch(readsInfo, input_params)
-
-        if params.get("create_report", 0) == 1:
-            report_info = star_runner._generate_report(alignments, input_params)
-            returnVal["report_ref"] = report_info["ref"]
-            returnVal["report_name"] = report_info["name"]
-        returnVal["alignment_objs"] = alignments
-        returnVal["alignment_ref"] = output_ref
-        returnVal["alignment_name"] = input_params["output_name"]
+        if input_info['run_mode'] == 'single_library':
+            returnVal = star_runner.run_single(readsInfo[0], input_params)
+        elif input_info['run_mode'] == 'sample_set':
+            returnVal = star_runner.run_batch(readsRefs, input_params)
 
         #END run_star
 

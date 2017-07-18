@@ -2,6 +2,7 @@ import time
 import json
 import os
 import re
+import copy
 import uuid
 import errno
 import subprocess
@@ -19,6 +20,7 @@ from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from KBParallel.KBParallelClient import KBParallel
+#from kb_QualiMap.kb_QualiMapClient import kb_QualiMap
 
 from file_util import (
     valid_string,
@@ -83,9 +85,9 @@ class STARUtil:
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-    def _process_params(self, params):
+    def process_params(self, params):
         """
-        _process_params:
+        process_params:
                 checks params passed to run_star method and set default values
         """
         log('Start validating run_star parameters')
@@ -573,12 +575,13 @@ class STARUtil:
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
-    def _get_reads_info(self, readsset_ref):
+    def get_reads(self, params):
         reads_refs = list()
+        readsset_ref = params[self.PARAM_IN_READS]
 	if readsset_ref is not None:
             try:
 		print("Fetching reads ref(s) from sampleset ref {}".format(readsset_ref))
-		reads_refs = fetch_reads_refs_from_sampleset(readsset_ref, self.workspace_url, self.callback_url)
+		reads_refs = fetch_reads_refs_from_sampleset(readsset_ref, self.workspace_url, self.callback_url, params)
 		print("Done fetching reads ref(s)!")
             except ValueError:
 		print("Incorrect object type for fetching reads ref(s)!")
@@ -599,9 +602,11 @@ class STARUtil:
                 if source_reads.get("condition", None) is not None:
                     ret_reads["condition"] = source_reads["condition"]
                 else:
-                    ret_reads["condition"] = None
+                    ret_reads["condition"] = 'unspecified'
                 reads_info.append(ret_reads)
-        return reads_info
+
+        return {'readsRefs': reads_refs, 'readsInfo': reads_info}
+
 
     def _get_genome_fasta(self, genome_ref):
         genome_fasta_files = list()
@@ -620,18 +625,19 @@ class STARUtil:
 		genome_fasta_files.append(genome_fasta_file["path"])
         return genome_fasta_files
 
-    def _convert_params(self, input_params):
+    def convert_params(self, input_params):
         """
         Convert input parameters with KBase ref format into STAR parameters,
         and add the advanced options.
         """
 	params = {
+            'output_workspace': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
             'runThreadN': input_params[self.PARAM_IN_THREADN]
 	}
 
 	# STEP 1: Converting refs to file locations in the scratch area
-        readsInfo = self._get_reads_info(input_params[self.PARAM_IN_READS])
+        reads = self.get_reads(input_params)
 
         params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(input_params[self.PARAM_IN_GENOME])
 
@@ -679,7 +685,7 @@ class STARUtil:
         if input_params.get('alignMatesGapMax', None) is not None:
             params['alignMatesGapMax'] = input_params['alignMatesGapMax']
 
-        return {'input_parameters':params, 'reads_info': readsInfo}
+        return {'input_parameters': params, 'reads': reads}
 
     def _build_star_index(self, params):
         """
@@ -719,7 +725,7 @@ class STARUtil:
         return ret
 
 
-    def _run_star_mapping(self, params, rds_files, rds_name):
+    def run_star_mapping(self, params, rds_files, rds_name):
         """
         Runs STAR in alignReads mode for STAR mapping.
         It creates a directory as defined by self.STAR_OUT_DIR with a subfolder named after the reads
@@ -842,7 +848,7 @@ class STARUtil:
                     rds_files.append(rds['file_rev'])
 
             # 3. Finally all set, do the alignment and upload the output.
-            star_mp_ret = self._run_star_mapping(input_params, rds_files, rds_name)
+            star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
             if not isinstance(star_mp_ret, int):
                 #print("Uploading STAR output object...")
                 if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
@@ -861,74 +867,142 @@ class STARUtil:
                     "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
                 }
 
-        return (alignments, alignment_ref)
+        if input_params.get("create_report", 0) == 1:
+            report_info = self._generate_report(alignments, input_params)
+            returnVal["report_ref"] = report_info["ref"]
+            returnVal["report_name"] = report_info["name"]
+        returnVal["alignment_objs"] = alignments
+        returnVal["alignment_ref"] = alignment_ref
+        returnVal["alignment_name"] = input_params["output_name"]
 
-    def run_batch(self, reads_infos, input_params):
+        return returnVal
+
+
+    def run_batch(self, reads_refs, input_params):
         base_output_obj_name = input_params[self.PARAM_IN_OUTPUT_NAME]
         # build task list and send it to KBParallel
-        tasks = list()
-        for idx, rds_info in enumerate(reads_infos):
-            single_param = dict(input_params)  # need a copy of the params
-            single_param[self.PARAM_IN_OUTPUT_NAME] = "{}_{}".format(base_output_obj_name, idx)
-            single_param["create_report"] = 0
-            single_param[self.PARAM_IN_READS] = rds_info["object_ref"]
-            if "condition" in rds_info:
-                single_param["condition"] = rds_info["condition"]
+        tasks = []
+        for r in reads_refs:
+            tasks.append(self.build_single_execution_task(r['ref'], input_params, r['alignment_output_name']))
+
+        batch_run_params = {'tasks': tasks,
+                            'runner': 'parallel',
+                            'max_retries': 2}
+
+        if input_params['concurrent_local_tasks'] is not None:
+                batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
+        if input_params['concurrent_njsw_tasks'] is not None:
+                batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
+
+        results = self.parallel_runner.run_batch(batch_run_params)
+        print('Batch run results=')
+        pprint(results)
+
+        batch_result = self.process_batch_result(results, input_params, reads)
+
+        return batch_result
+
+    def build_single_execution_task(self, rds_ref, params, output_name):
+        task_params = copy.deepcopy(params)
+
+        task_params['readsset_ref'] = rds_ref
+        task_params['output_name'] = output_name
+        task_params['create_report'] = 0
+
+        return {'module_name': 'kb_STAR',
+                'function_name': 'run_star',
+                'version': 'dev',
+                'parameters': task_params}
+
+
+    def process_batch_result(self, batch_result, validated_params, reads):
+
+        n_jobs = len(batch_result['results'])
+        n_success = 0
+        n_error = 0
+        ran_locally = 0
+        ran_njsw = 0
+
+        # reads alignment set items
+        items = []
+        objects_created = []
+
+        for k in range(0, len(batch_result['results'])):
+            job = batch_result['results'][k]
+            result_package = job['result_package']
+            if job['is_error']:
+                n_error += 1
             else:
-                single_param["condition"] = "unspecified"
+                n_success += 1
+                output_info = result_package['result'][0]['output_info']
+                ra_ref = output_info['upload_results']['obj_ref']
+                # Note: could add a label to the alignment here?
+                items.append({'ref': ra_ref, 'label': reads[k]['condition']})
+                objects_created.append({'ref': ra_ref})
 
-            tasks.append({
-                "module_name": "kb_STAR",
-                "function_name": "run_star",
-                "version": "dev",
-                "parameters": single_param
-            })
+            if result_package['run_context']['location'] == 'local':
+                ran_locally += 1
+            if result_package['run_context']['location'] == 'njsw':
+                ran_njsw += 1
 
-        batch_run_params = {
-            "tasks": tasks,
-            "runner": "parallel",
-            "concurrent_local_tasks": 3,
-            "concurrent_njsw_tasks": 0,
-            "max_retries": 2
-        }
-        parallel_runner = KBParallel(self.callback_url)
-        results = parallel_runner.run_batch(batch_run_params)["results"]
-        alignment_items = list()
-        alignments = dict()
-        for idx, result in enumerate(results):
-            # idx of the result is the same as the idx of the inputs AND reads_infos
-            if result["is_error"] != 0:
-                raise RuntimeError("Failed a parallel run of STAR! {}".format(result["result_package"]["error"]))
-            reads_ref = tasks[idx]["parameters"][self.PARAM_IN_READS]
-            alignment_items.append({
-                "ref": result["result_package"]["result"][0]["alignment_ref"],
-                "label": reads_infos[idx].get(
-                    "condition",
-                    input_params.get("condition",
-                               "unspecified condition"))
-            })
-            alignments[reads_ref] = {
-                "ref": result["result_package"]["result"][0]["alignment_ref"],
-                "name": tasks[idx]["parameters"][self.PARAM_IN_OUTPUT_NAME]
-            }
-        # build the final alignment set
-        alignment_ref = self.upload_alignment_set(
-            alignment_items, base_output_obj_name, input_params[self.PARAM_IN_WS]
-        )
-        return (alignments, alignment_ref)
+        # Save the alignment set
+        alignment_set_data = {'description': '', 'items': items}
+        alignment_set_save_params = {'data': alignment_set_data,
+                                     'workspace': validated_params['output_workspace'],
+                                     'output_object_name': validated_params['output_name']}
+
+        set_api = SetAPI(self.srv_wiz_url)
+        save_result = set_api.save_reads_alignment_set_v1(alignment_set_save_params)
+        print('Saved ReadsAlignment=')
+        pprint(save_result)
+        objects_created.append({'ref': save_result['set_ref'], 'description': 'Set of all reads alignments generated'})
+        set_name = save_result['set_info'][1]
+
+        # run qualimap
+        #qualimap_report = self.qualimap.run_bamqc({'readsset_ref': save_result['set_ref']})
+        #qc_result_zip_info = qualimap_report['qc_result_zip_info']
+
+        # create the report
+        report_text = 'Ran on SampleSet or ReadsSet.\n\n'
+        report_text = 'Created ReadsAlignmentSet: ' + str(set_name) + '\n\n'
+        report_text += 'Total ReadsLibraries = ' + str(n_jobs) + '\n'
+        report_text += '        Successful runs = ' + str(n_success) + '\n'
+        report_text += '            Failed runs = ' + str(n_error) + '\n'
+        report_text += '       Ran on main node = ' + str(ran_locally) + '\n'
+        report_text += '   Ran on remote worker = ' + str(ran_njsw) + '\n\n'
+
+        print('Report text=')
+        print(report_text)
+
+        kbr = KBaseReport(self.callback_url)
+        report_info = kbr.create_extended_report({'message': report_text,
+                                                  'objects_created': objects_created,
+                                                  'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
+                                                  'direct_html_link_index': 0,
+                                                  'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
+                                                                  'name': qc_result_zip_info['index_html_file_name'],
+                                                                  'label': qc_result_zip_info['name']}],
+                                                  'workspace_name': validated_params['output_workspace']
+                                                  })
+
+        result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
+        result['batch_output_info'] = batch_result
+
+        return result
 
 
-    def run_star(self, input_params):
+    def run_star_sequential(self, input_params):
         """
-        run_single: run the STAR app 
+        run_star_sequential: run the STAR app on each reads one by one
         """
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
 	# STEP 1: convert the input parameters (from refs to file paths, especially)
-        params_ret = self._convert_params(input_params)
+        params_ret = self.convert_params(input_params)
         params = params_ret.get('input_parameters', None)
-        readsInfo = params_ret.get('reads_info', None)
+        reads = params_ret.get('reads', None)
+        readsInfo = reads.get('readsInfo', None)
 
 	# STEP 2: Running star
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
@@ -976,3 +1050,23 @@ class STARUtil:
 
         return returnVal
 
+
+    def determine_input_info(self, validated_params):
+        ''' get info on the readsset_ref object and determine if we run once or run on a set '''
+        info = self.get_obj_info(validated_params['readsset_ref'])
+        obj_type = self.get_type_from_obj_info(info)
+        if obj_type in ['KBaseAssembly.PairedEndLibrary', 'KBaseAssembly.SingleEndLibrary',
+                        'KBaseFile.PairedEndLibrary', 'KBaseFile.SingleEndLibrary']:
+            return {'run_mode': 'single_library', 'info': info, 'ref': validated_params['readsset_ref']}
+        if obj_type == 'KBaseRNASeq.RNASeqSampleSet':
+            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params['readsset_ref']}
+        if obj_type == 'KBaseSets.ReadsSet':
+            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params['readsset_ref']}
+
+        raise ValueError('Object type of readsset_ref is not valid, was: ' + str(obj_type))
+
+    def get_type_from_obj_info(self, info):
+        return info[2].split('-')[0]
+
+    def get_obj_info(self, ref):
+        return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos'][0]

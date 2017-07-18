@@ -75,7 +75,7 @@ def fetch_fasta_from_object(ref, ws_url, callback_url):
         raise ValueError("Unable to fetch a FASTA file from an object of type {}".format(obj_type))
 
 
-def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url):
+def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
     """
     From the given object ref, return a list of all reads objects that are a part of that
     object. E.g., if ref is a ReadsSet, return a list of all PairedEndLibrary or SingleEndLibrary
@@ -91,6 +91,7 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url):
     """
     obj_type = get_object_type(ref, ws_url)
     refs = list()
+    refs_for_ws_info = list()
     if "KBaseSets.ReadsSet" in obj_type:
         print("Looking up reads references in ReadsSet object")
         set_client = SetAPI(callback_url)
@@ -103,6 +104,7 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url):
                 "ref": reads["ref"],
                 "condition": reads["label"]
             })
+            refs_for_ws_info.append({'ref': reads['ref']})
     elif "KBaseRNASeq.RNASeqSampleSet" in obj_type:
         print("Looking up reads references in RNASeqSampleSet object")
         ws = Workspace(ws_url)
@@ -126,6 +128,28 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url):
     else:
         raise ValueError("Unable to fetch reads reference from object {} "
                          "which is a {}".format(ref, obj_type))
+
+    # get object info so we can name things properly
+    infos = self.ws.get_object_info3({'objects': refs_for_ws_info})['infos']
+
+    name_ext = '_alignment'
+    if 'output_alignment_filename_extension' in params \
+        and params['output_alignment_filename_extension'] is not None:
+        ext = params['output_alignment_filename_extension'].replace(' ', '')
+        if ext:
+            name_ext = ext
+
+    unique_name_lookup = {}
+    for k in range(0, len(refs)):
+        refs[k]['info'] = infos[k]
+        name = infos[k][1]
+        if name not in unique_name_lookup:
+            unique_name_lookup[name] = 1
+        else:
+            unique_name_lookup[name] += 1
+            name = name + '_' + str(unique_name_lookup[name])
+        name = name + name_ext
+        refs[k]['alignment_output_name'] = name
 
     return refs
 
