@@ -634,7 +634,7 @@ class STARUtil:
             'output_workspace': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
             'runThreadN': input_params[self.PARAM_IN_THREADN],
-            'output_name': params[self.PARAM_IN_OUTPUT_NAME]
+            'output_name': input_params[self.PARAM_IN_OUTPUT_NAME]
 	}
 
 	# STEP 1: Converting refs to file locations in the scratch area
@@ -688,7 +688,7 @@ class STARUtil:
 
         return {'input_parameters': params, 'reads': reads}
 
-    def _build_star_index(self, params):
+    def build_star_index(self, params):
         """
         Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
         It creates a directory as defined by self.STAR_IDX_DIR in the scratch area that houses the index files.
@@ -712,6 +712,7 @@ class STARUtil:
         if params.get('sjdbOverhang', None) is not None :
             params_idx['sjdbOverhang'] = params['sjdbOverhang']
 
+        ret = 1
         try:
             if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
                 ret = self._exec_indexing(params_idx)
@@ -824,7 +825,7 @@ class STARUtil:
         # 1. Get STAR index from genome.
         #    a. If it exists in cache, use that.
         #    b. Otherwise, build it
-        idx_ret = self._build_star_index(input_params)
+        idx_ret = 0 #self.build_star_index(input_params)
         alignments = dict()
         alignment_ref = None
 

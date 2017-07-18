@@ -63,6 +63,11 @@ class STARTest(unittest.TestCase):
         cls.callback_url = os.environ['SDK_CALLBACK_URL']
 
 
+    @classmethod
+    def make_ref(self, object_info):
+        return str(object_info[6]) + '/' + str(object_info[0]) + \
+            '/' + str(object_info[4])
+
 
     @classmethod
     def tearDownClass(cls):
@@ -119,6 +124,18 @@ class STARTest(unittest.TestCase):
         return reads_ref
 
 
+    def loadFasta2Assembly(self, filename):
+        fn, ext = os.path.splitext(filename)
+        fasta_path = os.path.join(self.scratch, filename)
+        shutil.copy(os.path.join('../testReads', filename), fasta_path)
+        au = AssemblyUtil(self.callback_url)
+        a_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
+                                                    'workspace_name': self.getWsName(),
+                                                    'assembly_name': fn
+                                                    })
+        return a_ref
+
+
     def load_fasta_file(self, filename, obj_name, contents):
         f = open(filename, 'w')
         f.write(contents)
@@ -146,23 +163,19 @@ class STARTest(unittest.TestCase):
         shutil.copy(reverse_data_file, reverse_file)
 
         ru = ReadsUtils(os.environ['SDK_CALLBACK_URL'])
-        paired_end_ref = ru.upload_reads({'fwd_file': forward_file, 'rev_file': reverse_file,
+        pe_reads_ref = ru.upload_reads({'fwd_file': forward_file, 'rev_file': reverse_file,
                                           'sequencing_tech': 'artificial reads',
                                           'interleaved': 0, 'wsname': self.getWsName(),
-                                          'name': 'test.pe.reads'})['obj_ref']
+                                          'name': 'test_pe_reads'})['obj_ref']
 
-        new_obj_info = self.wsClient.get_object_info_new({'objects': [{'ref': paired_end_ref}]})
+        self.__class__.pe_reads_ref = pe_reads_ref
+        print('Loaded PairedEndReads: ' + pe_reads_ref)
+        new_obj_info = self.wsClient.get_object_info_new({'objects': [{'ref': pe_reads_ref}]})
         self.__class__.pairedEndLibInfo = new_obj_info[0]
-        print ('paired reads uploaded:\n')
         pprint (pformat(new_obj_info))
-
         #return new_obj_info[0]
-        return paired_end_ref
+        return pe_reads_ref
 
-    @classmethod
-    def make_ref(self, object_info):
-        return str(object_info[6]) + '/' + str(object_info[0]) + \
-            '/' + str(object_info[4])
 
     def loadAssembly(self):
         if hasattr(self.__class__, 'assembly_ref'):
@@ -176,18 +189,38 @@ class STARTest(unittest.TestCase):
                                                     'assembly_name': 'star_test_assembly'
                                                     })
         self.__class__.assembly_ref = assembly_ref
+        print('Loaded Assembly: ' + assembly_ref)
         return assembly_ref
 
-    def loadFasta2Assembly(self, filename):
-        fn, ext = os.path.splitext(filename)
-        fasta_path = os.path.join(self.scratch, filename)
-        shutil.copy(os.path.join('../testReads', filename), fasta_path)
-        au = AssemblyUtil(self.callback_url)
-        a_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
-                                                    'workspace_name': self.getWsName(),
-                                                    'assembly_name': fn
-                                                    })
-        return a_ref
+
+    def loadSampleSet(self):
+        if hasattr(self.__class__, 'sample_set_ref'):
+            return self.__class__.sample_set_ref
+        #return '23735/4/1'
+        pe_reads_ref = self.loadPairedEndReads()
+        sample_set_name = 'TestSampleSet'
+        sample_set_data = {'Library_type': 'PairedEnd',
+                           'domain': "Prokaryotes",
+                           'num_samples': 3,
+                           'platform': None,
+                           'publication_id': None,
+                           'sample_ids': [pe_reads_ref, pe_reads_ref, pe_reads_ref],
+                           'sampleset_desc': None,
+                           'sampleset_id': sample_set_name,
+                           'condition': ['c1', 'c2', 'c3'],
+                           'source': None
+                           }
+
+        ss_obj = self.getWsClient().save_objects({'workspace': self.getWsName(),
+                                                  'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
+                                                               'data': sample_set_data,
+                                                               'name': sample_set_name,
+                                                               'provenance': [{}]
+                                                               }]
+                                                  })
+        ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
+        print('Loaded SampleSet: ' + ss_ref)
+        return ss_ref
 
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
@@ -198,30 +231,44 @@ class STARTest(unittest.TestCase):
         pe_lib_info = self.getPairedEndLibInfo()
         pprint(pe_lib_info)
 
+        assembly_ref = self.loadAssembly()
+        genome_ref = self.loadGenome()
+        se_lib_ref = self.loadSEReads()
+
         # STAR input parameters
-        params = {
-            'output_workspace': self.getWsName(),
-            'output_name': 'Aligned_reads',
-            #'outFileNamePrefix': 'STARtest_',
-            'assembly_or_genome_ref': self.loadGenome(),
-            'readsset_ref': self.loadSEReads(),
-            'runMode': 'genomeGenerate',
-            'runThreadN': 4
-            #'genomeFastaFile_refs': [self.loadAssembly()],
-            #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
+        params = {'readsset_ref': se_lib_ref,
+                  'genome_ref': genome_ref,
+                  'output_name': 'readsAlignment1',
+                  'output_workspace': self.getWsName(),
+                  'runMode': 'genomeGenerate',
+                  'concurrent_njsw_tasks': 0,
+                  'concurrent_local_tasks': 1
+                  #'genomeFastaFile_refs': [self.loadAssembly()],
+                  #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }
+        pprint(params)
+        res = self.getImpl().run_star(self.getContext(), params)[0]
+        pprint(res)
+        self.assertIn('report_info', res)
+        self.assertIn('report_name', res['report_info'])
+        self.assertIn('report_ref', res['report_info'])
 
-        result = self.getImpl().run_star(self.getContext(), params)
-        self.assertIn('output_folder', result[0])
+        ss_ref = self.loadSampleSet()
+        params = {'readsset_ref': ss_ref,
+                  'genome_ref': assembly_ref,
+                  'output_name': 'readsAlignment1',
+                  'output_workspace': self.getWsName(),
+                  'concurrent_njsw_tasks': 0,
+                  'concurrent_local_tasks': 1
+        }
+        pprint('Running with a SampleSet')
+        pprint(params)
+        res = self.getImpl().run_star(self.getContext(), params)[0]
+        pprint(res)
+        self.assertIn('report_info', res)
+        self.assertIn('report_name', res['report_info'])
+        self.assertIn('report_ref', res['report_info'])
 
-        if result[0].get('report_ref', None) is not None:
-            rep = self.ws.get_objects2({'objects': [{'ref': result[0]['report_ref']}]})['data'][0]
-            print('REPORT object:')
-            pprint(rep)
-            #self.assertEqual(rep['info'][1].rsplit('_', 1)[0], 'kb_star_report')
-            #self.assertEqual(rep['info'][2].split('-', 1)[0], 'KBaseReport.Report')
-        else:
-            print('STAR failed!')
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_index_map")

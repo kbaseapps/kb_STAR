@@ -270,7 +270,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsRefs = reads.get('readsRefs', None)
         readsInfo = reads.get('readsInfo', None)
 
-        # 3. Run STAR with index and reads.
+	# 3. generate the index from a reference genome
+        star_runner.build_star_index(input_params)
+
+        # 4. Run STAR with index and reads.
         # If there's only one, run it locally right now.
         # If there's more than one:
         #  1. make a list of tasks to send to KBParallel.
@@ -328,6 +331,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'result is not type dict as required.')
         # return the results
         return [result]
+
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
