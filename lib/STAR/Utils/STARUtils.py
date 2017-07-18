@@ -833,11 +833,11 @@ class STARUtil:
                 reads_info["condition"] = input_params["condition"]
 
             rds_files = list()
-            rdsName = ''
+            rds_name = ''
             ret_fwd = reads_info["file_fwd"]
             if ret_fwd is not None:
                 rds_files.append(ret_fwd)
-                rdsName = reads_info['file_name'].split('.')[0]
+                rds_name = reads_info['file_name'].split('.')[0]
                 if reads_info.get('file_rev', None) is not None:
                     rds_files.append(rds['file_rev'])
 
