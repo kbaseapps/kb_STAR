@@ -21,7 +21,7 @@
             "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet","KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"]
         }
     }, {
-        "id" : "assembly_or_genome_ref",
+        "id" : "genome_ref",
         "optional" : false,
         "advanced" : false,
         "allow_multiple" : false,
@@ -160,8 +160,8 @@
                     "target_property" : "readsset_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
-                    "input_parameter" : "assembly_or_genome_ref",
-                    "target_property" : "assembly_or_genome_ref",
+                    "input_parameter" : "genome_ref",
+                    "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
                     "input_parameter" : "output_obj_name",
@@ -211,7 +211,7 @@
                 },
                 {
                     "narrative_system_variable": "workspace",
-                    "target_property": "workspace"
+                    "target_property": "output_workspace"
                 }
             ]
         }
