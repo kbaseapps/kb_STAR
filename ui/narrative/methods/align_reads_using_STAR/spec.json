@@ -143,6 +143,9 @@
                     "narrative_system_variable": "workspace",
                     "target_property": "output_workspace"
                 }, {
+                    "constant_value": 1,
+                    "target_property": "create_report"
+                }, {            
                     "constant_value"  : 2,
                     "target_property" : "runThreadN"
                 }, {
