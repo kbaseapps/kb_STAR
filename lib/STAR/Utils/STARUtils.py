@@ -56,7 +56,7 @@ class STARUtil:
     INVALID_WS_NAME_RE = re.compile('[^\\w:._-]')
 
     PARAM_IN_READS = 'readsset_ref'
-    PARAM_IN_GENOME = 'assembly_or_genome_ref'
+    PARAM_IN_GENOME = 'genome_ref'
 
     def __init__(self, config):
         self.config = config
@@ -459,7 +459,7 @@ class STARUtil:
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], input_params[self.PARAM_IN_OUTPUT_NAME]),
             "file_path": alignment_file,
-            "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
+            "genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
             "library_type": reads_info['style'],
             "condition": reads_info['condition'],
@@ -633,7 +633,8 @@ class STARUtil:
 	params = {
             'output_workspace': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
-            'runThreadN': input_params[self.PARAM_IN_THREADN]
+            'runThreadN': input_params[self.PARAM_IN_THREADN],
+            'output_name': params[self.PARAM_IN_OUTPUT_NAME]
 	}
 
 	# STEP 1: Converting refs to file locations in the scratch area
@@ -1070,3 +1071,4 @@ class STARUtil:
 
     def get_obj_info(self, ref):
         return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos'][0]
+

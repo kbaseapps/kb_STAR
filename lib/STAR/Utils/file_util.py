@@ -90,6 +90,7 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
     If ref is already a Reads library, just returns a list with ref as a single element.
     """
     obj_type = get_object_type(ref, ws_url)
+    ws = Workspace(ws_url)
     refs = list()
     refs_for_ws_info = list()
     if "KBaseSets.ReadsSet" in obj_type:
@@ -107,13 +108,13 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
             refs_for_ws_info.append({'ref': reads['ref']})
     elif "KBaseRNASeq.RNASeqSampleSet" in obj_type:
         print("Looking up reads references in RNASeqSampleSet object")
-        ws = Workspace(ws_url)
         sample_set = ws.get_objects2({"objects": [{"ref": ref}]})["data"][0]["data"]
         for i in range(len(sample_set["sample_ids"])):
             refs.append({
                 "ref": sample_set["sample_ids"][i],
                 "condition": sample_set["condition"][i]
             })
+            refs_for_ws_info.append({'ref': sample_set['sample_ids'][i]})
     elif ("KBaseAssembly.SingleEndLibrary" in obj_type or
           "KBaseFile.SingleEndLibrary" in obj_type or
           "KBaseFile.SingleEndLibrary-2.0" in obj_type or
@@ -122,15 +123,14 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
           "KBaseFile.PairedEndLibrary" in obj_type or
           "KBaseFile.PairedEndLibrary-2.0" in obj_type or
           "KBaseFile.PairedEndLibrary-2.1" in obj_type):
-        refs.append({
-            "ref": ref
-        })
+        refs.append({"ref": ref})
+        refs_for_ws_info.append({'ref': ref})
     else:
         raise ValueError("Unable to fetch reads reference from object {} "
                          "which is a {}".format(ref, obj_type))
 
     # get object info so we can name things properly
-    infos = self.ws.get_object_info3({'objects': refs_for_ws_info})['infos']
+    infos = ws.get_object_info3({'objects': refs_for_ws_info})['infos']
 
     name_ext = '_alignment'
     if 'output_alignment_filename_extension' in params \

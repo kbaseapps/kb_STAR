@@ -39,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "0ad47531ee869dca76f8e2ac7c2765e3ce17bd01"
+    GIT_COMMIT_HASH = "b0e3062e5dfe2cbdd40fc2bdabfea71d29666750"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -92,20 +92,20 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            specified assembly or assembly for the specified Genome (accepts
            Assembly, ContigSet, or Genome types) and produces a
            ReadsAlignment object, or in the case of a SampleSet, a
-           ReadsAlignmentSet object obj_ref assembly_or_genome_ref: KBase
-           workspace reference Genome, ContigSet or Assembly to align reads
-           against obj_ref readsset_ref: the workspace reference for the set
-           of reads to align, referring to either a SingleEnd/PairedEnd
-           reads, or a ReadsSet input string output_workspace - name or id of
-           the WS to save the results to, provided by the narrative for
-           housing output in KBase string output_name - name of the output
-           ReadsAlignment or ReadsAlignmentSet object int runThreadN - the
-           number of threads for STAR to use (default to 2) string
-           outFileNamePrefix: you can change the file prefixes using
-           --outFileNamePrefix /path/to/output/dir/prefix By default, this
-           parameter is ./, i.e. all output files are written in current
-           directory without a prefix string quantMode: types of
-           quantification requested--none/TranscriptomeSAM/GeneCounts int
+           ReadsAlignmentSet object obj_ref genome_ref: KBase workspace
+           reference Genome obj_ref readsset_ref: the workspace reference for
+           the set of reads to align, referring to either a
+           SingleEnd/PairedEnd reads, or a ReadsSet input string
+           output_workspace - name or id of the WS to save the results to,
+           provided by the narrative for housing output in KBase string
+           output_name - name of the output ReadsAlignment or
+           ReadsAlignmentSet object int runThreadN - the number of threads
+           for STAR to use (default to 2) string outFileNamePrefix: you can
+           change the file prefixes using --outFileNamePrefix
+           /path/to/output/dir/prefix By default, this parameter is ./, i.e.
+           all output files are written in current directory without a prefix
+           string quantMode: types of quantification
+           requested--none/TranscriptomeSAM/GeneCounts int
            outFilterMultimapNmax: max number of multiple alignments allowed
            for a read: if exceeded, the read is considered unmapped, default
            to 20 int alignSJoverhangMin: minimum overhang for unannotated
@@ -124,33 +124,33 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
            alignIntronMax @optional alignMatesGapMax @optional
            outFileNamePrefix) -> structure: parameter "readsset_ref" of type
-           "obj_ref" (An X/Y/Z style reference), parameter
-           "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "output_workspace" of String, parameter
-           "runThreadN" of Long, parameter "output_name" of String, parameter
-           "condition" of String, parameter "outFilterType" of String,
-           parameter "outSAMtype" of String, parameter "outSAMattrIHstart" of
-           Long, parameter "outSAMstrandField" of String, parameter
-           "quantMode" of String, parameter "outFilterMultimapNmax" of Long,
-           parameter "alignSJoverhangMin" of Long, parameter
-           "alignSJDBoverhangMin" of Long, parameter "outFilterMismatchNmax"
-           of Long, parameter "alignIntronMin" of Long, parameter
-           "alignIntronMax" of Long, parameter "alignMatesGapMax" of Long,
-           parameter "outFileNamePrefix" of String, parameter
-           "concurrent_njsw_tasks" of Long, parameter
-           "concurrent_local_tasks" of Long, parameter "create_report" of
-           type "bool" (A boolean - 0 for false, 1 for true. @range (0, 1))
+           "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
+           type "obj_ref" (An X/Y/Z style reference), parameter
+           "output_workspace" of String, parameter "runThreadN" of Long,
+           parameter "output_name" of String, parameter "condition" of
+           String, parameter "outFilterType" of String, parameter
+           "outSAMtype" of String, parameter "outSAMattrIHstart" of Long,
+           parameter "outSAMstrandField" of String, parameter "quantMode" of
+           String, parameter "outFilterMultimapNmax" of Long, parameter
+           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
+           Long, parameter "outFilterMismatchNmax" of Long, parameter
+           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
+           parameter "alignMatesGapMax" of Long, parameter
+           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
+           of Long, parameter "concurrent_local_tasks" of Long, parameter
+           "create_report" of type "bool" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
         :returns: instance of type "AlignReadsResult" (Here is the definition
            of the output of the function.  The output can be used by other
            SDK modules which call your code, or the output visualizations in
            the Narrative.  'report_name' and 'report_ref' are special output
            fields- if defined, the Narrative can automatically render your
-           Report. output_folder: folder path that holds all files generated
-           by STAT report_name: report name generated by KBaseReport
-           report_ref: report reference generated by KBaseReport) ->
-           structure: parameter "alignment_ref" of type "obj_ref" (An X/Y/Z
-           style reference), parameter "report_name" of String, parameter
-           "report_ref" of String
+           Report. alignment_ref: can be either an Alignment or AlignmentSet,
+           depending on inputs. report_name: report name generated by
+           KBaseReport report_ref: report reference generated by KBaseReport)
+           -> structure: parameter "alignment_ref" of type "obj_ref" (An
+           X/Y/Z style reference), parameter "report_name" of String,
+           parameter "report_ref" of String
         """
         # ctx is the context object
         # return variables are: result
@@ -184,20 +184,20 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            specified assembly or assembly for the specified Genome (accepts
            Assembly, ContigSet, or Genome types) and produces a
            ReadsAlignment object, or in the case of a SampleSet, a
-           ReadsAlignmentSet object obj_ref assembly_or_genome_ref: KBase
-           workspace reference Genome, ContigSet or Assembly to align reads
-           against obj_ref readsset_ref: the workspace reference for the set
-           of reads to align, referring to either a SingleEnd/PairedEnd
-           reads, or a ReadsSet input string output_workspace - name or id of
-           the WS to save the results to, provided by the narrative for
-           housing output in KBase string output_name - name of the output
-           ReadsAlignment or ReadsAlignmentSet object int runThreadN - the
-           number of threads for STAR to use (default to 2) string
-           outFileNamePrefix: you can change the file prefixes using
-           --outFileNamePrefix /path/to/output/dir/prefix By default, this
-           parameter is ./, i.e. all output files are written in current
-           directory without a prefix string quantMode: types of
-           quantification requested--none/TranscriptomeSAM/GeneCounts int
+           ReadsAlignmentSet object obj_ref genome_ref: KBase workspace
+           reference Genome obj_ref readsset_ref: the workspace reference for
+           the set of reads to align, referring to either a
+           SingleEnd/PairedEnd reads, or a ReadsSet input string
+           output_workspace - name or id of the WS to save the results to,
+           provided by the narrative for housing output in KBase string
+           output_name - name of the output ReadsAlignment or
+           ReadsAlignmentSet object int runThreadN - the number of threads
+           for STAR to use (default to 2) string outFileNamePrefix: you can
+           change the file prefixes using --outFileNamePrefix
+           /path/to/output/dir/prefix By default, this parameter is ./, i.e.
+           all output files are written in current directory without a prefix
+           string quantMode: types of quantification
+           requested--none/TranscriptomeSAM/GeneCounts int
            outFilterMultimapNmax: max number of multiple alignments allowed
            for a read: if exceeded, the read is considered unmapped, default
            to 20 int alignSJoverhangMin: minimum overhang for unannotated
@@ -216,33 +216,33 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
            alignIntronMax @optional alignMatesGapMax @optional
            outFileNamePrefix) -> structure: parameter "readsset_ref" of type
-           "obj_ref" (An X/Y/Z style reference), parameter
-           "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "output_workspace" of String, parameter
-           "runThreadN" of Long, parameter "output_name" of String, parameter
-           "condition" of String, parameter "outFilterType" of String,
-           parameter "outSAMtype" of String, parameter "outSAMattrIHstart" of
-           Long, parameter "outSAMstrandField" of String, parameter
-           "quantMode" of String, parameter "outFilterMultimapNmax" of Long,
-           parameter "alignSJoverhangMin" of Long, parameter
-           "alignSJDBoverhangMin" of Long, parameter "outFilterMismatchNmax"
-           of Long, parameter "alignIntronMin" of Long, parameter
-           "alignIntronMax" of Long, parameter "alignMatesGapMax" of Long,
-           parameter "outFileNamePrefix" of String, parameter
-           "concurrent_njsw_tasks" of Long, parameter
-           "concurrent_local_tasks" of Long, parameter "create_report" of
-           type "bool" (A boolean - 0 for false, 1 for true. @range (0, 1))
+           "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
+           type "obj_ref" (An X/Y/Z style reference), parameter
+           "output_workspace" of String, parameter "runThreadN" of Long,
+           parameter "output_name" of String, parameter "condition" of
+           String, parameter "outFilterType" of String, parameter
+           "outSAMtype" of String, parameter "outSAMattrIHstart" of Long,
+           parameter "outSAMstrandField" of String, parameter "quantMode" of
+           String, parameter "outFilterMultimapNmax" of Long, parameter
+           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
+           Long, parameter "outFilterMismatchNmax" of Long, parameter
+           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
+           parameter "alignMatesGapMax" of Long, parameter
+           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
+           of Long, parameter "concurrent_local_tasks" of Long, parameter
+           "create_report" of type "bool" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
         :returns: instance of type "AlignReadsResult" (Here is the definition
            of the output of the function.  The output can be used by other
            SDK modules which call your code, or the output visualizations in
            the Narrative.  'report_name' and 'report_ref' are special output
            fields- if defined, the Narrative can automatically render your
-           Report. output_folder: folder path that holds all files generated
-           by STAT report_name: report name generated by KBaseReport
-           report_ref: report reference generated by KBaseReport) ->
-           structure: parameter "alignment_ref" of type "obj_ref" (An X/Y/Z
-           style reference), parameter "report_name" of String, parameter
-           "report_ref" of String
+           Report. alignment_ref: can be either an Alignment or AlignmentSet,
+           depending on inputs. report_name: report name generated by
+           KBaseReport report_ref: report reference generated by KBaseReport)
+           -> structure: parameter "alignment_ref" of type "obj_ref" (An
+           X/Y/Z style reference), parameter "report_name" of String,
+           parameter "report_ref" of String
         """
         # ctx is the context object
         # return variables are: returnVal
@@ -271,9 +271,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsInfo = reads.get('readsInfo', None)
 
         # 3. Run STAR with index and reads.
-        alignments = dict()
-        output_ref = None
-
         # If there's only one, run it locally right now.
         # If there's more than one:
         #  1. make a list of tasks to send to KBParallel.
@@ -331,20 +328,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'result is not type dict as required.')
         # return the results
         return [result]
-
-    def run_star_cli(self, ctx, params):
-        """
-        general purpose local function for running tools in the star suite
-        :param params: instance of type "RunSTARCLIParams" (supported
-           commands: star star-align-l star-align-s star-build star-build-l
-           star-build-s star-inspect star-inspect-l star-inspect-s) ->
-           structure: parameter "command_name" of String, parameter "options"
-           of list of String
-        """
-        # ctx is the context object
-        #BEGIN run_star_cli
-        #END run_star_cli
-        pass
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
