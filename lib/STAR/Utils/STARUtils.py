@@ -825,49 +825,47 @@ class STARUtil:
         # 1. Get STAR index from genome.
         #    a. If it exists in cache, use that.
         #    b. Otherwise, build it
-        idx_ret = 0 #self.build_star_index(input_params)
         alignments = dict()
         alignment_ref = None
 
-        if idx_ret == 0:
-            # 2. Fetch the reads file and make sure input params are correct.
-            # if the reads ref came from a different sample set, then we need to drop that
-            # reference inside the reads info object so it can be linked in the alignment-TODO
-            #if reads_info["object_ref"] != input_params[self.PARAM_IN_READS]:
-                #reads_info["readsset_ref"] = input_params[self.PARAM_IN_READS]
-            # make sure condition info carries over if we have it
+        # 2. Fetch the reads file and make sure input params are correct.
+        # if the reads ref came from a different sample set, then we need to drop that
+        # reference inside the reads info object so it can be linked in the alignment-TODO
+        #if reads_info["object_ref"] != input_params[self.PARAM_IN_READS]:
+        #reads_info["readsset_ref"] = input_params[self.PARAM_IN_READS]
+        # make sure condition info carries over if we have it
 
-            if not "condition" in reads_info:
-                reads_info["condition"] = input_params["condition"]
+        if not "condition" in reads_info:
+            reads_info["condition"] = input_params["condition"]
 
-            rds_files = list()
-            rds_name = ''
-            ret_fwd = reads_info["file_fwd"]
-            if ret_fwd is not None:
-                rds_files.append(ret_fwd)
-                rds_name = reads_info['file_name'].split('.')[0]
-                if reads_info.get('file_rev', None) is not None:
-                    rds_files.append(rds['file_rev'])
+        rds_files = list()
+        rds_name = ''
+        ret_fwd = reads_info["file_fwd"]
+        if ret_fwd is not None:
+            rds_files.append(ret_fwd)
+            rds_name = reads_info['file_name'].split('.')[0]
+            if reads_info.get('file_rev', None) is not None:
+                rds_files.append(rds['file_rev'])
 
-            # 3. Finally all set, do the alignment and upload the output.
-            star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
-            if not isinstance(star_mp_ret, int):
-                #print("Uploading STAR output object...")
-                if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-                    prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
-                    alignment_file = '{}Aligned.out.sam'.format(prefix)
-                else:
-                    alignment_file = 'Aligned.out.sam'
+        # 3. Finally all set, do the alignment and upload the output.
+        star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
+        if not isinstance(star_mp_ret, int):
+            #print("Uploading STAR output object...")
+            if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+                prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+                alignment_file = '{}Aligned.out.sam'.format(prefix)
+            else:
+                alignment_file = 'Aligned.out.sam'
 
-                alignment_file = os.path.join(star_mp_ret['star_output'], alignment_file)
+            alignment_file = os.path.join(star_mp_ret['star_output'], alignment_file)
 
-                # Upload the alignment
-                alignment_ref = self.upload_STARalignment(input_params, reads_info, alignment_file)
-                alignments[reads_info["object_ref"]] = {
-                    "ref": alignment_ref,
-                    "readsName": reads_info['file_name'],
-                    "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
-                }
+            # Upload the alignment
+            alignment_ref = self.upload_STARalignment(input_params, reads_info, alignment_file)
+            alignments[reads_info["object_ref"]] = {
+                "ref": alignment_ref,
+                "readsName": reads_info['file_name'],
+                "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
+            }
 
         if input_params.get("create_report", 0) == 1:
             report_info = self._generate_report(alignments, input_params)

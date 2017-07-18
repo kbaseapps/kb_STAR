@@ -271,19 +271,24 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsInfo = reads.get('readsInfo', None)
 
 	# 3. generate the index from a reference genome
-        star_runner.build_star_index(input_params)
+        idx_ret = star_runner.build_star_index(input_params)
 
+        if idx_ret == 0:
         # 4. Run STAR with index and reads.
         # If there's only one, run it locally right now.
         # If there's more than one:
         #  1. make a list of tasks to send to KBParallel.
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
-        if input_info['run_mode'] == 'single_library':
-            returnVal = star_runner.run_single(readsInfo[0], input_params)
-        elif input_info['run_mode'] == 'sample_set':
-            returnVal = star_runner.run_batch(readsRefs, input_params)
-
+            if input_info['run_mode'] == 'single_library':
+                returnVal = star_runner.run_single(readsInfo[0], input_params)
+            elif input_info['run_mode'] == 'sample_set':
+                returnVal = star_runner.run_batch(readsRefs, input_params)
+        else:
+            returnVal = {alignment_ref : None,
+                         report_name : None,
+                         report_ref : None
+                        }
         #END run_star
 
         # At some point might do deeper type checking...

@@ -35,7 +35,7 @@ module STAR {
         and produces a ReadsAlignment object, or in the case of a SampleSet, a ReadsAlignmentSet
         object
 
-	obj_ref assembly_or_genome_ref: KBase workspace reference Genome, ContigSet or Assembly to align reads against
+	obj_ref genome_ref: KBase workspace reference Genome
 	obj_ref readsset_ref: the workspace reference for the set of reads to align, referring to 
 		either a SingleEnd/PairedEnd reads, or a ReadsSet input
 	string output_workspace - name or id of the WS to save the results to, provided by the narrative for housing output in KBase
@@ -70,7 +70,7 @@ module STAR {
     */
     typedef structure {
         obj_ref readsset_ref;
-        obj_ref assembly_or_genome_ref;
+        obj_ref genome_ref;
         string output_workspace;
         int runThreadN;
 	string output_name;
