@@ -832,14 +832,14 @@ class STARUtil:
             if not "condition" in reads_info:
                 reads_info["condition"] = input_params["condition"]
 
-            rdsFiles = list()
+            rds_files = list()
             rdsName = ''
             ret_fwd = reads_info["file_fwd"]
             if ret_fwd is not None:
-                rdsFiles.append(ret_fwd)
+                rds_files.append(ret_fwd)
                 rdsName = reads_info['file_name'].split('.')[0]
-                if reads_info['file_rev'] is not None:
-                    rdsFiles.append(rds['file_rev'])
+                if reads_info.get('file_rev', None) is not None:
+                    rds_files.append(rds['file_rev'])
 
             # 3. Finally all set, do the alignment and upload the output.
             star_mp_ret = self._run_star_mapping(input_params, rds_files, rds_name)
