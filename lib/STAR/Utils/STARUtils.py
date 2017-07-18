@@ -845,7 +845,7 @@ class STARUtil:
             rds_files.append(ret_fwd)
             rds_name = reads_info['file_name'].split('.')[0]
             if reads_info.get('file_rev', None) is not None:
-                rds_files.append(rds['file_rev'])
+                rds_files.append(reads_info['file_rev'])
 
         # 3. Finally all set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
