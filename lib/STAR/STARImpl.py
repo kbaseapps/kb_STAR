@@ -4,6 +4,11 @@
 import os
 import json
 import time
+from STAR.Utils.file_util import (
+    fetch_reads_from_reference,
+    fetch_reads_refs_from_sampleset
+)
+from KBParallel.KBParallelClient import KBParallel
 from pprint import pprint, pformat
 
 from STAR.Utils.STARUtils import STARUtil
@@ -34,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "8950d8c35628d39d96a9da82496a142e78229cec"
+    GIT_COMMIT_HASH = "0ad47531ee869dca76f8e2ac7c2765e3ce17bd01"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -57,17 +62,18 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         self.config['KB_AUTH_TOKEN'] = os.environ['KB_AUTH_TOKEN']
 
         if 'workspace-url' in config:
-            self.workspaceURL = config['workspace-url']
+            self.workspace_url = config['workspace-url']
         if 'shock-url' in config:
             self.__SHOCK_URL = config['shock-url']
         if 'handle-service-url' in config:
             self.__HS_URL = config['handle-service-url']
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.__CALLBACK_URL = os.environ['SDK_CALLBACK_URL']
 
-        self.__SERVICES = {'workspace_service_url': self.workspaceURL,
+        self.__SERVICES = {'workspace_service_url': self.workspace_url,
                            'shock_service_url': self.__SHOCK_URL,
                            'handle_service_url': self.__HS_URL,
-                           'callback_url': self.__CALLBACK_URL}
+                           'callback_url': self.callback_url}
 
         self.scratch = os.path.abspath(config['scratch'])
         if not os.path.exists(self.scratch):
@@ -109,8 +115,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            this filter, default to 999 int alignIntronMin: minimum intron
            length, default to 20 int alignIntronMax: maximum intron length,
            default to 1000000 int alignMatesGapMax: maximum genomic distance
-           between mates, default to 1000000 @optional outFilterType
-           @optional outFilterMultimapNmax @optional outSAMtype @optional
+           between mates, default to 1000000 create_report = 1 if we build a
+           report, 0 otherwise. (default 1) (shouldn not be user set - mainly
+           used for subtasks) @optional outFilterType @optional
+           outFilterMultimapNmax @optional outSAMtype @optional
            outSAMattrIHstart @optional outSAMstrandField @optional quantMode
            @optional alignSJoverhangMin @optional alignSJDBoverhangMin
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
@@ -120,16 +128,18 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
            reference), parameter "output_workspace" of String, parameter
            "runThreadN" of Long, parameter "output_name" of String, parameter
-           "outFilterType" of String, parameter "outSAMtype" of String,
-           parameter "outSAMattrIHstart" of Long, parameter
-           "outSAMstrandField" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
-           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
-           Long, parameter "outFilterMismatchNmax" of Long, parameter
-           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
-           parameter "alignMatesGapMax" of Long, parameter
-           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
-           of Long, parameter "concurrent_local_tasks" of Long
+           "condition" of String, parameter "outFilterType" of String,
+           parameter "outSAMtype" of String, parameter "outSAMattrIHstart" of
+           Long, parameter "outSAMstrandField" of String, parameter
+           "quantMode" of String, parameter "outFilterMultimapNmax" of Long,
+           parameter "alignSJoverhangMin" of Long, parameter
+           "alignSJDBoverhangMin" of Long, parameter "outFilterMismatchNmax"
+           of Long, parameter "alignIntronMin" of Long, parameter
+           "alignIntronMax" of Long, parameter "alignMatesGapMax" of Long,
+           parameter "outFileNamePrefix" of String, parameter
+           "concurrent_njsw_tasks" of Long, parameter
+           "concurrent_local_tasks" of Long, parameter "create_report" of
+           type "bool" (A boolean - 0 for false, 1 for true. @range (0, 1))
         :returns: instance of type "AlignReadsResult" (Here is the definition
            of the output of the function.  The output can be used by other
            SDK modules which call your code, or the output visualizations in
@@ -138,11 +148,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            Report. output_folder: folder path that holds all files generated
            by STAT report_name: report name generated by KBaseReport
            report_ref: report reference generated by KBaseReport) ->
-           structure: parameter "output_folder" of String, parameter
-           "reads_alignment_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "read_alignment_set_ref" of type "obj_ref"
-           (An X/Y/Z style reference), parameter "report_name" of String,
-           parameter "report_ref" of String
+           structure: parameter "alignment_ref" of type "obj_ref" (An X/Y/Z
+           style reference), parameter "report_name" of String, parameter
+           "report_ref" of String
         """
         # ctx is the context object
         # return variables are: result
@@ -199,8 +207,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            this filter, default to 999 int alignIntronMin: minimum intron
            length, default to 20 int alignIntronMax: maximum intron length,
            default to 1000000 int alignMatesGapMax: maximum genomic distance
-           between mates, default to 1000000 @optional outFilterType
-           @optional outFilterMultimapNmax @optional outSAMtype @optional
+           between mates, default to 1000000 create_report = 1 if we build a
+           report, 0 otherwise. (default 1) (shouldn not be user set - mainly
+           used for subtasks) @optional outFilterType @optional
+           outFilterMultimapNmax @optional outSAMtype @optional
            outSAMattrIHstart @optional outSAMstrandField @optional quantMode
            @optional alignSJoverhangMin @optional alignSJDBoverhangMin
            @optional outFilterMismatchNmax @optional alignIntronMin @optional
@@ -210,16 +220,18 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            "assembly_or_genome_ref" of type "obj_ref" (An X/Y/Z style
            reference), parameter "output_workspace" of String, parameter
            "runThreadN" of Long, parameter "output_name" of String, parameter
-           "outFilterType" of String, parameter "outSAMtype" of String,
-           parameter "outSAMattrIHstart" of Long, parameter
-           "outSAMstrandField" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
-           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
-           Long, parameter "outFilterMismatchNmax" of Long, parameter
-           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
-           parameter "alignMatesGapMax" of Long, parameter
-           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
-           of Long, parameter "concurrent_local_tasks" of Long
+           "condition" of String, parameter "outFilterType" of String,
+           parameter "outSAMtype" of String, parameter "outSAMattrIHstart" of
+           Long, parameter "outSAMstrandField" of String, parameter
+           "quantMode" of String, parameter "outFilterMultimapNmax" of Long,
+           parameter "alignSJoverhangMin" of Long, parameter
+           "alignSJDBoverhangMin" of Long, parameter "outFilterMismatchNmax"
+           of Long, parameter "alignIntronMin" of Long, parameter
+           "alignIntronMax" of Long, parameter "alignMatesGapMax" of Long,
+           parameter "outFileNamePrefix" of String, parameter
+           "concurrent_njsw_tasks" of Long, parameter
+           "concurrent_local_tasks" of Long, parameter "create_report" of
+           type "bool" (A boolean - 0 for false, 1 for true. @range (0, 1))
         :returns: instance of type "AlignReadsResult" (Here is the definition
            of the output of the function.  The output can be used by other
            SDK modules which call your code, or the output visualizations in
@@ -228,31 +240,63 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            Report. output_folder: folder path that holds all files generated
            by STAT report_name: report name generated by KBaseReport
            report_ref: report reference generated by KBaseReport) ->
-           structure: parameter "output_folder" of String, parameter
-           "reads_alignment_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "read_alignment_set_ref" of type "obj_ref"
-           (An X/Y/Z style reference), parameter "report_name" of String,
-           parameter "report_ref" of String
+           structure: parameter "alignment_ref" of type "obj_ref" (An X/Y/Z
+           style reference), parameter "report_name" of String, parameter
+           "report_ref" of String
         """
         # ctx is the context object
-        # return variables are: output
+        # return variables are: returnVal
         #BEGIN run_star
         self.log('Running run_star with params:\n' + pformat(params))
+        returnVal = {
+            "report_ref": None,
+            "report_name": None
+        }
 
         for key, value in params.iteritems():
             if isinstance(value, basestring):
                 params[key] = value.strip()
 
         star_runner = STARUtil(self.config)
-        output = star_runner.run_star(params)
+
+        # 1. process the input parameters
+        params = star_runner._process_params(params)
+
+	# 2. convert the input parameters (from refs to file paths, especially)
+        params_ret = star_runner._convert_params(params)
+        input_params = params_ret.get('input_parameters', None)
+        readsInfo = params_ret.get('reads_info', None)
+
+        # 3. Run STAR with index and reads.
+        alignments = dict()
+        output_ref = None
+
+        # If there's only one, run it locally right now.
+        # If there's more than one:
+        #  1. make a list of tasks to send to KBParallel.
+        #  2. add a flag to not make a report for each subtask.
+        #  3. make the report when it's all done.
+        if len(readsInfo) == 1:
+            (alignments, output_ref) = star_runner.run_single(readsInfo[0], input_params)
+        else:
+            (alignments, output_ref) = star_runner.run_batch(readsInfo, input_params)
+
+        if params.get("create_report", 0) == 1:
+            report_info = star_runner._generate_report(alignments, input_params)
+            returnVal["report_ref"] = report_info["ref"]
+            returnVal["report_name"] = report_info["name"]
+        returnVal["alignment_objs"] = alignments
+        returnVal["alignment_ref"] = output_ref
+        returnVal["alignment_name"] = input_params["output_name"]
+
         #END run_star
 
         # At some point might do deeper type checking...
-        if not isinstance(output, dict):
+        if not isinstance(returnVal, dict):
             raise ValueError('Method run_star return value ' +
-                             'output is not type dict as required.')
+                             'returnVal is not type dict as required.')
         # return the results
-        return [output]
+        return [returnVal]
 
     def get_star_index(self, ctx, params):
         """
@@ -276,10 +320,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            built fresh, 1 if it was found in the cache pushed_to_cache - if
            the index was rebuilt and successfully added to the cache, this
            will be set to 1; otherwise set to 0) -> structure: parameter
-           "output_dir" of String, parameter "from_cache" of type "boolean"
-           (A boolean - 0 for false, 1 for true. @range (0, 1)), parameter
-           "pushed_to_cache" of type "boolean" (A boolean - 0 for false, 1
-           for true. @range (0, 1))
+           "output_dir" of String, parameter "from_cache" of type "bool" (A
+           boolean - 0 for false, 1 for true. @range (0, 1)), parameter
+           "pushed_to_cache" of type "bool" (A boolean - 0 for false, 1 for
+           true. @range (0, 1))
         """
         # ctx is the context object
         # return variables are: result

@@ -102,10 +102,13 @@ class STARUtil:
 
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
+        if (params.get(self.PARAM_IN_READS, None) is None or
+                not valid_string(params[self.PARAM_IN_READS], is_ref=True)):
+            raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
+                      "not {}".format(params.get(self.PARAM_IN_READS, None)))
         if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
                 not valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
             raise ValueError("Parameter alignment output_name must be a valid Workspace object string, "
-
                       "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
@@ -132,7 +135,11 @@ class STARUtil:
             if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
                 raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
 
+        if params.get('create_report', None) is None:
+            params['create_report'] = 0
+
         return self._setDefaultParameters(params)
+
 
     def _setDefaultParameters(self, params):
         """set default for this group of parameters
@@ -495,32 +502,34 @@ class STARUtil:
 
         return output_files
 
-    def _generate_extended_report(self, obj_ref, params, star_dirs):
+    def _generate_extended_report(self, alignObj_refs, params):
         """
-        generate_report: generate a summary STAR report, including index files and alignment output files
+        generate_extended_report: generate a summary STAR report, including index files and alignment output files
         """
         log('Generating summary report...')
 
         created_objects = list()
         index_files = list()
         output_files = list()
-        for oref in obj_refs:
+        for oref in alignObj_refs:
             created_objects.append({
                 "ref": oref,
                 "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
             })
 
         t0 = time.clock()
-        for out_dir in star_dirs:
-            index_files += self._get_output_file_list(self.STAR_IDX_DIR, out_dir['star_idx'])
-            t1 = time.clock()
-            output_files += self._get_output_file_list(self.STAR_OUT_DIR, out_dir['str_output'])
-            t2 = time.clock()
-            pprint( "Zipping index files used {} seconds ".format(t1-t0))
-            pprint( "Zipping output files used {} seconds ".format(t2-t1))
+        #for out_dir in star_dirs:
+            #index_files += self._get_output_file_list(self.STAR_IDX_DIR, out_dir['star_idx'])
+        index_files = self._get_output_file_list(self.STAR_IDX_DIR, self.STAR_IDX_DIR)
+        t1 = time.clock()
+            #output_files += self._get_output_file_list(self.STAR_OUT_DIR, out_dir['star_output'])
+        output_files = self._get_output_file_list(self.STAR_OUT_DIR, self.STAR_OUT_DIR)
+        t2 = time.clock()
+        pprint( "Zipping index files used {} seconds ".format(t1-t0))
+        pprint( "Zipping output files used {} seconds ".format(t2-t1))
 
         report_params = {
-              'message': 'Created one alignment from the given sample set.',
+              'message': 'Created a set of {} alignment(s) from the given sample set.'.format(len(alignObj_refs)),
               'workspace_name': params[self.PARAM_IN_WS],
               'objects_created': created_objects,
               'file_links': index_files + output_files,
@@ -537,18 +546,20 @@ class STARUtil:
         pprint( "Creating report used {} seconds ".format(t3-t2))
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def _generate_report(self, obj_refs, params):
+    def _generate_report(self, alignmentSet, params):
         """
-        Creates a brief STAR report.
+        _generate_report: Creates a brief STAR report.
         """
         print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
         report_client = KBaseReport(self.callback_url, token=self.token)
 
         created_objects = list()
-        for oref in obj_refs:
+        for key, value in alignmentSet.iteritems():
             created_objects.append({
-                "ref": oref,
-                "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+                'ref': key,
+                'reads': value['readsName'],
+                'alignment': value['name'],
+                'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], params[self.PARAM_IN_GENOME])
             })
 
         report_text = "Created one alignment set from the given reads set."
@@ -561,18 +572,8 @@ class STARUtil:
         })
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def _convert_params(self, input_params):
-        """
-        Convert input parameters with KBase ref format into STAR parameters,
-        and add the advanced options.
-        """
-	params = {
-            'runMode': 'genomeGenerate',
-            'runThreadN': input_params[self.PARAM_IN_THREADN]
-	}
 
-	# STEP 1: Converting refs to file locations in the scratch area
-        readsset_ref = input_params.get(self.PARAM_IN_READS, None)
+    def _get_reads_info(self, readsset_ref):
         reads_refs = list()
 	if readsset_ref is not None:
             try:
@@ -583,8 +584,7 @@ class STARUtil:
 		print("Incorrect object type for fetching reads ref(s)!")
 		raise
 
-        readsInfo = list()
-	readsFiles = list()
+        reads_info = list()
 	for source_reads in reads_refs:
             try:
                 print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
@@ -599,11 +599,12 @@ class STARUtil:
                 if source_reads.get("condition", None) is not None:
                     ret_reads["condition"] = source_reads["condition"]
                 else:
-                    ret_reads["condition"] = "N/A"
-                readsInfo.append(ret_reads)
+                    ret_reads["condition"] = None
+                reads_info.append(ret_reads)
+        return reads_info
 
-        params[self.PARAM_IN_FASTA_FILES] = list()
-        genome_ref = input_params.get(self.PARAM_IN_GENOME, None)
+    def _get_genome_fasta(self, genome_ref):
+        genome_fasta_files = list()
 	if genome_ref is not None:
             try:
 		print("Fetching FASTA file from object {}".format(genome_ref))
@@ -616,7 +617,23 @@ class STARUtil:
             if genome_fasta_file.get("path", None) is None:
 		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
             else:
-		params[self.PARAM_IN_FASTA_FILES].append(genome_fasta_file["path"])
+		genome_fasta_files.append(genome_fasta_file["path"])
+        return genome_fasta_files
+
+    def _convert_params(self, input_params):
+        """
+        Convert input parameters with KBase ref format into STAR parameters,
+        and add the advanced options.
+        """
+	params = {
+            'runMode': 'genomeGenerate',
+            'runThreadN': input_params[self.PARAM_IN_THREADN]
+	}
+
+	# STEP 1: Converting refs to file locations in the scratch area
+        readsInfo = self._get_reads_info(input_params[self.PARAM_IN_READS])
+
+        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(input_params[self.PARAM_IN_GENOME])
 
         # STEP 2: Add advanced options from input_params to params
         sjdbGTFfile = input_params.get("sjdbGTFfile", None)
@@ -664,23 +681,258 @@ class STARUtil:
 
         return {'input_parameters':params, 'reads_info': readsInfo}
 
+    def _build_star_index(self, params):
+        """
+        Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
+        It creates a directory as defined by self.STAR_IDX_DIR in the scratch area that houses the index files.
+        """
+        # check options and raise ValueError here as needed.
+        idx_dir = self.STAR_idx
+        try:
+            os.mkdir(idx_dir)
+        except OSError:
+            print("Ignoring error for already existing {} directory".format(idx_dir))
+
+        # build the indexing parameters
+        params_idx = {
+                'runMode': params[self.PARAM_IN_STARMODE],
+		'runThreadN': params[self.PARAM_IN_THREADN],
+		self.STAR_IDX_DIR: self.STAR_idx,
+                'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
+        }
+        if params.get('sjdbGTFfile', None) is not None:
+            params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
+        if params.get('sjdbOverhang', None) is not None :
+            params_idx['sjdbOverhang'] = params['sjdbOverhang']
+
+        try:
+            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
+                ret = self._exec_indexing(params_idx)
+            else:
+		ret = 0
+            while( ret != 0 ):
+                time.sleep(1)
+        except ValueError as eidx:
+            log('STAR genome indexing raised error:\n')
+            pprint(eidx)
+
+        return ret
+
+
+    def _run_star_mapping(self, params, rds_files, rds_name):
+        """
+        Runs STAR in alignReads mode for STAR mapping.
+        It creates a directory as defined by self.STAR_OUT_DIR with a subfolder named after the reads
+        """
+        # build the mapping parameters
+        aligndir = self.STAR_output
+        if rds_name:
+            aligndir = os.path.join(self.STAR_output, rds_name)
+            self._mkdir_p(aligndir)
+            print '\nSTAR output directory created: ' + aligndir
+        params_mp = {
+                'runMode': params[self.PARAM_IN_STARMODE],
+		'runThreadN': params[self.PARAM_IN_THREADN],
+                'readFilesIn': rds_files,#params[self.PARAM_IN_READS_FILES],
+		self.STAR_IDX_DIR: self.STAR_idx,
+		'align_output': aligndir
+        }
+
+        if params.get('sjdbGTFfile', None) is not None:
+            params_mp['sjdbGTFfile'] = params['sjdbGTFfile']
+        if params.get('sjdbOverhang', None) is not None :
+            params_mp['sjdbOverhang'] = params['sjdbOverhang']
+
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            params_mp[self.PARAM_IN_OUTFILE_PREFIX] = params[self.PARAM_IN_OUTFILE_PREFIX]
+
+        if (params.get('outFilterType', None) is not None
+                and isinstance(params['outFilterType'], str)):
+            params_mp['outFilterType'] = params['outFilterType']
+        if (params.get('outFilterMultimapNmax', None) is not None
+                and isinstance(params['outFilterMultimapNmax'], int)):
+            params_mp['outFilterMultimapNmax'] = params['outFilterMultimapNmax']
+        if (params.get('outSAMtype', None) is not None
+                and isinstance(params['outSAMtype'], str)):
+            params_mp['outSAMtype'] = params['outSAMtype']
+        if (params.get('outSAMattrIHstart', None) is not None
+                and isinstance(params['outSAMattrIHstart'], int)):
+            params_mp['outSAMattrIHstart'] = params['outSAMattrIHstart']
+        if (params.get('outSAMstrandField', None) is not None
+                and isinstance(params['outSAMstrandField'], str)):
+            params_mp['outSAMstrandField'] = params['outSAMstrandField']
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (params.get('quantMode', None) is not None
+                and params.get('quantMode', None) in quant_modes):
+            params_mp['quantMode'] = params['quantMode']
+        if (params.get('alignSJoverhangMin', None) is not None
+		and isinstance(params['alignSJoverhangMin'], int)
+                and params['alignSJoverhangMin'] > 0):
+            params_mp['alignSJoverhangMin'] = params['alignSJoverhangMin']
+        if (params.get('alignSJDBoverhangMin', None) is not None
+                and isinstance(params['alignSJDBoverhangMin'], int)
+                and params['alignSJDBoverhangMin'] > 0):
+            params_mp['alignSJDBoverhangMin'] = params['alignSJDBoverhangMin']
+        if (params.get('outFilterMismatchNmax', None) is not None
+		and isinstance(params['outFilterMismatchNmax'], int)
+                and params['outFilterMismatchNmax'] > 0):
+            params_mp['outFilterMismatchNmax'] = params['outFilterMismatchNmax']
+        if (params.get('alignIntronMin', None) is not None
+		and isinstance(params['alignIntronMin'], int)
+                and params['alignIntronMin'] > 0):
+            params_mp['alignIntronMin'] = params['alignIntronMin']
+        if (params.get('alignIntronMax', None) is not None
+		and isinstance(params['alignIntronMax'], int)
+                and params['alignIntronMax'] >= 0):
+            params_mp['alignIntronMax'] = params['alignIntronMax']
+        if (params.get('alignMatesGapMax', None) is not None
+		and isinstance(params['alignMatesGapMax'], int)
+                and params['alignMatesGapMax'] >= 0):
+            params_mp['alignMatesGapMax'] = params['alignMatesGapMax']
+
+        ret = 1
+        params_mp[self.PARAM_IN_STARMODE] = 'alignReads'
+        try:
+            ret = self._exec_mapping(params_mp)
+            while( ret != 0 ):
+                time.sleep(1)
+        except ValueError as emp:
+            log('STAR mapping raised error:\n')
+            pprint(emp)
+        else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
+            ret = {'star_idx': self.STAR_idx, 'star_output': aligndir}
+
+        return ret
+
+
+    def run_single(self, reads_info, input_params):
+        """
+        Performs a single run of STAR against a single reads reference. The rest of the info
+        is taken from the params dict - see the spec for details.
+        """
+        log('--->\nrunning STARUtil.run_single\n' +
+            'params:\n{} on reads {}'.format(json.dumps(input_params, indent=1), reads_info))
+
+        # 1. Get STAR index from genome.
+        #    a. If it exists in cache, use that.
+        #    b. Otherwise, build it
+        idx_ret = self._build_star_index(input_params)
+        alignments = dict()
+        alignment_ref = None
+
+        if idx_ret == 0:
+            # 2. Fetch the reads file and make sure input params are correct.
+            # if the reads ref came from a different sample set, then we need to drop that
+            # reference inside the reads info object so it can be linked in the alignment-TODO
+            #if reads_info["object_ref"] != input_params[self.PARAM_IN_READS]:
+                #reads_info["readsset_ref"] = input_params[self.PARAM_IN_READS]
+            # make sure condition info carries over if we have it
+
+            if not "condition" in reads_info:
+                reads_info["condition"] = input_params["condition"]
+
+            rdsFiles = list()
+            rdsName = ''
+            ret_fwd = reads_info["file_fwd"]
+            if ret_fwd is not None:
+                rdsFiles.append(ret_fwd)
+                rdsName = reads_info['file_name'].split('.')[0]
+                if reads_info['file_rev'] is not None:
+                    rdsFiles.append(rds['file_rev'])
+
+            # 3. Finally all set, do the alignment and upload the output.
+            star_mp_ret = self._run_star_mapping(input_params, rds_files, rds_name)
+            if not isinstance(star_mp_ret, int):
+                #print("Uploading STAR output object...")
+                if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+                    prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
+                    alignment_file = '{}Aligned.out.sam'.format(prefix)
+                else:
+                    alignment_file = 'Aligned.out.sam'
+
+                alignment_file = os.path.join(star_ret['star_output'], alignment_file)
+
+                # Upload the alignment
+                alignment_ref = self.upload_STARalignment(input_params, reads_info, alignment_file)
+                alignments[reads_info["object_ref"]] = {
+                    "ref": alignment_ref,
+                    "readsName": reads_info['file_name'],
+                    "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
+                }
+
+        return (alignments, alignment_ref)
+
+    def run_batch(self, reads_infos, input_params):
+        base_output_obj_name = input_params[self.PARAM_IN_OUTPUT_NAME]
+        # build task list and send it to KBParallel
+        tasks = list()
+        for idx, rds_info in enumerate(reads_infos):
+            single_param = dict(input_params)  # need a copy of the params
+            single_param[self.PARAM_IN_OUTPUT_NAME] = "{}_{}".format(base_output_obj_name, idx)
+            single_param["create_report"] = 0
+            single_param[self.PARAM_IN_READS] = rds_info["object_ref"]
+            if "condition" in rds_info:
+                single_param["condition"] = rds_info["condition"]
+            else:
+                single_param["condition"] = "unspecified"
+
+            tasks.append({
+                "module_name": "kb_STAR",
+                "function_name": "run_star",
+                "version": "dev",
+                "parameters": single_param
+            })
+
+        batch_run_params = {
+            "tasks": tasks,
+            "runner": "parallel",
+            "concurrent_local_tasks": 3,
+            "concurrent_njsw_tasks": 0,
+            "max_retries": 2
+        }
+        parallel_runner = KBParallel(self.callback_url)
+        results = parallel_runner.run_batch(batch_run_params)["results"]
+        alignment_items = list()
+        alignments = dict()
+        for idx, result in enumerate(results):
+            # idx of the result is the same as the idx of the inputs AND reads_infos
+            if result["is_error"] != 0:
+                raise RuntimeError("Failed a parallel run of STAR! {}".format(result["result_package"]["error"]))
+            reads_ref = tasks[idx]["parameters"][self.PARAM_IN_READS]
+            alignment_items.append({
+                "ref": result["result_package"]["result"][0]["alignment_ref"],
+                "label": reads_infos[idx].get(
+                    "condition",
+                    input_params.get("condition",
+                               "unspecified condition"))
+            })
+            alignments[reads_ref] = {
+                "ref": result["result_package"]["result"][0]["alignment_ref"],
+                "name": tasks[idx]["parameters"][self.PARAM_IN_OUTPUT_NAME]
+            }
+        # build the final alignment set
+        alignment_ref = self.upload_alignment_set(
+            alignment_items, base_output_obj_name, input_params[self.PARAM_IN_WS]
+        )
+        return (alignments, alignment_ref)
+
 
     def run_star(self, input_params):
         """
-        run_star: run the STAR app
+        run_single: run the STAR app 
         """
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-	# STEP 1: preprocessing the input parameters
-        input_params = self._process_params(input_params)
+	# STEP 1: convert the input parameters (from refs to file paths, especially)
         params_ret = self._convert_params(input_params)
         params = params_ret.get('input_parameters', None)
         readsInfo = params_ret.get('reads_info', None)
 
 	# STEP 2: Running star
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
-        alignment_set = list()
+        alignment_set = dict()
         star_out_dirs = list()
         for rds in readsInfo:
             rdsFiles = list()
@@ -698,25 +950,28 @@ class STARUtil:
                 #print("Uploading STAR output object...")
                 if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
                     prefix = format(params[self.PARAM_IN_OUTFILE_PREFIX])
-                    alignment_file = "{}Aligned.out.sam".format(prefix)
+                    alignment_file = '{}Aligned.out.sam'.format(prefix)
                 else:
-                    alignment_file = "Aligned.out.sam"
+                    alignment_file = 'Aligned.out.sam'
 
                 alignment_file = os.path.join(star_ret['star_output'], alignment_file)
 
                 # Upload the alignment
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
-                alignment_set.append(alignment_ref)
+                alignment_set[rds['object_ref']] = {
+                        'ref': alignment_ref,
+                        'readsName': rds['file_name'],
+                        'name': params['output_name']
+                }
                 star_out_dirs.append(star_ret)
 
 	# STEP 3: Generating report
         returnVal = {
-                'output_folder': self.STAR_OUT_DIR,
-                'alignment_set': alignment_set
+                'alignment_ref': alignment_set
         }
 
-        #report_out = self._generate_extended_report(alignment_set, input_params, star_out_dirs)
-        report_out = self._generate_report(alignment_set, input_params)
+        report_out = self._generate_extended_report(alignment_set, input_params)
+        #report_out = self._generate_report(alignment_set, input_params)
         returnVal.update(report_out)
 
         return returnVal

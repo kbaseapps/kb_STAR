@@ -156,7 +156,8 @@ class STARTest(unittest.TestCase):
         print ('paired reads uploaded:\n')
         pprint (pformat(new_obj_info))
 
-        return new_obj_info[0]
+        #return new_obj_info[0]
+        return paired_end_ref
 
     @classmethod
     def make_ref(self, object_info):
@@ -194,16 +195,16 @@ class STARTest(unittest.TestCase):
     #@unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
-        #pe_lib_info = self.getPairedEndLibInfo()
-        #pprint(pe_lib_info)
+        pe_lib_info = self.getPairedEndLibInfo()
+        pprint(pe_lib_info)
 
         # STAR input parameters
         params = {
             'output_workspace': self.getWsName(),
             'output_name': 'Aligned_reads',
-            'outFileNamePrefix': 'STARtest_',
-            'genome_ref': self.loadGenome(),
-            'sampleset_ref': self.loadSEReads(),
+            #'outFileNamePrefix': 'STARtest_',
+            'assembly_or_genome_ref': self.loadGenome(),
+            'readsset_ref': self.loadSEReads(),
             'runMode': 'genomeGenerate',
             'runThreadN': 4
             #'genomeFastaFile_refs': [self.loadAssembly()],

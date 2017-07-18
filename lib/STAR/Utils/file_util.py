@@ -3,6 +3,7 @@
 Utility functions to fetch files from various Workspace object types.
 Depends on the more general util.py that's here, too.
 """
+import re
 from pprint import pprint
 from SetAPI.SetAPIClient import SetAPI
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
