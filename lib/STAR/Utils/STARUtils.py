@@ -459,7 +459,7 @@ class STARUtil:
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], input_params[self.PARAM_IN_OUTPUT_NAME]),
             "file_path": alignment_file,
-            "genome_ref": input_params[self.PARAM_IN_GENOME],
+            "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
             "library_type": reads_info['style'],
             "condition": reads_info['condition'],
