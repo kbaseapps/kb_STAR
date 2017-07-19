@@ -900,9 +900,9 @@ class STARUtil:
                             'runner': 'parallel',
                             'max_retries': 2}
 
-        if input_params['concurrent_local_tasks'] is not None:
+        if input_params.get('concurrent_local_tasks', None) is not None:
                 batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
-        if input_params['concurrent_njsw_tasks'] is not None:
+        if input_params.get('concurrent_njsw_tasks', None) is not None:
                 batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
 
         results = self.parallel_runner.run_batch(batch_run_params)
