@@ -560,7 +560,7 @@ class STARUtil:
             created_objects.append({
                 'ref': key,
                 'reads': value['readsName'],
-                'alignment': value['name'],
+                'alignment': value['alignment_name'],
                 'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], params[self.PARAM_IN_GENOME])
             })
 
