@@ -159,7 +159,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # 1. process the input parameters
         validated_params = star_runner.process_params(params)
-        input_info = star_runner.determine_input_info(validated_params)
+        input_obj_info = star_runner.determine_input_info(validated_params)
 
 	# 2. convert the input parameters (from refs to file paths, especially)
         params_ret = star_runner.convert_params(validated_params)
@@ -168,7 +168,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsRefs = reads.get('readsRefs', None)
         readsInfo = reads.get('readsInfo', None)
 
-        result = star_runner.run_single(readsInfo[0], input_params, input_info)
+        result = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
 
         #END star_align_reads_to_assembly
 
@@ -276,7 +276,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # 1. process the input parameters
         validated_params = star_runner.process_params(params)
-        input_info = star_runner.determine_input_info(validated_params)
+        input_obj_info = star_runner.determine_input_info(validated_params)
 
 	# 2. convert the input parameters (from refs to file paths, especially)
         params_ret = star_runner.convert_params(validated_params)
@@ -295,10 +295,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #  1. make a list of tasks to send to KBParallel.
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
-            if input_info['run_mode'] == 'single_library':
-                returnVal = star_runner.run_single(readsInfo[0], input_params, input_info)
-            elif input_info['run_mode'] == 'sample_set':
-                returnVal = star_runner.run_batch(readsRefs, input_params, input_info)
+            if input_obj_info['run_mode'] == 'single_library':
+                returnVal = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
+            elif input_obj_info['run_mode'] == 'sample_set':
+                returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
         else:
             returnVal = {alignment_ref : None,
                          report_name : None,

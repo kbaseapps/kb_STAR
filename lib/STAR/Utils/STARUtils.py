@@ -169,9 +169,10 @@ class STARUtil:
         log("Converting genome {0} to GFF file {1}".format(gnm_ref, gtf_file_dir))
         gfu = GenomeFileUtil(self.callback_url)
         try:
-            gfu_ret = gfu.genome_to_gff({'genome_ref': gnm_ref,
-                                           'is_gtf': 1,
-                                           'target_dir': gtf_file_dir})
+            gfu_ret = gfu.genome_to_gff({self.PARAM_IN_GENOME: gnm_ref,
+                                         'is_gtf': 1,
+                                         'target_dir': gtf_file_dir
+                                      })
         except ValueError as egfu:
             log('GFU getting GTF file raised error:\n')
             pprint(egfu)
@@ -555,13 +556,14 @@ class STARUtil:
         print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
         report_client = KBaseReport(self.callback_url, token=self.token)
 
+        genomeName = self.get_name_from_obj_info(self.get_obj_info(params[self.PARAM_IN_GENOME]))
         created_objects = list()
         for key, value in alignmentSet.iteritems():
             created_objects.append({
                 'ref': key,
                 'reads': value['readsName'],
                 'alignment': value['alignment_name'],
-                'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], params[self.PARAM_IN_GENOME])
+                'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], genomeName)
             })
 
         report_text = "Created one alignment set from the given reads set."
@@ -821,7 +823,7 @@ class STARUtil:
         return ret
 
 
-    def run_single(self, reads_info, input_params, input_info):
+    def run_single(self, reads_info, input_params, input_obj_info):
         """
         Performs a single run of STAR against a single reads reference. The rest of the info
         is taken from the params dict - see the spec for details.
@@ -845,8 +847,8 @@ class STARUtil:
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
 
+        rds_name = input_obj_info['info'][1]
         rds_files = list()
-        rds_name = input_info['info'][1]
         ret_fwd = reads_info["file_fwd"]
         if ret_fwd is not None:
             rds_files.append(ret_fwd)
@@ -870,7 +872,7 @@ class STARUtil:
             alignment_ref = self.upload_STARalignment(input_params, reads_info, alignment_file)
             alignments[reads_info["object_ref"]] = {
                 "ref": alignment_ref,
-                "readsName": reads_info['file_name'],
+                "readsName": rds_name,
                 "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
 
@@ -883,12 +885,12 @@ class STARUtil:
             returnVal.update(report_out)
         returnVal["alignment_objs"] = alignments
         returnVal["alignment_ref"] = alignment_ref
-        returnVal["alignment_name"] = input_params["output_name"]
+        returnVal["alignment_name"] = input_params[self.PARAM_IN_OUTPUT_NAME]
 
         return returnVal
 
 
-    def run_batch(self, reads_refs, input_params, input_info):
+    def run_batch(self, reads_refs, input_params, input_obj_info):
         base_output_obj_name = input_params[self.PARAM_IN_OUTPUT_NAME]
         # build task list and send it to KBParallel
         tasks = []
@@ -915,8 +917,8 @@ class STARUtil:
     def build_single_execution_task(self, rds_ref, params, output_name):
         task_params = copy.deepcopy(params)
 
-        task_params['readsset_ref'] = rds_ref
-        task_params['output_name'] = output_name
+        task_params[self.PARAM_IN_READS] = rds_ref
+        task_params[self.PARAM_IN_OUTPUT_NAME] = output_name
         task_params['create_report'] = 0
 
         return {'module_name': 'kb_STAR',
@@ -969,7 +971,7 @@ class STARUtil:
         set_name = save_result['set_info'][1]
 
         # run qualimap
-        #qualimap_report = self.qualimap.run_bamqc({'readsset_ref': save_result['set_ref']})
+        #qualimap_report = self.qualimap.run_bamqc({self.PARAM_IN_READS: save_result['set_ref']})
         #qc_result_zip_info = qualimap_report['qc_result_zip_info']
 
         # create the report
@@ -1063,15 +1065,15 @@ class STARUtil:
 
     def determine_input_info(self, validated_params):
         ''' get info on the readsset_ref object and determine if we run once or run on a set '''
-        info = self.get_obj_info(validated_params['readsset_ref'])
+        info = self.get_obj_info(validated_params[self.PARAM_IN_READS])
         obj_type = self.get_type_from_obj_info(info)
         if obj_type in ['KBaseAssembly.PairedEndLibrary', 'KBaseAssembly.SingleEndLibrary',
                         'KBaseFile.PairedEndLibrary', 'KBaseFile.SingleEndLibrary']:
-            return {'run_mode': 'single_library', 'info': info, 'ref': validated_params['readsset_ref']}
+            return {'run_mode': 'single_library', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
         if obj_type == 'KBaseRNASeq.RNASeqSampleSet':
-            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params['readsset_ref']}
+            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
         if obj_type == 'KBaseSets.ReadsSet':
-            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params['readsset_ref']}
+            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
 
         raise ValueError('Object type of readsset_ref is not valid, was: ' + str(obj_type))
 
