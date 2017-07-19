@@ -868,6 +868,10 @@ class STARUtil:
                 "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
 
+        returnVal = {
+            "report_ref": None,
+            "report_name": None
+        }
         if input_params.get("create_report", 0) == 1:
             report_info = self._generate_report(alignments, input_params)
             returnVal["report_ref"] = report_info["ref"]

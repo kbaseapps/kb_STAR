@@ -150,7 +150,7 @@ class STARTest(unittest.TestCase):
 
     # borrowed from Megahit - call this method to get the WS object info of a Paired End Library (will
     # upload the example data if this is the first time the method is called during tests)
-    def getPairedEndLibInfo(self):
+    def loadPairedEndReads(self):
         if hasattr(self.__class__, 'pairedEndLibInfo'):
             return self.__class__.pairedEndLibInfo
         # 1) upload files to shock
@@ -228,7 +228,7 @@ class STARTest(unittest.TestCase):
     #@unittest.skip("skipped test_run_star")
     def test_run_star(self):
         # get the test data
-        pe_lib_info = self.getPairedEndLibInfo()
+        pe_lib_info = self.loadPairedEndReads()
         pprint(pe_lib_info)
 
         assembly_ref = self.loadAssembly()
@@ -255,7 +255,7 @@ class STARTest(unittest.TestCase):
 
         ss_ref = self.loadSampleSet()
         params = {'readsset_ref': ss_ref,
-                  'genome_ref': assembly_ref,
+                  'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
                   'concurrent_njsw_tasks': 0,
@@ -381,20 +381,4 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.scratch, 'STAR_output_dir/STAR_SJ.out.tab')))
 
         pprint(result)
-
-    def loadPairedEndReads(self):
-        if hasattr(self.__class__, 'pe_reads_ref'):
-            return self.__class__.pe_reads_ref
-        fq_path1 = os.path.join(self.scratch, 'reads_1.fq')
-        shutil.copy(os.path.join('data', 'bt_test_data', 'reads_1.fq'), fq_path1)
-        fq_path2 = os.path.join(self.scratch, 'reads_2.fq')
-        shutil.copy(os.path.join('data', 'bt_test_data', 'reads_2.fq'), fq_path2)
-
-        ru = ReadsUtils(self.callback_url)
-        pe_reads_ref = ru.upload_reads({'fwd_file': fq_path1, 'rev_file': fq_path2,
-                                        'wsname': self.getWsName(),
-                                        'name': 'test_assembly',
-                                        'sequencing_tech': 'artificial reads'})['obj_ref']
-        self.__class__.pe_reads_ref = pe_reads_ref
-        return pe_reads_ref
 
