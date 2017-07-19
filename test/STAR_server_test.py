@@ -242,7 +242,8 @@ class STARTest(unittest.TestCase):
                   'output_workspace': self.getWsName(),
                   'runMode': 'genomeGenerate',
                   'concurrent_njsw_tasks': 0,
-                  'concurrent_local_tasks': 1
+                  'concurrent_local_tasks': 1,
+                  'create_report': 1
                   #'genomeFastaFile_refs': [self.loadAssembly()],
                   #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }
@@ -259,7 +260,8 @@ class STARTest(unittest.TestCase):
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
                   'concurrent_njsw_tasks': 0,
-                  'concurrent_local_tasks': 1
+                  'concurrent_local_tasks': 1,
+                  'create_report': 1
         }
         pprint('Running with a SampleSet')
         pprint(params)
