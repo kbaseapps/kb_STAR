@@ -638,11 +638,11 @@ class STARUtil:
             'output_name': input_params[self.PARAM_IN_OUTPUT_NAME]
 	}
 
-        if input_params['create_report'] is not None:
+        if input_params.get('create_report', None) is not None:
                 params['create_report'] = input_params['create_report']
-        if input_params['concurrent_local_tasks'] is not None:
+        if input_params.get('concurrent_local_tasks', None) is not None:
                 params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
-        if input_params['concurrent_njsw_tasks'] is not None:
+        if input_params.get('concurrent_njsw_tasks', None) is not None:
                 params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
 	# STEP 1: Converting refs to file locations in the scratch area
         reads = self.get_reads(input_params)
