@@ -871,7 +871,7 @@ class STARUtil:
             alignments[reads_info["object_ref"]] = {
                 "ref": alignment_ref,
                 "readsName": reads_info['file_name'],
-                "alignment_ame": input_params[self.PARAM_IN_OUTPUT_NAME]
+                "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
 
         returnVal = {
