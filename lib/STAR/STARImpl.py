@@ -39,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "b0e3062e5dfe2cbdd40fc2bdabfea71d29666750"
+    GIT_COMMIT_HASH = "8ae6d347aedf837da50b81d429be0e54faab40fe"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -85,7 +85,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         pass
 
 
-    def align_reads_to_assembly_app(self, ctx, params):
+    def star_align_reads_to_assembly(self, ctx, params):
         """
         :param params: instance of type "AlignReadsParams" (Will align the
            input reads (or set of reads specified in a SampleSet) to the
@@ -154,12 +154,27 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         """
         # ctx is the context object
         # return variables are: result
-        #BEGIN align_reads_to_assembly_app
-        #END align_reads_to_assembly_app
+        #BEGIN star_align_reads_to_assembly
+        star_runner = STARUtil(self.config)
+
+        # 1. process the input parameters
+        validated_params = star_runner.process_params(params)
+        input_info = star_runner.determine_input_info(validated_params)
+
+	# 2. convert the input parameters (from refs to file paths, especially)
+        params_ret = star_runner.convert_params(validated_params)
+        input_params = params_ret.get('input_parameters', None)
+        reads = params_ret.get('reads', None)
+        readsRefs = reads.get('readsRefs', None)
+        readsInfo = reads.get('readsInfo', None)
+
+        result = star_runner.run_single(readsInfo[0], input_params, input_info)
+
+        #END star_align_reads_to_assembly
 
         # At some point might do deeper type checking...
         if not isinstance(result, dict):
-            raise ValueError('Method align_reads_to_assembly_app return value ' +
+            raise ValueError('Method star_align_reads_to_assembly return value ' +
                              'result is not type dict as required.')
         # return the results
         return [result]
@@ -281,9 +296,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
             if input_info['run_mode'] == 'single_library':
-                returnVal = star_runner.run_single(readsInfo[0], input_params)
+                returnVal = star_runner.run_single(readsInfo[0], input_params, input_info)
             elif input_info['run_mode'] == 'sample_set':
-                returnVal = star_runner.run_batch(readsRefs, input_params)
+                returnVal = star_runner.run_batch(readsRefs, input_params, input_info)
         else:
             returnVal = {alignment_ref : None,
                          report_name : None,
@@ -336,8 +351,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'result is not type dict as required.')
         # return the results
         return [result]
-
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",

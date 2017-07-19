@@ -633,6 +633,7 @@ class STARUtil:
 	params = {
             'output_workspace': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
+            self.PARAM_IN_GENOME: input_params[self.PARAM_IN_GENOME],
             'runThreadN': input_params[self.PARAM_IN_THREADN],
             'output_name': input_params[self.PARAM_IN_OUTPUT_NAME]
 	}
@@ -814,7 +815,7 @@ class STARUtil:
         return ret
 
 
-    def run_single(self, reads_info, input_params):
+    def run_single(self, reads_info, input_params, input_info):
         """
         Performs a single run of STAR against a single reads reference. The rest of the info
         is taken from the params dict - see the spec for details.
@@ -839,11 +840,11 @@ class STARUtil:
             reads_info["condition"] = input_params["condition"]
 
         rds_files = list()
-        rds_name = ''
+        rds_name = input_info['info'][1]
         ret_fwd = reads_info["file_fwd"]
         if ret_fwd is not None:
             rds_files.append(ret_fwd)
-            rds_name = reads_info['file_name'].split('.')[0]
+            #rds_name = reads_info['file_name'].split('.')[0]
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
@@ -878,7 +879,7 @@ class STARUtil:
         return returnVal
 
 
-    def run_batch(self, reads_refs, input_params):
+    def run_batch(self, reads_refs, input_params, input_info):
         base_output_obj_name = input_params[self.PARAM_IN_OUTPUT_NAME]
         # build task list and send it to KBParallel
         tasks = []
@@ -898,7 +899,7 @@ class STARUtil:
         print('Batch run results=')
         pprint(results)
 
-        batch_result = self.process_batch_result(results, input_params, reads)
+        batch_result = self.process_batch_result(results, input_params, reads_refs)
 
         return batch_result
 
@@ -910,12 +911,12 @@ class STARUtil:
         task_params['create_report'] = 0
 
         return {'module_name': 'kb_STAR',
-                'function_name': 'run_star',
+                'function_name': 'star_align_reads_to_assembly',
                 'version': 'dev',
                 'parameters': task_params}
 
 
-    def process_batch_result(self, batch_result, validated_params, reads):
+    def process_batch_result(self, batch_result, validated_params, reads_refs):
 
         n_jobs = len(batch_result['results'])
         n_success = 0
@@ -937,7 +938,7 @@ class STARUtil:
                 output_info = result_package['result'][0]['output_info']
                 ra_ref = output_info['upload_results']['obj_ref']
                 # Note: could add a label to the alignment here?
-                items.append({'ref': ra_ref, 'label': reads[k]['condition']})
+                items.append({'ref': ra_ref, 'label': reads_refs[k]['condition']})
                 objects_created.append({'ref': ra_ref})
 
             if result_package['run_context']['location'] == 'local':
@@ -1065,8 +1066,12 @@ class STARUtil:
 
         raise ValueError('Object type of readsset_ref is not valid, was: ' + str(obj_type))
 
+
     def get_type_from_obj_info(self, info):
         return info[2].split('-')[0]
+
+    def get_name_from_obj_info(self, info):
+        return info[1]
 
     def get_obj_info(self, ref):
         return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos'][0]

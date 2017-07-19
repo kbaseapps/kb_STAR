@@ -111,7 +111,7 @@ module STAR {
         string report_ref;
     } AlignReadsResult;
    
-    funcdef align_reads_to_assembly_app(AlignReadsParams params)
+    funcdef star_align_reads_to_assembly(AlignReadsParams params)
         returns (AlignReadsResult result) authentication required;
 
     /* aligns a single reads object to produce */
