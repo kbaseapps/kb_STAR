@@ -879,9 +879,8 @@ class STARUtil:
             "report_name": None
         }
         if input_params.get("create_report", 0) == 1:
-            report_info = self._generate_report(alignments, input_params)
-            returnVal["report_ref"] = report_info["ref"]
-            returnVal["report_name"] = report_info["name"]
+            report_out = self._generate_report(alignments, input_params)
+            returnVal.update(report_out)
         returnVal["alignment_objs"] = alignments
         returnVal["alignment_ref"] = alignment_ref
         returnVal["alignment_name"] = input_params["output_name"]
