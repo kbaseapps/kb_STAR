@@ -263,14 +263,15 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # return variables are: returnVal
         #BEGIN run_star
         self.log('Running run_star with params:\n' + pformat(params))
-        returnVal = {
-            "report_ref": None,
-            "report_name": None
-        }
-
         for key, value in params.iteritems():
             if isinstance(value, basestring):
                 params[key] = value.strip()
+
+        returnVal = {
+            "report_ref": None,
+            "report_name": None,
+            "alignment_ref": None
+        }
 
         star_runner = STARUtil(self.config)
 
@@ -299,11 +300,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                 returnVal = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
             elif input_obj_info['run_mode'] == 'sample_set':
                 returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
-        else:
-            returnVal = {alignment_ref : None,
-                         report_name : None,
-                         report_ref : None
-                        }
+                returnVal = star_runner.run_star_sequential(readsInfo, input_params, input_obj_info)
         #END run_star
 
         # At some point might do deeper type checking...

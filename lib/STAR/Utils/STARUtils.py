@@ -637,7 +637,7 @@ class STARUtil:
             'runMode': 'genomeGenerate',
             self.PARAM_IN_GENOME: input_params[self.PARAM_IN_GENOME],
             'runThreadN': input_params[self.PARAM_IN_THREADN],
-            'output_name': input_params[self.PARAM_IN_OUTPUT_NAME]
+            self.PARAM_IN_OUTPUT_NAME: input_params[self.PARAM_IN_OUTPUT_NAME]
 	}
 
         if input_params.get('create_report', None) is not None:
@@ -961,7 +961,7 @@ class STARUtil:
         alignment_set_data = {'description': '', 'items': items}
         alignment_set_save_params = {'data': alignment_set_data,
                                      'workspace': validated_params['output_workspace'],
-                                     'output_object_name': validated_params['output_name']}
+                                     'output_object_name': validated_params[self.PARAM_IN_OUTPUT_NAME]}
 
         set_api = SetAPI(self.srv_wiz_url)
         save_result = set_api.save_reads_alignment_set_v1(alignment_set_save_params)
@@ -1003,7 +1003,7 @@ class STARUtil:
         return result
 
 
-    def run_star_sequential(self, input_params):
+    def run_star_sequential(self, readsInfo, input_params, input_obj_info):
         """
         run_star_sequential: run the STAR app on each reads one by one
         """
@@ -1011,23 +1011,22 @@ class STARUtil:
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
 	# STEP 1: convert the input parameters (from refs to file paths, especially)
-        params_ret = self.convert_params(input_params)
-        params = params_ret.get('input_parameters', None)
-        reads = params_ret.get('reads', None)
-        readsInfo = reads.get('readsInfo', None)
+        #params_ret = self.convert_params(input_params)
+        #params = params_ret.get('input_parameters', None)
+        #reads = params_ret.get('reads', None)
+        #readsInfo = reads.get('readsInfo', None)
 
-	# STEP 2: Running star
+	# STEP 2: Running star indexing & mapping
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
         alignment_set = dict()
         star_out_dirs = list()
         for rds in readsInfo:
             rdsFiles = list()
-            rdsName = ''
+            rdsName = input_obj_info['info'][1]
             ret_fwd = rds.get("file_fwd", None)
             if ret_fwd is not None:
                 print("Done fetching FASTA file with name = {}".format(ret_fwd))
                 rdsFiles.append(ret_fwd)
-                rdsName = rds['file_name'].split('.')[0]
                 if rds.get('file_rev', None) is not None:
                     rdsFiles.append(rds['file_rev'])
 
@@ -1046,14 +1045,14 @@ class STARUtil:
                 alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
                 alignment_set[rds['object_ref']] = {
                         'ref': alignment_ref,
-                        'readsName': rds['file_name'],
-                        'name': params['output_name']
+                        'readsName': rdsName,
+                        'alignment_name': '{}_{}_starAligned'.format(params[self.PARAM_IN_OUTPUT_NAME], rdsName)
                 }
                 star_out_dirs.append(star_ret)
 
 	# STEP 3: Generating report
         returnVal = {
-                'alignment_ref': alignment_set
+                'alignment_ref': alignment_set[readsInfo[0]['object_ref']]['ref']#use the first alignment for now
         }
 
         report_out = self._generate_extended_report(alignment_set, input_params)
