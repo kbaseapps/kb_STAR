@@ -15,7 +15,7 @@ from STAR.Utils.Program_Runner import Program_Runner
 from DataFileUtil.DataFileUtilClient import DataFileUtil
 from Workspace.WorkspaceClient import Workspace as Workspace
 from KBaseReport.KBaseReportClient import KBaseReport
-#from ReadsUtils.ReadsUtilsClient import ReadsUtils
+from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
@@ -860,6 +860,7 @@ class STARUtil:
         alignments = dict()
         alignment_ref = None
         singlerun_output_info = {}
+        report_info = {}
 
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
@@ -890,23 +891,23 @@ class STARUtil:
             # Upload the alignment
             #print("Uploading STAR output object...")
             upload_results = self.upload_STARalignment(input_params, reads_info, output_sam_file)
+            alignment_ref = upload_results['obj_ref']
             alignments[reads_info["object_ref"]] = {
-                "ref": upload_results['obj_ref'],
+                "ref": alignment_ref,
                 "readsName": rds_name,
                 "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
             singlerun_output_info['upload_results'] = upload_results
 
-        report_info = {
-            "report_ref": None,
-            "report_name": None
-        }
-        if input_params.get("create_report", 0) == 1:
-            report_out = self.generate_report_for_single_run(singlerun_output_info, input_params)
-            #report_out = self._generate_extended_report(alignments, input_params)
-            report_info.update(report_out)
+        result = {'alignment_ref': alignment_ref}
 
-        return {'output_info': singlerun_output_info, 'report_info': report_info}
+        if input_params.get("create_report", 0) == 1:
+            report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
+            #report_info = self._generate_extended_report(alignments, input_params)
+            result.update(report_info)
+
+        #return {'output_info': singlerun_output_info, 'report_info': report_info}
+        return result 
 
 
     def run_batch(self, reads_refs, input_params, input_obj_info):

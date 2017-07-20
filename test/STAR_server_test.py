@@ -226,11 +226,8 @@ class STARTest(unittest.TestCase):
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
     #@unittest.skip("skipped test_run_star")
-    def test_run_star(self):
+    def test_run_star_single(self):
         # get the test data
-        pe_lib_info = self.loadPairedEndReads()
-        pprint(pe_lib_info)
-
         assembly_ref = self.loadAssembly()
         genome_ref = self.loadGenome()
         se_lib_ref = self.loadSEReads()
@@ -254,6 +251,14 @@ class STARTest(unittest.TestCase):
         self.assertIn('report_name', res['report_info'])
         self.assertIn('report_ref', res['report_info'])
 
+    # Uncomment to skip this test
+    @unittest.skip("skipped test_run_star")
+    def test_run_star_batch(self):
+        # get the test data
+        pe_lib_info = self.loadPairedEndReads()
+        pprint(pe_lib_info)
+
+        genome_ref = self.loadGenome()
         ss_ref = self.loadSampleSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,

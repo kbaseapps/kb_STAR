@@ -267,11 +267,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if isinstance(value, basestring):
                 params[key] = value.strip()
 
-        returnVal = {
-            "report_ref": None,
-            "report_name": None,
-            "alignment_ref": None
-        }
+        returnVal = {}
 
         star_runner = STARUtil(self.config)
 
