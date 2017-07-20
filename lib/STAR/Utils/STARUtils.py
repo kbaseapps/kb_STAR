@@ -20,7 +20,7 @@ from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from KBParallel.KBParallelClient import KBParallel
-#from kb_QualiMap.kb_QualiMapClient import kb_QualiMap
+from kb_QualiMap.kb_QualiMapClient import kb_QualiMap
 
 from file_util import (
     valid_string,
@@ -867,7 +867,7 @@ class STARUtil:
             else:
                 output_sam_file = 'Aligned.out.sam'
 
-            singlerun_output_info['output_dir'] = star_mp_dir['star_output']
+            singlerun_output_info['output_dir'] = star_mp_ret['star_output']
             output_sam_file = os.path.join(star_mp_ret['star_output'], output_sam_file)
             singlerun_output_info['output_sam_file'] = output_sam_file
 
@@ -973,7 +973,7 @@ class STARUtil:
         objects_created.append({'ref': save_result['set_ref'], 'description': 'Set of all reads alignments generated'})
         set_name = save_result['set_info'][1]
 
-        # run qualimap
+        #run qualimap
         #qualimap_report = self.qualimap.run_bamqc({self.PARAM_IN_READS: save_result['set_ref']})
         #qc_result_zip_info = qualimap_report['qc_result_zip_info']
 
