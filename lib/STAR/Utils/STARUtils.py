@@ -903,10 +903,8 @@ class STARUtil:
 
         if input_params.get("create_report", 0) == 1:
             report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-            #report_info = self._generate_extended_report(alignments, input_params)
             result.update(report_info)
 
-        #return {'output_info': singlerun_output_info, 'report_info': report_info}
         return result 
 
 
@@ -992,8 +990,8 @@ class STARUtil:
         set_name = save_result['set_info'][1]
 
         #run qualimap
-        #qualimap_report = self.qualimap.run_bamqc({self.PARAM_IN_READS: save_result['set_ref']})
-        #qc_result_zip_info = qualimap_report['qc_result_zip_info']
+        qualimap_report = self.qualimap.run_bamqc({self.PARAM_IN_READS: save_result['set_ref']})
+        qc_result_zip_info = qualimap_report['qc_result_zip_info']
 
         # create the report
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
@@ -1018,10 +1016,13 @@ class STARUtil:
                                                   'workspace_name': validated_params['output_workspace']
                                                   })
 
-        result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
-        result['batch_output_info'] = batch_result
+        #result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
+        #result['batch_output_info'] = batch_result
+        report_out = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+        result = {'alignment_ref': save_result['set_ref']}
+        result.update(report_out)
 
-        return result
+        return result 
 
 
     def run_star_sequential(self, readsInfo, input_params, input_obj_info):

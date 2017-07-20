@@ -225,10 +225,9 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star")
+    @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        assembly_ref = self.loadAssembly()
         genome_ref = self.loadGenome()
         se_lib_ref = self.loadSEReads()
 
@@ -247,12 +246,12 @@ class STARTest(unittest.TestCase):
         pprint(params)
         res = self.getImpl().run_star(self.getContext(), params)[0]
         pprint(res)
-        self.assertIn('report_info', res)
-        self.assertIn('report_name', res['report_info'])
-        self.assertIn('report_ref', res['report_info'])
+        self.assertIn('report_ref', res)
+        self.assertIn('report_name', res)
+        self.assertIn('alignment_ref', res)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star")
+    #@unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
         pe_lib_info = self.loadPairedEndReads()
@@ -272,9 +271,9 @@ class STARTest(unittest.TestCase):
         pprint(params)
         res = self.getImpl().run_star(self.getContext(), params)[0]
         pprint(res)
-        self.assertIn('report_info', res)
-        self.assertIn('report_name', res['report_info'])
-        self.assertIn('report_ref', res['report_info'])
+        self.assertIn('report_ref', res)
+        self.assertIn('report_name', res)
+        self.assertIn('alignment_ref', res)
 
 
     # Uncomment to skip this test
