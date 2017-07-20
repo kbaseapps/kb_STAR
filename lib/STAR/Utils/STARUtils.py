@@ -535,7 +535,7 @@ class STARUtil:
         pprint( "Zipping output files used {} seconds ".format(t2-t1))
 
         report_params = {
-              'message': 'Created a set of {} alignment(s) from the given sample set.'.format(len(alignObj_refs)),
+              'message': 'Created a set of {} alignment(s) from the given sample set.'.format(len(alignObjs)),
               'workspace_name': params[self.PARAM_IN_WS],
               'objects_created': created_objects,
               'file_links': index_files + output_files,
