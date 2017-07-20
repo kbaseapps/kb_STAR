@@ -449,7 +449,7 @@ class STARUtil:
         return ret
 
 
-    def upload_STARalignment(self, input_params, reads_info, alignment_file):
+    def upload_STARalignment(self, input_params, reads_info, output_sam_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
@@ -460,7 +460,7 @@ class STARUtil:
         pprint(reads_info)
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], input_params[self.PARAM_IN_OUTPUT_NAME]),
-            "file_path": alignment_file,
+            "file_path": output_sam_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
             "library_type": reads_info['style'],
@@ -841,16 +841,9 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_single\n' +
             'params:\n{} on reads {}'.format(json.dumps(input_params, indent=1), reads_info))
 
-        # 1. Get STAR index from genome.
-        #    a. If it exists in cache, use that.
-        #    b. Otherwise, build it
         alignments = dict()
         alignment_ref = None
-
-        # 2. Fetch the reads file and make sure input params are correct.
-        # if the reads ref came from a different sample set, then we need to drop that
-        # reference inside the reads info object so it can be linked in the alignment-TODO
-        # make sure condition info carries over if we have it
+        singlerun_output_info = {}
 
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
@@ -864,22 +857,25 @@ class STARUtil:
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
-        # 3. Finally all set, do the alignment and upload the output.
+        # After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
+
         if not isinstance(star_mp_ret, int):
-            #print("Uploading STAR output object...")
             if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
                 prefix = format(input_params[self.PARAM_IN_OUTFILE_PREFIX])
-                alignment_file = '{}Aligned.out.sam'.format(prefix)
+                output_sam_file = '{}Aligned.out.sam'.format(prefix)
             else:
-                alignment_file = 'Aligned.out.sam'
+                output_sam_file = 'Aligned.out.sam'
 
-            alignment_file = os.path.join(star_mp_ret['star_output'], alignment_file)
+            singlerun_output_info['output_dir'] = star_mp_dir['star_output']
+            output_sam_file = os.path.join(star_mp_ret['star_output'], output_sam_file)
+            singlerun_output_info['output_sam_file'] = output_sam_file
 
             # Upload the alignment
-            upload_results = self.upload_STARalignment(input_params, reads_info, alignment_file)
+            #print("Uploading STAR output object...")
+            upload_results = self.upload_STARalignment(input_params, reads_info, output_sam_file)
             alignments[reads_info["object_ref"]] = {
-                "ref": alignment_ref,
+                "ref": upload_results['obj_ref'],
                 "readsName": rds_name,
                 "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
@@ -1027,6 +1023,8 @@ class STARUtil:
         # Looping through for now, but later should implement the parallel processing here for all reads in readsInfo
         alignment_set = dict()
         star_out_dirs = list()
+        output_sam_file = ''
+
         for rds in readsInfo:
             rdsFiles = list()
             rdsName = input_obj_info['info'][1]
@@ -1042,17 +1040,17 @@ class STARUtil:
                 #print("Uploading STAR output object...")
                 if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
                     prefix = format(params[self.PARAM_IN_OUTFILE_PREFIX])
-                    alignment_file = '{}Aligned.out.sam'.format(prefix)
+                    output_sam_file = '{}Aligned.out.sam'.format(prefix)
                 else:
-                    alignment_file = 'Aligned.out.sam'
+                    output_sam_file = 'Aligned.out.sam'
 
-                alignment_file = os.path.join(star_ret['star_output'], alignment_file)
+                output_sam_file = os.path.join(star_ret['star_output'], output_sam_file)
 
                 # Upload the alignment
-                upload_out = self.upload_STARalignment(input_params, rds, alignment_file)
+                upload_out = self.upload_STARalignment(input_params, rds, output_sam_file)
                 alignment_ref = upload_out['object_ref']
                 alignment_set[rds['object_ref']] = {
-                        'ref': alignment_ref,
+                        'ref': upload_out['obj_ref'],
                         'readsName': rdsName,
                         'alignment_name': '{}_{}_starAligned'.format(params[self.PARAM_IN_OUTPUT_NAME], rdsName)
                 }
