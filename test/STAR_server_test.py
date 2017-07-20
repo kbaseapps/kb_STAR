@@ -215,7 +215,7 @@ class STARTest(unittest.TestCase):
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
                                                                'data': sample_set_data,
                                                                'name': sample_set_name,
-                                                               'provenance': [{}]
+                                                               'provenance': ['say something']
                                                                }]
                                                   })
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
