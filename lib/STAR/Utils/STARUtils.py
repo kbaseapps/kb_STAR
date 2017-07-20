@@ -511,6 +511,7 @@ class STARUtil:
         """
         log('Generating summary report...')
 
+        genomeName = self.get_name_from_obj_info(self.get_obj_info(params[self.PARAM_IN_GENOME]))
         created_objects = list()
         index_files = list()
         output_files = list()
