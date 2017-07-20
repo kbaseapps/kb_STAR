@@ -73,7 +73,7 @@ class STARUtil:
         self.STAR_idx = ''
         self.star_runner = Program_Runner(self.STAR_BIN, self.scratch)
         self.parallel_runner = KBParallel(self.callback_url)
-
+        self.qualimap = kb_QualiMap(self.callback_url)
 
     def _mkdir_p(self, dir):
         """
