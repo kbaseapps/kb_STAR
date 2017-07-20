@@ -508,7 +508,7 @@ class STARUtil:
         return output_files
 
 
-    def create_report_for_single_run(self, run_output_info, validated_params):
+    def generate_report_for_single_run(self, run_output_info, validated_params):
         input_ref = run_output_info['upload_results']['obj_ref']
         # first run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
@@ -518,7 +518,7 @@ class STARUtil:
         report_text = 'Ran on a single reads library.\n\n'
         alignment_info = self.get_obj_info(input_ref)
         report_text = 'Created ReadsAlignment: ' + str(alignment_info[1]) + '\n'
-        report_text += '                        ' + inpu_ref + '\n'
+        report_text += '                        ' + input_ref + '\n'
         kbr = KBaseReport(self.callback_url)
         report_info = kbr.create_extended_report({'message': report_text,
                                                   'objects_created': [{'ref': input_ref,
@@ -902,7 +902,7 @@ class STARUtil:
             "report_name": None
         }
         if input_params.get("create_report", 0) == 1:
-            report_out = self.create_report_for_single_run(singlerun_output_info, input_params)
+            report_out = self.generate_report_for_single_run(singlerun_output_info, input_params)
             #report_out = self._generate_extended_report(alignments, input_params)
             report_info.update(report_out)
 
