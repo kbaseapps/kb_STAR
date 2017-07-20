@@ -287,7 +287,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsInfo = reads.get('readsInfo', None)
 
 	# 3. generate the index from a reference genome
-        idx_ret = star_runner.build_star_index(input_params)
+        idx_ret = star_runner.run_star_indexing(input_params)
 
         if idx_ret == 0:
         # 4. Run STAR with index and reads.
@@ -299,7 +299,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if input_obj_info['run_mode'] == 'single_library':
                 returnVal = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
             elif input_obj_info['run_mode'] == 'sample_set':
-                returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
+                #returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
                 returnVal = star_runner.run_star_sequential(readsInfo, input_params, input_obj_info)
         #END run_star
 

@@ -448,6 +448,7 @@ class STARUtil:
                 ret = {'star_idx': self.STAR_idx, 'star_output': aligndir}
         return ret
 
+
     def upload_STARalignment(self, input_params, reads_info, alignment_file):
         """
         Uploads the alignment file + metadata.
@@ -471,10 +472,11 @@ class STARUtil:
 
         pprint(align_upload_params)
 
-        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver="dev")
-        alignment_ref = ra_util.upload_alignment(align_upload_params)["obj_ref"]
+        ra_util = ReadsAlignmentUtils(self.callback_url)
+        rau_upload_ret = ra_util.upload_alignment(align_upload_params)
+        alignment_ref = rau_upload_ret["obj_ref"]
         print("STAR alignment uploaded as object {}".format(alignment_ref))
-        return alignment_ref
+        return rau_upload_ret
 
     # borrowed from kb_stringtie and modified for STAR
     def _get_output_file_list(self, out_filename, output_dir):
@@ -552,13 +554,14 @@ class STARUtil:
         pprint( "Creating report used {} seconds ".format(t3-t2))
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
+
     def _generate_report(self, alignmentSet, params):
         """
         _generate_report: Creates a brief STAR report.
         """
         print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
-        report_client = KBaseReport(self.callback_url, token=self.token)
 
+        alignmentName = ''
         genomeName = self.get_name_from_obj_info(self.get_obj_info(params[self.PARAM_IN_GENOME]))
         created_objects = list()
         for key, value in alignmentSet.iteritems():
@@ -568,8 +571,11 @@ class STARUtil:
                 'alignment': value['alignment_name'],
                 'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], genomeName)
             })
+            alignmentName = value['alignment_name'] #for now only, will implement the alignmentSet name later
 
-        report_text = "Created one alignment set from the given reads set."
+        report_text = 'Created ReadsAlignment: ' + alignmentName + '\n'
+
+        report_client = KBaseReport(self.callback_url, token=self.token)
         report_info = report_client.create({
             'workspace_name': params[self.PARAM_IN_WS],
             "report": {
@@ -629,6 +635,7 @@ class STARUtil:
             else:
 		genome_fasta_files.append(genome_fasta_file["path"])
         return genome_fasta_files
+
 
     def convert_params(self, input_params):
         """
@@ -700,12 +707,12 @@ class STARUtil:
 
         return {'input_parameters': params, 'reads': reads}
 
-    def build_star_index(self, params):
+
+    def run_star_indexing(self, params):
         """
         Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
         It creates a directory as defined by self.STAR_IDX_DIR in the scratch area that houses the index files.
         """
-        # check options and raise ValueError here as needed.
         idx_dir = self.STAR_idx
         try:
             os.mkdir(idx_dir)
@@ -843,8 +850,6 @@ class STARUtil:
         # 2. Fetch the reads file and make sure input params are correct.
         # if the reads ref came from a different sample set, then we need to drop that
         # reference inside the reads info object so it can be linked in the alignment-TODO
-        #if reads_info["object_ref"] != input_params[self.PARAM_IN_READS]:
-        #reads_info["readsset_ref"] = input_params[self.PARAM_IN_READS]
         # make sure condition info carries over if we have it
 
         if not "condition" in reads_info:
@@ -872,25 +877,23 @@ class STARUtil:
             alignment_file = os.path.join(star_mp_ret['star_output'], alignment_file)
 
             # Upload the alignment
-            alignment_ref = self.upload_STARalignment(input_params, reads_info, alignment_file)
+            upload_results = self.upload_STARalignment(input_params, reads_info, alignment_file)
             alignments[reads_info["object_ref"]] = {
                 "ref": alignment_ref,
                 "readsName": rds_name,
                 "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
             }
+            singlerun_output_info['upload_results'] = upload_results
 
-        returnVal = {
+        report_info = {
             "report_ref": None,
             "report_name": None
         }
         if input_params.get("create_report", 0) == 1:
             report_out = self._generate_extended_report(alignments, input_params)
-            returnVal.update(report_out)
-        returnVal["alignment_objs"] = alignments
-        returnVal["alignment_ref"] = alignment_ref
-        returnVal["alignment_name"] = input_params[self.PARAM_IN_OUTPUT_NAME]
+            report_info.update(report_out)
 
-        return returnVal
+        return {'output_info': singlerun_output_info, 'report_info': report_info}
 
 
     def run_batch(self, reads_refs, input_params, input_obj_info):
@@ -916,6 +919,7 @@ class STARUtil:
         batch_result = self.process_batch_result(results, input_params, reads_refs)
 
         return batch_result
+
 
     def build_single_execution_task(self, rds_ref, params, output_name):
         task_params = copy.deepcopy(params)
@@ -979,7 +983,7 @@ class STARUtil:
 
         # create the report
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
-        report_text = 'Created ReadsAlignmentSet: ' + str(set_name) + '\n\n'
+        report_text += 'Created ReadsAlignmentSet: ' + str(set_name) + '\n\n'
         report_text += 'Total ReadsLibraries = ' + str(n_jobs) + '\n'
         report_text += '        Successful runs = ' + str(n_success) + '\n'
         report_text += '            Failed runs = ' + str(n_error) + '\n'
@@ -1045,22 +1049,25 @@ class STARUtil:
                 alignment_file = os.path.join(star_ret['star_output'], alignment_file)
 
                 # Upload the alignment
-                alignment_ref = self.upload_STARalignment(input_params, rds, alignment_file)
+                upload_out = self.upload_STARalignment(input_params, rds, alignment_file)
+                alignment_ref = upload_out['object_ref']
                 alignment_set[rds['object_ref']] = {
                         'ref': alignment_ref,
                         'readsName': rdsName,
                         'alignment_name': '{}_{}_starAligned'.format(params[self.PARAM_IN_OUTPUT_NAME], rdsName)
                 }
                 star_out_dirs.append(star_ret)
+                alignmentsInfo.append({'upload_results': upload_out})
 
 	# STEP 3: Generating report
         returnVal = {
-                'alignment_ref': alignment_set[readsInfo[0]['object_ref']]['ref']#use the first alignment for now
+                'output_info': alignmentsInfo,
+                'alignment_set': alignment_set
         }
 
         report_out = self._generate_extended_report(alignment_set, input_params)
         #report_out = self._generate_report(alignment_set, input_params)
-        returnVal.update(report_out)
+        returnVal['report_info'] = report_out
 
         return returnVal
 

@@ -114,16 +114,6 @@ module STAR {
     funcdef star_align_reads_to_assembly(AlignReadsParams params)
         returns (AlignReadsResult result) authentication required;
 
-    /* aligns a single reads object to produce */
-    funcdef align_one_reads_to_assembly()
-        returns () authentication required;
- 
-    /*
-        The actual function is declared using 'funcdef' to specify the name
-        and input/return arguments to the function.  For all typical KBase
-        Apps that run in the Narrative, your function should have the 
-        'authentication required' modifier.
-    */
     funcdef run_star(AlignReadsParams params)
         returns (AlignReadsResult returnVal) authentication required;
 
@@ -158,7 +148,6 @@ module STAR {
         bool from_cache;
         bool pushed_to_cache;
     } GetSTARIndexResult;
-
 
     funcdef get_star_index(GetSTARIndex params)
         returns(GetSTARIndexResult result) authentication required;
