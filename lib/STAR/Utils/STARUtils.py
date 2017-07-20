@@ -505,7 +505,7 @@ class STARUtil:
 
         return output_files
 
-    def _generate_extended_report(self, alignObj_refs, params):
+    def _generate_extended_report(self, alignObjs, params):
         """
         generate_extended_report: generate a summary STAR report, including index files and alignment output files
         """
@@ -514,10 +514,12 @@ class STARUtil:
         created_objects = list()
         index_files = list()
         output_files = list()
-        for oref in alignObj_refs:
+        for key, value in alignObjs.iteritems():
             created_objects.append({
-                "ref": oref,
-                "description": "Reads {} aligned to Genome {}".format(params[self.PARAM_IN_READS], params[self.PARAM_IN_GENOME])
+                'ref': key,
+                'reads': value['readsName'],
+                'alignment': value['alignment_name'],
+                'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], genomeName)
             })
 
         t0 = time.clock()
@@ -881,7 +883,7 @@ class STARUtil:
             "report_name": None
         }
         if input_params.get("create_report", 0) == 1:
-            report_out = self._generate_report(alignments, input_params)
+            report_out = self._generate_extended_report(alignments, input_params)
             returnVal.update(report_out)
         returnVal["alignment_objs"] = alignments
         returnVal["alignment_ref"] = alignment_ref
