@@ -507,6 +507,32 @@ class STARUtil:
 
         return output_files
 
+
+    def create_report_for_single_run(self, run_output_info, validated_params):
+        input_ref = run_output_info['upload_results']['obj_ref']
+        # first run qualimap
+        qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
+        qc_result_zip_info = qualimap_report['qc_result_zip_info']
+
+        # create report
+        report_text = 'Ran on a single reads library.\n\n'
+        alignment_info = self.get_obj_info(input_ref)
+        report_text = 'Created ReadsAlignment: ' + str(alignment_info[1]) + '\n'
+        report_text += '                        ' + inpu_ref + '\n'
+        kbr = KBaseReport(self.callback_url)
+        report_info = kbr.create_extended_report({'message': report_text,
+                                                  'objects_created': [{'ref': input_ref,
+                                                                       'description': 'ReadsAlignment'}],
+                                                  'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
+                                                  'direct_html_link_index': 0,
+                                                  'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
+                                                                  'name': qc_result_zip_info['index_html_file_name'],
+                                                                  'label': qc_result_zip_info['name']}],
+                                                  'workspace_name': validated_params['output_workspace']
+                                                  })
+        return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+
+
     def _generate_extended_report(self, alignObjs, params):
         """
         generate_extended_report: generate a summary STAR report, including index files and alignment output files
@@ -525,16 +551,8 @@ class STARUtil:
                 'description': 'Reads {} aligned to Genome {}'.format(value['readsName'], genomeName)
             })
 
-        t0 = time.clock()
-        #for out_dir in star_dirs:
-            #index_files += self._get_output_file_list(self.STAR_IDX_DIR, out_dir['star_idx'])
         index_files = self._get_output_file_list(self.STAR_IDX_DIR, self.STAR_IDX_DIR)
-        t1 = time.clock()
-            #output_files += self._get_output_file_list(self.STAR_OUT_DIR, out_dir['star_output'])
         output_files = self._get_output_file_list(self.STAR_OUT_DIR, self.STAR_OUT_DIR)
-        t2 = time.clock()
-        pprint( "Zipping index files used {} seconds ".format(t1-t0))
-        pprint( "Zipping output files used {} seconds ".format(t2-t1))
 
         report_params = {
               'message': 'Created a set of {} alignment(s) from the given sample set.'.format(len(alignObjs)),
@@ -550,8 +568,6 @@ class STARUtil:
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
         report_info = kbase_report_client.create_extended_report(report_params)
 
-        t3 = time.clock()
-        pprint( "Creating report used {} seconds ".format(t3-t2))
         return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
@@ -886,7 +902,8 @@ class STARUtil:
             "report_name": None
         }
         if input_params.get("create_report", 0) == 1:
-            report_out = self._generate_extended_report(alignments, input_params)
+            report_out = self.create_report_for_single_run(singlerun_output_info, input_params)
+            #report_out = self._generate_extended_report(alignments, input_params)
             report_info.update(report_out)
 
         return {'output_info': singlerun_output_info, 'report_info': report_info}
