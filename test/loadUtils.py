@@ -108,37 +108,6 @@ def load_sample_set(workspace_url, ws_name, reads_refs, conditions, library_type
     ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
     return ss_ref
 
-
-def loadGenome(self):
-    if hasattr(self.__class__, 'genome_ref'):
-        return self.__class__.genome_ref
-    genome_file_path = os.path.join(self.scratch, 'star_test_genome.gbff')
-    shutil.copy(os.path.join('../testReads', 'ecoli_genomic.gbff'), genome_file_path)
-    gfu = GenomeFileUtil(self.callback_url)
-    genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
-                                        'workspace_name': self.getWsName(),
-                                        'genome_name': 'STAR_test_genome'
-                                        })['genome_ref']
-    self.__class__.genome_ref = genome_ref
-    return genome_ref
-
-
-def loadSEReads(self):
-    if hasattr(self.__class__, 'reads_ref'):
-        return self.__class__.reads_ref
-    fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
-    #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
-    shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
-
-    ru = ReadsUtils(self.callback_url)
-    reads_ref = ru.upload_reads({'fwd_file': fq_path,
-                                    'wsname': self.getWsName(),
-                                    'name': 'star_test_reads',
-                                    'sequencing_tech': 'rnaseq reads'})['obj_ref']
-    self.__class__.reads_ref = reads_ref
-    return reads_ref
-
-
 def loadFasta2Assembly(self, filename):
     fn, ext = os.path.splitext(filename)
     fasta_path = os.path.join(self.scratch, filename)

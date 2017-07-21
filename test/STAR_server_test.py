@@ -192,7 +192,7 @@ class STARTest(unittest.TestCase):
     def loadSampleSet(self):
         if hasattr(self.__class__, 'sample_set_ref'):
             return self.__class__.sample_set_ref
-        #return '23735/4/1'
+        se_lib_ref = self.loadSEReads()
         pe_reads_ref = self.loadPairedEndReads()
         sample_set_name = 'TestSampleSet'
         sample_set_data = {'Library_type': 'PairedEnd',
@@ -200,7 +200,7 @@ class STARTest(unittest.TestCase):
                            'num_samples': 3,
                            'platform': None,
                            'publication_id': None,
-                           'sample_ids': [pe_reads_ref, pe_reads_ref, pe_reads_ref],
+                           'sample_ids': [se_lib_ref, se_lib_ref],#[pe_reads_ref, pe_reads_ref, pe_reads_ref],
                            'sampleset_desc': None,
                            'sampleset_id': sample_set_name,
                            'condition': ['c1', 'c2', 'c3'],
@@ -210,8 +210,8 @@ class STARTest(unittest.TestCase):
         ss_obj = self.getWsClient().save_objects({'workspace': self.getWsName(),
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
                                                                'data': sample_set_data,
-                                                               'name': sample_set_name,
-                                                               'provenance': [{"input_ws_objects": [pe_reads_ref, pe_reads_ref, pe_reads_ref]}]}]
+                                                               'name': sample_set_name}]#,
+                                                               #'provenance': [{"input_ws_objects": [pe_reads_ref, pe_reads_ref, pe_reads_ref]}]}]
                                                   })
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
         print('Loaded SampleSet: ' + ss_ref)
@@ -316,7 +316,7 @@ class STARTest(unittest.TestCase):
         params_mp = {
             'workspace_name': self.getWsName(),
 	    'runThreadN': 4,
-            'star_output_dir': 'STAR_output_dir',
+            'align_output': 'STAR_output_dir',
 	    'outFileNamePrefix': 'STAR_',
             'readFilesIn':[forward_file, reverse_file]
         }
@@ -332,8 +332,8 @@ class STARTest(unittest.TestCase):
 
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_exec_star")
-    def test_exec_star(self):
+    @unittest.skip("skipped test_exec_star_pipeline")
+    def test_exec_star_pipeline(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
         genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
@@ -361,7 +361,7 @@ class STARTest(unittest.TestCase):
 	}
         # 3) test running star directly from files (not KBase refs)
 	star_util = STARUtil(self.cfg)
-        result = star_util._exec_star(params)
+        result = star_util._exec_star_pipeline(params, rnaseq_file, 'Ath_Hy5_R1')
 
         pprint('RESULT from velveth is saved in:\n' + os.path.join(self.scratch,''))
         pprint('Returned value by exec_star is: ' + str(result))
