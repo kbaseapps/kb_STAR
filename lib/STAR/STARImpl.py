@@ -168,7 +168,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsRefs = reads.get('readsRefs', None)
         readsInfo = reads.get('readsInfo', None)
 
-        result = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
+        result = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
 
         #END star_align_reads_to_assembly
 
