@@ -182,7 +182,7 @@ class STARTest(unittest.TestCase):
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
                                                                'data': sample_set_data,
                                                                'name': sample_set_name,
-                                                               'provenance': [{"input_ws_objects": [pe_                                                                 reads_ref, pe_reads_ref, pe_reads_ref]}]}]
+                                                               'provenance': [{"input_ws_objects": [pe_reads_ref, pe_reads_ref, pe_reads_ref]}]}]
                                                   })
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
         print('Loaded SampleSet: ' + ss_ref)
