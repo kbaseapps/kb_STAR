@@ -295,8 +295,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if input_obj_info['run_mode'] == 'single_library':
                 returnVal = star_runner.run_single(readsInfo[0], input_params, input_obj_info)
             elif input_obj_info['run_mode'] == 'sample_set':
-                #returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
-                returnVal = star_runner.run_star_sequential(readsInfo, input_params, input_obj_info)
+                returnVal = star_runner.run_batch(readsRefs, input_params, input_obj_info)
+                #returnVal = star_runner.run_star_sequential(readsInfo, input_params, input_obj_info)
         #END run_star
 
         # At some point might do deeper type checking...

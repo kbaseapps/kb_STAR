@@ -1054,7 +1054,7 @@ class STARUtil:
                 if rds.get('file_rev', None) is not None:
                     rdsFiles.append(rds['file_rev'])
 
-            star_ret = self._exec_star(params, rdsFiles, rdsName)
+            star_ret = self._exec_star(inpupt_params, rdsFiles, rdsName)
             if not isinstance(star_ret, int):
                 #print("Uploading STAR output object...")
                 if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
