@@ -31,9 +31,7 @@ from loadUtils import (
     load_genbank_file,
     load_reads,
     load_reads_set,
-    load_sample_set,
-    loadSEReads,
-    loadGenome
+    load_sample_set
 )
 
 class STARTest(unittest.TestCase):
@@ -160,6 +158,37 @@ class STARTest(unittest.TestCase):
         return assembly_ref
 
 
+    def loadGenome(self):
+        if hasattr(self.__class__, 'genome_ref'):
+            return self.__class__.genome_ref
+        genome_file_path = os.path.join(self.scratch, 'star_test_genome.gbff')
+        shutil.copy(os.path.join('../testReads', 'ecoli_genomic.gbff'), genome_file_path)
+        gfu = GenomeFileUtil(self.callback_url)
+        genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
+                                            'workspace_name': self.getWsName(),
+                                            'genome_name': 'STAR_test_genome'
+                                            })['genome_ref']
+        self.__class__.genome_ref = genome_ref
+        return genome_ref
+
+
+    def loadSEReads(self):
+        if hasattr(self.__class__, 'reads_ref'):
+            return self.__class__.reads_ref
+        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
+        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
+        shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
+
+        ru = ReadsUtils(self.callback_url)
+        reads_ref = ru.upload_reads({'fwd_file': fq_path,
+                                        'wsname': self.getWsName(),
+                                        'name': 'star_test_reads',
+                                        'sequencing_tech': 'rnaseq reads'})['obj_ref']
+        self.__class__.reads_ref = reads_ref
+        return reads_ref
+
+
+
     def loadSampleSet(self):
         if hasattr(self.__class__, 'sample_set_ref'):
             return self.__class__.sample_set_ref
@@ -194,8 +223,8 @@ class STARTest(unittest.TestCase):
     @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        genome_ref = loadGenome()
-        se_lib_ref = loadSEReads()
+        genome_ref = self.loadGenome()
+        se_lib_ref = self.loadSEReads()
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -223,7 +252,7 @@ class STARTest(unittest.TestCase):
         pe_lib_info = self.loadPairedEndReads()
         pprint(pe_lib_info)
 
-        genome_ref = loadGenome()
+        genome_ref = self.loadGenome()
         ss_ref = self.loadSampleSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
