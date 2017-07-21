@@ -194,8 +194,8 @@ class STARTest(unittest.TestCase):
     @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        genome_ref = self.loadGenome()
-        se_lib_ref = self.loadSEReads()
+        genome_ref = loadGenome()
+        se_lib_ref = loadSEReads()
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -223,7 +223,7 @@ class STARTest(unittest.TestCase):
         pe_lib_info = self.loadPairedEndReads()
         pprint(pe_lib_info)
 
-        genome_ref = self.loadGenome()
+        genome_ref = loadGenome()
         ss_ref = self.loadSampleSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
