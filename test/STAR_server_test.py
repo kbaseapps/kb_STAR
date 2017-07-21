@@ -27,6 +27,15 @@ from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from ReadsUtils.baseclient import ServerError
 from ReadsUtils.ReadsUtilsClient import ReadsUtils
 
+from loadUtils import (
+    load_genbank_file,
+    load_reads,
+    load_reads_set,
+    load_sample_set,
+    loadSEReads,
+    loadGenome
+)
+
 class STARTest(unittest.TestCase):
 
     @classmethod
@@ -92,48 +101,6 @@ class STARTest(unittest.TestCase):
 
     def getContext(self):
         return self.__class__.ctx
-
-
-    def loadGenome(self):
-        if hasattr(self.__class__, 'genome_ref'):
-            return self.__class__.genome_ref
-        genome_file_path = os.path.join(self.scratch, 'star_test_genome.gbff')
-        shutil.copy(os.path.join('../testReads', 'ecoli_genomic.gbff'), genome_file_path)
-        gfu = GenomeFileUtil(self.callback_url)
-        genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
-                                            'workspace_name': self.getWsName(),
-                                            'genome_name': 'STAR_test_genome'
-                                            })['genome_ref']
-        self.__class__.genome_ref = genome_ref
-        return genome_ref
-
-
-    def loadSEReads(self):
-        if hasattr(self.__class__, 'reads_ref'):
-            return self.__class__.reads_ref
-        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
-        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
-        shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
-
-        ru = ReadsUtils(self.callback_url)
-        reads_ref = ru.upload_reads({'fwd_file': fq_path,
-                                        'wsname': self.getWsName(),
-                                        'name': 'star_test_reads',
-                                        'sequencing_tech': 'rnaseq reads'})['obj_ref']
-        self.__class__.reads_ref = reads_ref
-        return reads_ref
-
-
-    def loadFasta2Assembly(self, filename):
-        fn, ext = os.path.splitext(filename)
-        fasta_path = os.path.join(self.scratch, filename)
-        shutil.copy(os.path.join('../testReads', filename), fasta_path)
-        au = AssemblyUtil(self.callback_url)
-        a_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
-                                                    'workspace_name': self.getWsName(),
-                                                    'assembly_name': fn
-                                                    })
-        return a_ref
 
 
     def load_fasta_file(self, filename, obj_name, contents):
@@ -214,9 +181,8 @@ class STARTest(unittest.TestCase):
         ss_obj = self.getWsClient().save_objects({'workspace': self.getWsName(),
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
                                                                'data': sample_set_data,
-                                                               'name': sample_set_name,
-                                                               'provenance': ['say something']
-                                                               }]
+                                                               'name': sample_set_name#,
+                                                               'provenance': [{"input_ws_objects": [pe_                                                                 reads_ref, pe_reads_ref, pe_reads_ref]}]}]
                                                   })
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
         print('Loaded SampleSet: ' + ss_ref)
