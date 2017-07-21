@@ -804,7 +804,7 @@ class STARUtil:
         alignments = dict()
         alignment_ref = None
         singlerun_output_info = {}
-        report_info = {}
+        result = {}
 
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
@@ -843,11 +843,10 @@ class STARUtil:
             }
             singlerun_output_info['upload_results'] = upload_results
 
-        result = {'alignment_ref': alignment_ref}
-
-        if input_params.get("create_report", 0) == 1:
-            report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-            result.update(report_info)
+            result = {'alignment_ref': alignment_ref}
+            if input_params.get("create_report", 0) == 1:
+                report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
+                result.update(report_info)
 
         return result 
 
