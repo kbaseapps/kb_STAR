@@ -403,13 +403,13 @@ class STARUtil:
 
         pprint(align_upload_params)
 
-        ra_util = ReadsAlignmentUtils(self.callback_url)
+        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver="dev")
         rau_upload_ret = ra_util.upload_alignment(align_upload_params)
         alignment_ref = rau_upload_ret["obj_ref"]
         print("STAR alignment uploaded as object {}".format(alignment_ref))
         return rau_upload_ret
 
-    # borrowed from kb_stringtie and modified for STAR
+    # borrowed from kb_stringtie and modified for STAR, for cases when user wants the files
     def _get_output_file_list(self, out_filename, output_dir):
         """
         _get_output_file_list: zip result files and generate file_links for report
@@ -461,7 +461,7 @@ class STARUtil:
                                                                   'label': qc_result_zip_info['name']}],
                                                   'workspace_name': validated_params['output_workspace']
                                                   })
-        return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+        return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
     def _generate_extended_report(self, alignObjs, params):
@@ -499,7 +499,7 @@ class STARUtil:
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
         report_info = kbase_report_client.create_extended_report(report_params)
 
-        return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+        return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
     def _generate_report(self, alignmentSet, params):
@@ -530,7 +530,7 @@ class STARUtil:
                 "text_message": report_text
             }
         })
-        return {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+        return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
 
     def get_reads(self, params):
@@ -846,7 +846,7 @@ class STARUtil:
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-
+                report_info = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
         return {'output_info': run_output_info, 'report_info': report_info}
 
 

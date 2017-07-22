@@ -197,7 +197,7 @@ class STARTest(unittest.TestCase):
         sample_set_name = 'TestSampleSet'
         sample_set_data = {'Library_type': 'PairedEnd',
                            'domain': "Prokaryotes",
-                           'num_samples': 3,
+                           'num_samples': 2,
                            'platform': None,
                            'publication_id': None,
                            'sample_ids': [se_lib_ref, se_lib_ref],#[pe_reads_ref, pe_reads_ref, pe_reads_ref],
@@ -249,8 +249,8 @@ class STARTest(unittest.TestCase):
     #@unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
-        pe_lib_info = self.loadPairedEndReads()
-        pprint(pe_lib_info)
+        #pe_lib_info = self.loadPairedEndReads()
+        #pprint(pe_lib_info)
 
         genome_ref = self.loadGenome()
         ss_ref = self.loadSampleSet()
