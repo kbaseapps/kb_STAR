@@ -68,6 +68,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         if 'handle-service-url' in config:
             self.__HS_URL = config['handle-service-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
+        self.srv_wiz_url = config['srv-wiz-url']
         self.__CALLBACK_URL = os.environ['SDK_CALLBACK_URL']
 
         self.__SERVICES = {'workspace_service_url': self.workspace_url,
