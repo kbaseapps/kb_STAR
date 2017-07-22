@@ -883,7 +883,7 @@ class STARUtil:
         task_params[self.PARAM_IN_OUTPUT_NAME] = output_name
         task_params['create_report'] = 0
 
-        return {'module_name': 'kb_STAR',
+        return {'module_name': 'STAR',
                 'function_name': 'star_align_reads_to_assembly',
                 'version': 'dev',
                 'parameters': task_params}
