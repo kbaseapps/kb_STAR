@@ -848,7 +848,6 @@ class STARUtil:
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-                #report_info = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
         return {'output_info': singlerun_output_info, 'report_info': report_info}
 
 

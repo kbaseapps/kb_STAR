@@ -158,6 +158,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #BEGIN star_align_reads_to_assembly
         star_runner = STARUtil(self.config)
 
+        result = {}
         # 1. process the input parameters
         validated_params = star_runner.process_params(params)
         input_obj_info = star_runner.determine_input_info(validated_params)
@@ -170,9 +171,11 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsInfo = reads.get('readsInfo', None)
 
         star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
-        result['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
-        result['report_name'] = star_ret['report_info']['name']
-        result['report_ref'] = star_ret['report_info']['ref']
+        if star_ret['output_info'].get('upload_results', None) is not None:
+            result['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
+        if star_ret['report_info'].get('name', None) is not None:
+            result['report_name'] = star_ret['report_info']['name']
+            result['report_ref'] = star_ret['report_info']['ref']
 
         #END star_align_reads_to_assembly
 
@@ -301,9 +304,12 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             elif input_obj_info['run_mode'] == 'sample_set':
                 star_ret = star_runner.star_run_batch(readsRefs, input_params, input_obj_info)
                 #returnVal = star_runner.star_run_sequential(readsInfo, input_params, input_obj_info)
-            returnVal['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
-            returnVal['report_name'] = star_ret['report_info']['name']
-            returnVal['report_ref'] = star_ret['report_info']['ref']
+
+            if star_ret['output_info'].get('upload_results', None) is not None:
+                returnVal['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
+            if star_ret['report_info'].get('name', None) is not None:
+                returnVal['report_name'] = star_ret['report_info']['name']
+                returnVal['report_ref'] = star_ret['report_info']['ref']
         #END run_star
 
         # At some point might do deeper type checking...
