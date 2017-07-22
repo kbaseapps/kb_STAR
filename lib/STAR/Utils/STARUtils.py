@@ -848,7 +848,7 @@ class STARUtil:
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-                report_info = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
+                #report_info = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
         return {'output_info': singlerun_output_info, 'report_info': report_info}
 
 
@@ -960,7 +960,7 @@ class STARUtil:
                                                   'workspace_name': validated_params['output_workspace']
                                                   })
 
-        result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
+        result = {'report_info': report_info} #{'report_name': report_info['name'], 'report_ref': report_info['ref']}}
         result['output_info'] = batch_result
 
         return result 
@@ -1009,11 +1009,10 @@ class STARUtil:
                         'alignment_name': '{}_{}_starAligned'.format(params[self.PARAM_IN_OUTPUT_NAME], rdsName)
                 }
                 star_out_dirs.append(star_ret)
-                alignmentsInfo.append({'upload_results': upload_out})
 
 	# STEP 3: Generating report
         returnVal = {
-                'output_info': alignmentsInfo,
+                'output_info': {'upload_results': upload_out},
                 'alignment_set': alignment_set,
         }
 

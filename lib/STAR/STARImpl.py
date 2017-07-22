@@ -169,7 +169,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsRefs = reads.get('readsRefs', None)
         readsInfo = reads.get('readsInfo', None)
 
-        result = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
+        star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
+        result['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
+        result['report_name'] = star_ret['report_info']['name']
+        result['report_ref'] = star_ret['report_info']['ref']
 
         #END star_align_reads_to_assembly
 
@@ -294,10 +297,13 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
             if input_obj_info['run_mode'] == 'single_library':
-                returnVal = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
+                star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
             elif input_obj_info['run_mode'] == 'sample_set':
-                returnVal = star_runner.star_run_batch(readsRefs, input_params, input_obj_info)
+                star_ret = star_runner.star_run_batch(readsRefs, input_params, input_obj_info)
                 #returnVal = star_runner.star_run_sequential(readsInfo, input_params, input_obj_info)
+            returnVal['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
+            returnVal['report_name'] = star_ret['report_info']['name']
+            returnVal['report_ref'] = star_ret['report_info']['ref']
         #END run_star
 
         # At some point might do deeper type checking...
