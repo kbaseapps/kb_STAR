@@ -805,7 +805,7 @@ class STARUtil:
         alignments = dict()
         alignment_ref = None
         singlerun_output_info = {}
-        result = {}
+        report_info = {}
 
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
@@ -844,12 +844,10 @@ class STARUtil:
             }
             singlerun_output_info['upload_results'] = upload_results
 
-            result = {'alignment_ref': alignment_ref}
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-                result.update(report_info)
 
-        return result 
+        return {'output_info': run_output_info, 'report_info': report_info}
 
 
     def star_run_batch(self, reads_refs, input_params, input_obj_info):
@@ -960,11 +958,8 @@ class STARUtil:
                                                   'workspace_name': validated_params['output_workspace']
                                                   })
 
-        #result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
-        #result['batch_output_info'] = batch_result
-        report_out = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
-        result = {'alignment_ref': save_result['set_ref']}
-        result.update(report_out)
+        result = {'report_info': {'report_name': report_info['name'], 'report_ref': report_info['ref']}}
+        result['output_info'] = batch_result
 
         return result 
 
@@ -1018,11 +1013,10 @@ class STARUtil:
         returnVal = {
                 'output_info': alignmentsInfo,
                 'alignment_set': alignment_set,
-                'alignment_ref': upload_out['obj_ref']#the last one
         }
 
-        report_out = self._generate_extended_report(alignment_set, input_params)
-        #report_out = self._generate_report(alignment_set, input_params)
+        report_info = self._generate_extended_report(alignment_set, input_params)
+        report_out = {'report_info': report_info}
         returnVal.update(report_out)
 
         return returnVal
