@@ -171,11 +171,12 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         readsInfo = reads.get('readsInfo', None)
 
         star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
-        if star_ret['output_info'].get('upload_results', None) is not None:
-            result['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
-        if star_ret['report_info'].get('name', None) is not None:
-            result['report_name'] = star_ret['report_info']['name']
-            result['report_ref'] = star_ret['report_info']['ref']
+        #if star_ret['output_info'].get('upload_results', None) is not None:
+        #    result['alignment_ref'] = star_ret['output_info']['upload_results']['obj_ref']
+        #if star_ret['report_info'].get('name', None) is not None:
+        #    result['report_name'] = star_ret['report_info']['name']
+        #    result['report_ref'] = star_ret['report_info']['ref']
+        result = star_ret
 
         #END star_align_reads_to_assembly
 
