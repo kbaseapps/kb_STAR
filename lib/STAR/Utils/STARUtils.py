@@ -65,6 +65,7 @@ class STARUtil:
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.token = config['KB_AUTH_TOKEN']
         self.shock_url = config['shock-url']
+        self.srv_wiz_url = config['srv-wiz-url']
         self.ws_client = Workspace(self.workspace_url)
         self.au = AssemblyUtil(self.callback_url)
         self.dfu = DataFileUtil(self.callback_url)
@@ -75,6 +76,7 @@ class STARUtil:
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
         self.parallel_runner = KBParallel(self.callback_url)
         self.qualimap = kb_QualiMap(self.callback_url)
+
 
     def _mkdir_p(self, dir):
         """
@@ -847,7 +849,7 @@ class STARUtil:
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
                 report_info = {'report_name': report_info['name'], 'report_ref': report_info['ref']}
-        return {'output_info': run_output_info, 'report_info': report_info}
+        return {'output_info': singlerun_output_info, 'report_info': report_info}
 
 
     def star_run_batch(self, reads_refs, input_params, input_obj_info):
