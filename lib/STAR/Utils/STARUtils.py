@@ -21,6 +21,7 @@ from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
 from KBParallel.KBParallelClient import KBParallel
 from kb_QualiMap.kb_QualiMapClient import kb_QualiMap
+from SetAPI.SetAPIServiceClient import SetAPI
 
 from file_util import (
     valid_string,
@@ -373,10 +374,10 @@ class STARUtil:
             except ValueError as emp:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
-                retVal = {'star_idx': self.STAR_idx, 'star_output': None}
             else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-                retVal = {'star_idx': self.STAR_idx, 'star_output': aligndir}
-        return retVal
+                ret = {'star_idx': self.STAR_idx, 'star_output': params_mp.get('align_output')}
+
+        return ret
 
 
     def upload_STARalignment(self, input_params, reads_info, output_sam_file):
@@ -788,7 +789,7 @@ class STARUtil:
             pprint(emp)
             retVal = {'star_idx': self.STAR_idx, 'star_output': None}
         else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
-            retVal = {'star_idx': self.STAR_idx, 'star_output': aligndir}
+            retVal = {'star_idx': self.STAR_idx, 'star_output': params_mp.get('align_output')}
 
         return retVal
 
