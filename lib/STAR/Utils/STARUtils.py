@@ -848,7 +848,7 @@ class STARUtil:
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-        return {'output_info': singlerun_output_info, 'report_info': report_info}
+        return {'alignment_ref': alignment_ref, 'output_info': singlerun_output_info, 'report_info': report_info}
 
 
     def star_run_batch(self, reads_refs, input_params, input_obj_info):
@@ -933,7 +933,7 @@ class STARUtil:
         set_name = save_result['set_info'][1]
 
         #run qualimap
-        qualimap_report = self.qualimap.run_bamqc({self.PARAM_IN_READS: save_result['set_ref']})
+        qualimap_report = self.qualimap.run_bamqc({'input_ref': save_result['set_ref']})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
 
         # create the report
@@ -961,6 +961,7 @@ class STARUtil:
 
         result = {'report_info': report_info} #{'report_name': report_info['name'], 'report_ref': report_info['ref']}}
         result['output_info'] = batch_result
+        result['alignment_ref'] = save_result['set_ref']
 
         return result 
 
