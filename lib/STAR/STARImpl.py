@@ -298,7 +298,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                 star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
             elif input_obj_info['run_mode'] == 'sample_set':
                 star_ret = star_runner.star_run_batch(readsRefs, input_params, input_obj_info)
-            if star_re.get('alignment_ref', None) is not None:
+            if star_ret.get('alignment_ref', None) is not None:
                 returnVal['alignment_ref'] = star_ret['alignment_ref']
             if star_ret['report_info'].get('name', None) is not None:
                 returnVal['report_name'] = star_ret['report_info']['name']
