@@ -120,10 +120,10 @@ class STARTest(unittest.TestCase):
             return self.__class__.pairedEndLibInfo
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        forward_data_file = '../testReads/small.forward.fq'
+        forward_data_file = '../work/testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = '../testReads/small.reverse.fq'
+        reverse_data_file = '../work/testReads/small.reverse.fq'
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
@@ -146,8 +146,8 @@ class STARTest(unittest.TestCase):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        #shutil.copy(os.path.join('../testReads', 'test_reference.fa'), fasta_path)
-        shutil.copy(os.path.join('../testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        #shutil.copy(os.path.join('../work/testReads', 'test_reference.fa'), fasta_path)
+        shutil.copy(os.path.join('../work/testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -158,41 +158,42 @@ class STARTest(unittest.TestCase):
         return assembly_ref
 
 
-    def loadGenome(self):
+    def loadGenome(self, gbff_file):
         if hasattr(self.__class__, 'genome_ref'):
             return self.__class__.genome_ref
-        genome_file_path = os.path.join(self.scratch, 'star_test_genome.gbff')
-        shutil.copy(os.path.join('../testReads', 'ecoli_genomic.gbff'), genome_file_path)
+        gbff_file_name = os.path.basename(gbff_file)
+        genome_file_path = os.path.join(self.scratch, gbff_file_name) 
+        shutil.copy(gbff_file, genome_file_path)
+
         gfu = GenomeFileUtil(self.callback_url)
         genome_ref = gfu.genbank_to_genome({'file': {'path': genome_file_path},
                                             'workspace_name': self.getWsName(),
-                                            'genome_name': 'STAR_test_genome'
+                                            'genome_name': gbff_file_name.split('.')[0]
                                             })['genome_ref']
         self.__class__.genome_ref = genome_ref
         return genome_ref
 
 
-    def loadSEReads(self):
+    def loadSEReads(self, reads_file_path):
         if hasattr(self.__class__, 'reads_ref'):
             return self.__class__.reads_ref
-        fq_path = os.path.join(self.scratch, 'star_test_reads.fastq')
-        #shutil.copy(os.path.join('../testReads', 'Ath_Hy5_R1.fastq'), fq_path)
-        shutil.copy(os.path.join('../testReads', 'small.forward.fq'), fq_path)
+        se_reads_name = os.path.basename(reads_file_path)
+        fq_path = os.path.join(self.scratch, se_reads_name) #'star_test_reads.fastq')
+        shutil.copy(reads_file_path, fq_path)
 
         ru = ReadsUtils(self.callback_url)
         reads_ref = ru.upload_reads({'fwd_file': fq_path,
                                         'wsname': self.getWsName(),
-                                        'name': 'star_test_reads',
+                                        'name': se_reads_name.split('.')[0],
                                         'sequencing_tech': 'rnaseq reads'})['obj_ref']
         self.__class__.reads_ref = reads_ref
         return reads_ref
 
 
-
     def loadSampleSet(self):
         if hasattr(self.__class__, 'sample_set_ref'):
             return self.__class__.sample_set_ref
-        se_lib_ref = self.loadSEReads()
+        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
         pe_reads_ref = self.loadPairedEndReads()
         sample_set_name = 'TestSampleSet'
         sample_set_data = {'Library_type': 'PairedEnd',
@@ -200,7 +201,7 @@ class STARTest(unittest.TestCase):
                            'num_samples': 2,
                            'platform': None,
                            'publication_id': None,
-                           'sample_ids': [se_lib_ref, se_lib_ref],#[pe_reads_ref, pe_reads_ref, pe_reads_ref],
+                           'sample_ids': [se_lib_ref, pe_reads_ref],
                            'sampleset_desc': None,
                            'sampleset_id': sample_set_name,
                            'condition': ['c1', 'c2', 'c3'],
@@ -220,11 +221,12 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star_single")
+    #@unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        genome_ref = self.loadGenome()
-        se_lib_ref = self.loadSEReads()
+        genome_ref = self.loadGenome('../testReads/ecoli_genomic.gbff')
+        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
+        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -246,13 +248,10 @@ class STARTest(unittest.TestCase):
         self.assertIn('alignment_ref', res)
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star_batch")
+    @unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
-        #pe_lib_info = self.loadPairedEndReads()
-        #pprint(pe_lib_info)
-
-        genome_ref = self.loadGenome()
+        genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
         ss_ref = self.loadSampleSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
