@@ -193,7 +193,8 @@ class STARTest(unittest.TestCase):
     def loadSampleSet(self):
         if hasattr(self.__class__, 'sample_set_ref'):
             return self.__class__.sample_set_ref
-        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
+        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
+        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
         pe_reads_ref = self.loadPairedEndReads()
         sample_set_name = 'TestSampleSet'
         sample_set_data = {'Library_type': 'PairedEnd',
@@ -221,10 +222,10 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star_single")
+    @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        genome_ref = self.loadGenome('../testReads/ecoli_genomic.gbff')
+        genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
         #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
         se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
 
@@ -248,7 +249,7 @@ class STARTest(unittest.TestCase):
         self.assertIn('alignment_ref', res)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star_batch")
+    #@unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
