@@ -26,6 +26,7 @@ from SetAPI.SetAPIServiceClient import SetAPI
 from file_util import (
     valid_string,
     check_reference,
+    get_unique_names,
     fetch_fasta_from_object,
     fetch_reads_refs_from_sampleset,
     fetch_reads_from_reference
@@ -122,7 +123,6 @@ class STARUtil:
 		if params.get(self.PARAM_IN_GENOME, None) is None:
                     raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
-        params['sjdbGTFfile'] = self._get_genome_gtf_file(params[self.PARAM_IN_GENOME], self.STAR_idx)
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -441,7 +441,7 @@ class STARUtil:
         return output_files
 
 
-    def generate_report_for_single_run(self, run_output_info, validated_params):
+    def generate_report_for_single_run(self, run_output_info, params):
         input_ref = run_output_info['upload_results']['obj_ref']
         # first run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
@@ -449,7 +449,7 @@ class STARUtil:
 
         # create report
         report_text = 'Ran on a single reads library.\n\n'
-        alignment_info = self.get_obj_info(input_ref)
+        alignment_info = self.get_obj_infos(input_ref)[0]
         report_text = 'Created ReadsAlignment: ' + str(alignment_info[1]) + '\n'
         report_text += '                        ' + input_ref + '\n'
         kbr = KBaseReport(self.callback_url)
@@ -461,7 +461,7 @@ class STARUtil:
                                                   'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
                                                                   'name': qc_result_zip_info['index_html_file_name'],
                                                                   'label': qc_result_zip_info['name']}],
-                                                  'workspace_name': validated_params['output_workspace']
+                                                  'workspace_name': params['output_workspace']
                                                   })
         return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
@@ -472,7 +472,7 @@ class STARUtil:
         """
         log('Generating summary report...')
 
-        genomeName = self.get_name_from_obj_info(self.get_obj_info(params[self.PARAM_IN_GENOME]))
+        genomeName = self.get_name_from_obj_info(self.get_obj_infos(params[self.PARAM_IN_GENOME])[0])
         created_objects = list()
         index_files = list()
         output_files = list()
@@ -511,7 +511,7 @@ class STARUtil:
         print("Creating STAR output report...in workspace " + params[self.PARAM_IN_WS])
 
         alignmentName = ''
-        genomeName = self.get_name_from_obj_info(self.get_obj_info(params[self.PARAM_IN_GENOME]))
+        genomeName = self.get_name_from_obj_info(self.get_obj_infos(params[self.PARAM_IN_GENOME])[0])
         created_objects = list()
         for key, value in alignmentSet.iteritems():
             created_objects.append({
@@ -536,11 +536,13 @@ class STARUtil:
 
 
     def get_reads(self, params):
+        '''fetch the refs and info from the input given by params[self.PARAM_IN_READS], which is a ref
+        '''
         reads_refs = list()
         readsset_ref = params[self.PARAM_IN_READS]
 	if readsset_ref is not None:
             try:
-		print("Fetching reads ref(s) from sampleset ref {}".format(readsset_ref))
+		print("Fetching reads ref(s) from sample/reads set ref {}".format(readsset_ref))
 		reads_refs = fetch_reads_refs_from_sampleset(readsset_ref, self.workspace_url, self.callback_url, params)
 		print("Done fetching reads ref(s)!")
             except ValueError:
@@ -657,11 +659,16 @@ class STARUtil:
         return {'input_parameters': params, 'reads': reads}
 
 
-    def run_star_indexing(self, params):
+    def run_star_indexing(self, input_params):
         """
         Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
         It creates a directory as defined by self.STAR_IDX_DIR in the scratch area that houses the index files.
         """
+        genome_params = copy.deepcopy(input_params)
+
+        # GTF file -create only once as the index is being generated
+        genome_params['sjdbGTFfile'] = self._get_genome_gtf_file(input_params[self.PARAM_IN_GENOME], self.STAR_idx)
+
         idx_dir = self.STAR_idx
         try:
             os.mkdir(idx_dir)
@@ -669,11 +676,11 @@ class STARUtil:
             print("Ignoring error for already existing {} directory".format(idx_dir))
 
         # build the indexing parameters
-        params_idx = self._get_indexing_params(params)
+        params_idx = self._get_indexing_params(genome_params)
 
         ret = 1
         try:
-            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
+            if genome_params[self.PARAM_IN_STARMODE]=='genomeGenerate':
                 ret = self._exec_indexing(params_idx)
             else:
 		ret = 0
@@ -682,6 +689,8 @@ class STARUtil:
         except ValueError as eidx:
             log('STAR genome indexing raised error:\n')
             pprint(eidx)
+        else:
+            ret = 0
 
         return ret
 
@@ -707,7 +716,7 @@ class STARUtil:
         if rds_name:
             aligndir = os.path.join(self.STAR_output, rds_name)
             self._mkdir_p(aligndir)
-            print '\nSTAR output directory created: ' + aligndir
+            print '\n**********STAR output directory created: ' + aligndir
 
         params_mp = {
                 'runMode': 'alignReads',#params[self.PARAM_IN_STARMODE],
@@ -796,13 +805,21 @@ class STARUtil:
         return retVal
 
 
-    def star_run_single(self, reads_info, input_params, input_obj_info):
+    def star_run_single(self, validated_params):
         """
         Performs a single run of STAR against a single reads reference. The rest of the info
         is taken from the params dict - see the spec for details.
         """
         log('--->\nrunning STARUtil.run_single\n' +
-            'params:\n{} on reads {}'.format(json.dumps(input_params, indent=1), reads_info))
+                'params:\n{}'.format(json.dumps(validated_params, indent=1)))
+
+        rds_name = self.determine_unique_reads_names(validated_params)[0]
+
+	# convert the input parameters (from refs to file paths, especially)
+        params_ret = self.convert_params(validated_params)
+        input_params = params_ret.get('input_parameters', None)
+        reads = params_ret.get('reads', None)
+        reads_info = reads.get('readsInfo', None)[0]
 
         alignments = dict()
         alignment_ref = None
@@ -812,12 +829,10 @@ class STARUtil:
         if not "condition" in reads_info:
             reads_info["condition"] = input_params["condition"]
 
-        rds_name = input_obj_info['info'][1]
         rds_files = list()
         ret_fwd = reads_info["file_fwd"]
         if ret_fwd is not None:
             rds_files.append(ret_fwd)
-            #rds_name = reads_info['file_name'].split('.')[0]
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
@@ -851,27 +866,32 @@ class STARUtil:
         return {'alignment_ref': alignment_ref, 'output_info': singlerun_output_info, 'report_info': report_info}
 
 
-    def star_run_batch(self, reads_refs, input_params, input_obj_info):
-        base_output_obj_name = input_params[self.PARAM_IN_OUTPUT_NAME]
+    def star_run_batch(self, validated_params):
+        base_output_obj_name = validated_params[self.PARAM_IN_OUTPUT_NAME]
+
+        # convert the input parameters (from refs to file paths, especially)
+        reads_refs = fetch_reads_refs_from_sampleset(validated_params[self.PARAM_IN_READS], self.workspace_url, self.callback_url, validated_params)
+
         # build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
-            tasks.append(self.build_single_execution_task(r['ref'], input_params, r['alignment_output_name']))
+            rds_align_name = r['alignment_output_name']
+            tasks.append(self.build_single_execution_task(r['ref'], validated_params, rds_align_name))
 
         batch_run_params = {'tasks': tasks,
                             'runner': 'parallel',
                             'max_retries': 2}
 
-        if input_params.get('concurrent_local_tasks', None) is not None:
-                batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
-        if input_params.get('concurrent_njsw_tasks', None) is not None:
-                batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
+        if validated_params.get('concurrent_local_tasks', None) is not None:
+                batch_run_params['concurrent_local_tasks'] = validated_params['concurrent_local_tasks']
+        if validated_params.get('concurrent_njsw_tasks', None) is not None:
+                batch_run_params['concurrent_njsw_tasks'] = validated_params['concurrent_njsw_tasks']
 
         results = self.parallel_runner.run_batch(batch_run_params)
         print('Batch run results=')
         pprint(results)
 
-        batch_result = self.process_batch_result(results, input_params, reads_refs)
+        batch_result = self.process_batch_result(results, validated_params, reads_refs)
 
         return batch_result
 
@@ -889,7 +909,7 @@ class STARUtil:
                 'parameters': task_params}
 
 
-    def process_batch_result(self, batch_result, validated_params, reads_refs):
+    def process_batch_result(self, batch_result, params, reads_refs):
 
         n_jobs = len(batch_result['results'])
         n_success = 0
@@ -922,8 +942,8 @@ class STARUtil:
         # Save the alignment set
         alignment_set_data = {'description': '', 'items': items}
         alignment_set_save_params = {'data': alignment_set_data,
-                                     'workspace': validated_params['output_workspace'],
-                                     'output_object_name': validated_params[self.PARAM_IN_OUTPUT_NAME]}
+                                     'workspace': params['output_workspace'],
+                                     'output_object_name': params[self.PARAM_IN_OUTPUT_NAME]}
 
         set_api = SetAPI(self.srv_wiz_url)
         save_result = set_api.save_reads_alignment_set_v1(alignment_set_save_params)
@@ -956,7 +976,7 @@ class STARUtil:
                                                   'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
                                                                   'name': qc_result_zip_info['index_html_file_name'],
                                                                   'label': qc_result_zip_info['name']}],
-                                                  'workspace_name': validated_params['output_workspace']
+                                                  'workspace_name': params['output_workspace']
                                                   })
 
         result = {'report_info': report_info} #{'report_name': report_info['name'], 'report_ref': report_info['ref']}}
@@ -1025,7 +1045,7 @@ class STARUtil:
 
     def determine_input_info(self, validated_params):
         ''' get info on the readsset_ref object and determine if we run once or run on a set '''
-        info = self.get_obj_info(validated_params[self.PARAM_IN_READS])
+        info = self.get_obj_infos(validated_params[self.PARAM_IN_READS])[0]
         obj_type = self.get_type_from_obj_info(info)
         if obj_type in ['KBaseAssembly.PairedEndLibrary', 'KBaseAssembly.SingleEndLibrary',
                         'KBaseFile.PairedEndLibrary', 'KBaseFile.SingleEndLibrary']:
@@ -1037,6 +1057,9 @@ class STARUtil:
 
         raise ValueError('Object type of readsset_ref is not valid, was: ' + str(obj_type))
 
+    def determine_unique_reads_names(self, validated_params):
+        infos = self.get_obj_infos(validated_params[self.PARAM_IN_READS])
+        return get_unique_names(infos)
 
     def get_type_from_obj_info(self, info):
         return info[2].split('-')[0]
@@ -1044,6 +1067,6 @@ class STARUtil:
     def get_name_from_obj_info(self, info):
         return info[1]
 
-    def get_obj_info(self, ref):
-        return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos'][0]
+    def get_obj_infos(self, ref):
+        return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos']
 

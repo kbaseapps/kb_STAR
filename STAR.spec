@@ -53,7 +53,8 @@ module STAR {
 	int alignIntronMax: maximum intron length, default to 1000000
 	int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
         create_report = 1 if we build a report, 0 otherwise. (default 1) (shouldn not be user set - mainly used for subtasks)
-	
+
+        @optional output_alignment_filename_extension	
         @optional outFilterType
         @optional outFilterMultimapNmax
         @optional outSAMtype
@@ -72,8 +73,9 @@ module STAR {
         obj_ref readsset_ref;
         obj_ref genome_ref;
         string output_workspace;
-        int runThreadN;
 	string output_name;
+        string output_alignment_filename_extension;
+        int runThreadN;
         string condition; 
         string outFilterType;
         string outSAMtype;

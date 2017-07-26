@@ -175,8 +175,8 @@ class STARTest(unittest.TestCase):
 
 
     def loadSEReads(self, reads_file_path):
-        if hasattr(self.__class__, 'reads_ref'):
-            return self.__class__.reads_ref
+        #if hasattr(self.__class__, 'reads_ref'):
+            #return self.__class__.reads_ref
         se_reads_name = os.path.basename(reads_file_path)
         fq_path = os.path.join(self.scratch, se_reads_name) #'star_test_reads.fastq')
         shutil.copy(reads_file_path, fq_path)
@@ -186,37 +186,39 @@ class STARTest(unittest.TestCase):
                                         'wsname': self.getWsName(),
                                         'name': se_reads_name.split('.')[0],
                                         'sequencing_tech': 'rnaseq reads'})['obj_ref']
-        self.__class__.reads_ref = reads_ref
+        #self.__class__.reads_ref = reads_ref
         return reads_ref
 
 
-    def loadSampleSet(self):
-        if hasattr(self.__class__, 'sample_set_ref'):
-            return self.__class__.sample_set_ref
-        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
-        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
-        pe_reads_ref = self.loadPairedEndReads()
-        sample_set_name = 'TestSampleSet'
-        sample_set_data = {'Library_type': 'PairedEnd',
+    def loadReadsSet(self):
+        #if hasattr(self.__class__, 'reads_set_ref'):
+            #return self.__class__.reads_set_ref
+        #se_lib_ref1 = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
+        se_lib_ref1 = self.loadSEReads(os.path.join('../work/testReads', 'testreads.fastq'))
+        se_lib_ref2 = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
+        #pe_reads_ref = self.loadPairedEndReads()
+        reads_set_name = 'TestSampleSet'
+        reads_set_data = {'Library_type': 'PairedEnd',
                            'domain': "Prokaryotes",
                            'num_samples': 2,
                            'platform': None,
                            'publication_id': None,
-                           'sample_ids': [se_lib_ref, pe_reads_ref],
+                           'sample_ids': [se_lib_ref1, se_lib_ref2],
                            'sampleset_desc': None,
-                           'sampleset_id': sample_set_name,
-                           'condition': ['c1', 'c2', 'c3'],
+                           'sampleset_id': reads_set_name,
+                           'condition': ['c1', 'c2'],
                            'source': None
                            }
 
         ss_obj = self.getWsClient().save_objects({'workspace': self.getWsName(),
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
-                                                               'data': sample_set_data,
-                                                               'name': sample_set_name}]#,
+                                                               'data': reads_set_data,
+                                                               'name': reads_set_name}]#,
                                                                #'provenance': [{"input_ws_objects": [pe_reads_ref, pe_reads_ref, pe_reads_ref]}]}]
                                                   })
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
-        print('Loaded SampleSet: ' + ss_ref)
+        print('Loaded ReadsSet: ' + ss_ref)
+        #self.__class__.reads_set_ref = ss_ref
         return ss_ref
 
 
@@ -226,11 +228,12 @@ class STARTest(unittest.TestCase):
     def test_run_star_single(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
-        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
-        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
+        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
+        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
+        #pe_reads_ref = self.loadPairedEndReads()
 
         # STAR input parameters
-        params = {'readsset_ref': se_lib_ref,
+        params = {'readsset_ref': se_lib_ref,#pe_reads_ref,
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
@@ -253,7 +256,7 @@ class STARTest(unittest.TestCase):
     def test_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
-        ss_ref = self.loadSampleSet()
+        ss_ref = self.loadReadsSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',

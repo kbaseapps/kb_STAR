@@ -91,7 +91,10 @@ parameters :
             Set the condition for the reads input. Ignored for sets of reads, required for singletons.
         long-hint : |
             Set the condition associated with the input reads object. This is required for a single sample, but ignored for sets of samples, since that is included in the set.
-            
+    output_alignment_filename_extension :
+        ui-name : Alignment output filename extensions
+        short-hint : When run on a set, individual alignments will be given names based on the reads object name appended with this extension        
+    
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
     <p>Basic STAR work flow consists of 2 steps:</p>

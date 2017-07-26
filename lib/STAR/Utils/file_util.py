@@ -132,26 +132,34 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
     # get object info so we can name things properly
     infos = ws.get_object_info3({'objects': refs_for_ws_info})['infos']
 
-    name_ext = '_alignment'
+    name_ext = '_starAlignment'
     if 'output_alignment_filename_extension' in params \
         and params['output_alignment_filename_extension'] is not None:
         ext = params['output_alignment_filename_extension'].replace(' ', '')
         if ext:
             name_ext = ext
 
-    unique_name_lookup = {}
+    unique_names = get_unique_names(infos)
     for k in range(0, len(refs)):
         refs[k]['info'] = infos[k]
+        name = unique_names[k] + name_ext
+        refs[k]['alignment_output_name'] = name
+
+    return refs
+
+
+def get_unique_names(infos):
+    unique_name_lookup = {}
+    names = {}
+    for k in range(0, len(infos)):
         name = infos[k][1]
         if name not in unique_name_lookup:
             unique_name_lookup[name] = 1
         else:
             unique_name_lookup[name] += 1
             name = name + '_' + str(unique_name_lookup[name])
-        name = name + name_ext
-        refs[k]['alignment_output_name'] = name
-
-    return refs
+        names[k] = name
+    return names
 
 
 def fetch_reads_from_reference(ref, callback_url):

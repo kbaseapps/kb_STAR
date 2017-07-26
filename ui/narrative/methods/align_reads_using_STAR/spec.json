@@ -74,72 +74,82 @@
             }]
         }
     }, {
-            "id": "alignSJoverhangMin",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "8" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
+        "id": "alignSJoverhangMin",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "8" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
    }, {
-            "id": "alignSJDBoverhangMin",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "1" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
+        "id": "alignSJDBoverhangMin",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "1" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
    }, {
-            "id": "outFilterMismatchNmax",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "999" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
+        "id": "outFilterMismatchNmax",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "999" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
     }, {
-            "id": "alignIntronMin",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "20" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
+        "id": "alignIntronMin",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "20" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
     }, {
-            "id": "alignIntronMax",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "1000000" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
+        "id": "alignIntronMax",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "1000000" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
     }, {
-            "id": "alignMatesGapMax",
-            "optional": true,
-            "advanced": true,
-            "allow_multiple": false,
-            "default_values": [ "1000000" ],
-            "field_type": "text",
-            "text_options": {
-                "validate_as": "int",
-                "min_int" : 0
-            }
-    }],
+        "id": "alignMatesGapMax",
+        "optional": true,
+        "advanced": true,
+        "allow_multiple": false,
+        "default_values": [ "1000000" ],
+        "field_type": "text",
+        "text_options": {
+            "validate_as": "int",
+            "min_int" : 0
+        }
+    }, {
+        "id" : "output_alignment_filename_extension",
+        "optional" : true,
+        "advanced" : true,
+        "allow_multiple" : false,
+        "default_values" : [ "_starAlignment" ],
+        "field_type" : "text",
+        "text_options" : { 
+            "is_output_name" : true
+        }   
+   }],
     "behavior": {
         "service-mapping": {
             "url": "",
@@ -190,6 +200,9 @@
                 }, {
                     "input_parameter" : "reads_condition",
                     "target_property" : "condition"
+                }, {
+                    "input_parameter" : "output_alignment_filename_extension",
+                    "target_property" : "output_alignment_filename_extension"
                 }
             ],
             "output_mapping": [

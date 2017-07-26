@@ -39,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "8ae6d347aedf837da50b81d429be0e54faab40fe"
+    GIT_COMMIT_HASH = "c77a101595cf73a5a9ecd3f0dd0a7765682dd07e"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -118,21 +118,23 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            default to 1000000 int alignMatesGapMax: maximum genomic distance
            between mates, default to 1000000 create_report = 1 if we build a
            report, 0 otherwise. (default 1) (shouldn not be user set - mainly
-           used for subtasks) @optional outFilterType @optional
-           outFilterMultimapNmax @optional outSAMtype @optional
-           outSAMattrIHstart @optional outSAMstrandField @optional quantMode
-           @optional alignSJoverhangMin @optional alignSJDBoverhangMin
-           @optional outFilterMismatchNmax @optional alignIntronMin @optional
-           alignIntronMax @optional alignMatesGapMax @optional
-           outFileNamePrefix) -> structure: parameter "readsset_ref" of type
-           "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
-           type "obj_ref" (An X/Y/Z style reference), parameter
-           "output_workspace" of String, parameter "runThreadN" of Long,
-           parameter "output_name" of String, parameter "condition" of
-           String, parameter "outFilterType" of String, parameter
-           "outSAMtype" of String, parameter "outSAMattrIHstart" of Long,
-           parameter "outSAMstrandField" of String, parameter "quantMode" of
-           String, parameter "outFilterMultimapNmax" of Long, parameter
+           used for subtasks) @optional output_alignment_filename_extension
+           @optional outFilterType @optional outFilterMultimapNmax @optional
+           outSAMtype @optional outSAMattrIHstart @optional outSAMstrandField
+           @optional quantMode @optional alignSJoverhangMin @optional
+           alignSJDBoverhangMin @optional outFilterMismatchNmax @optional
+           alignIntronMin @optional alignIntronMax @optional alignMatesGapMax
+           @optional outFileNamePrefix) -> structure: parameter
+           "readsset_ref" of type "obj_ref" (An X/Y/Z style reference),
+           parameter "genome_ref" of type "obj_ref" (An X/Y/Z style
+           reference), parameter "output_workspace" of String, parameter
+           "output_name" of String, parameter
+           "output_alignment_filename_extension" of String, parameter
+           "runThreadN" of Long, parameter "condition" of String, parameter
+           "outFilterType" of String, parameter "outSAMtype" of String,
+           parameter "outSAMattrIHstart" of Long, parameter
+           "outSAMstrandField" of String, parameter "quantMode" of String,
+           parameter "outFilterMultimapNmax" of Long, parameter
            "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
            Long, parameter "outFilterMismatchNmax" of Long, parameter
            "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
@@ -159,19 +161,18 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         star_runner = STARUtil(self.config)
 
         result = {}
-        # 1. process the input parameters
+        # pre-process the input parameters
         validated_params = star_runner.process_params(params)
-        input_obj_info = star_runner.determine_input_info(validated_params)
+        result = star_runner.star_run_single(validated_params)
 
-	# 2. convert the input parameters (from refs to file paths, especially)
-        params_ret = star_runner.convert_params(validated_params)
-        input_params = params_ret.get('input_parameters', None)
-        reads = params_ret.get('reads', None)
-        readsRefs = reads.get('readsRefs', None)
-        readsInfo = reads.get('readsInfo', None)
-
-        result = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
-
+        # indexing if not yet existing
+        if not hasattr(self.__class__, 'STARGenomeIndex'):
+            # convert the input parameters (from refs to file paths, especially)
+            params_ret = star_runner.convert_params(validated_params)
+            input_params = params_ret.get('input_parameters', None)
+            # generate the indices
+            idx_ret = star_runner.run_star_indexing(input_params)
+            self.__class__.STARGenomeIndex = 'indexed'
         #END star_align_reads_to_assembly
 
         # At some point might do deeper type checking...
@@ -181,21 +182,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # return the results
         return [result]
 
-    def align_one_reads_to_assembly(self, ctx):
-        """
-        aligns a single reads object to produce
-        """
-        # ctx is the context object
-        #BEGIN align_one_reads_to_assembly
-        #END align_one_reads_to_assembly
-        pass
-
     def run_star(self, ctx, params):
         """
-        The actual function is declared using 'funcdef' to specify the name
-        and input/return arguments to the function.  For all typical KBase
-        Apps that run in the Narrative, your function should have the 
-        'authentication required' modifier.
         :param params: instance of type "AlignReadsParams" (Will align the
            input reads (or set of reads specified in a SampleSet) to the
            specified assembly or assembly for the specified Genome (accepts
@@ -226,21 +214,23 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            default to 1000000 int alignMatesGapMax: maximum genomic distance
            between mates, default to 1000000 create_report = 1 if we build a
            report, 0 otherwise. (default 1) (shouldn not be user set - mainly
-           used for subtasks) @optional outFilterType @optional
-           outFilterMultimapNmax @optional outSAMtype @optional
-           outSAMattrIHstart @optional outSAMstrandField @optional quantMode
-           @optional alignSJoverhangMin @optional alignSJDBoverhangMin
-           @optional outFilterMismatchNmax @optional alignIntronMin @optional
-           alignIntronMax @optional alignMatesGapMax @optional
-           outFileNamePrefix) -> structure: parameter "readsset_ref" of type
-           "obj_ref" (An X/Y/Z style reference), parameter "genome_ref" of
-           type "obj_ref" (An X/Y/Z style reference), parameter
-           "output_workspace" of String, parameter "runThreadN" of Long,
-           parameter "output_name" of String, parameter "condition" of
-           String, parameter "outFilterType" of String, parameter
-           "outSAMtype" of String, parameter "outSAMattrIHstart" of Long,
-           parameter "outSAMstrandField" of String, parameter "quantMode" of
-           String, parameter "outFilterMultimapNmax" of Long, parameter
+           used for subtasks) @optional output_alignment_filename_extension
+           @optional outFilterType @optional outFilterMultimapNmax @optional
+           outSAMtype @optional outSAMattrIHstart @optional outSAMstrandField
+           @optional quantMode @optional alignSJoverhangMin @optional
+           alignSJDBoverhangMin @optional outFilterMismatchNmax @optional
+           alignIntronMin @optional alignIntronMax @optional alignMatesGapMax
+           @optional outFileNamePrefix) -> structure: parameter
+           "readsset_ref" of type "obj_ref" (An X/Y/Z style reference),
+           parameter "genome_ref" of type "obj_ref" (An X/Y/Z style
+           reference), parameter "output_workspace" of String, parameter
+           "output_name" of String, parameter
+           "output_alignment_filename_extension" of String, parameter
+           "runThreadN" of Long, parameter "condition" of String, parameter
+           "outFilterType" of String, parameter "outSAMtype" of String,
+           parameter "outSAMattrIHstart" of Long, parameter
+           "outSAMstrandField" of String, parameter "quantMode" of String,
+           parameter "outFilterMultimapNmax" of Long, parameter
            "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
            Long, parameter "outFilterMismatchNmax" of Long, parameter
            "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
@@ -277,32 +267,31 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         validated_params = star_runner.process_params(params)
         input_obj_info = star_runner.determine_input_info(validated_params)
 
-	# 2. convert the input parameters (from refs to file paths, especially)
-        params_ret = star_runner.convert_params(validated_params)
-        input_params = params_ret.get('input_parameters', None)
-        reads = params_ret.get('reads', None)
-        readsRefs = reads.get('readsRefs', None)
-        readsInfo = reads.get('readsInfo', None)
+        # indexing if not yet existing
+        if not hasattr(self.__class__, 'STARGenomeIndex'):
+            # convert the input parameters (from refs to file paths, especially)
+            params_ret = star_runner.convert_params(validated_params)
+            input_params = params_ret.get('input_parameters', None)
+            # generate the indices
+            idx_ret = star_runner.run_star_indexing(input_params)
+            self.__class__.STARGenomeIndex = 'indexed'
 
-	# 3. generate the index from a reference genome
-        idx_ret = star_runner.run_star_indexing(input_params)
-
-        if idx_ret == 0:
-        # 4. Run STAR with index and reads.
+        # 2. Run STAR with index and reads.
         # If there's only one, run it locally right now.
         # If there's more than one:
         #  1. make a list of tasks to send to KBParallel.
         #  2. add a flag to not make a report for each subtask.
         #  3. make the report when it's all done.
-            if input_obj_info['run_mode'] == 'single_library':
-                star_ret = star_runner.star_run_single(readsInfo[0], input_params, input_obj_info)
-            elif input_obj_info['run_mode'] == 'sample_set':
-                star_ret = star_runner.star_run_batch(readsRefs, input_params, input_obj_info)
-            if star_ret.get('alignment_ref', None) is not None:
-                returnVal['alignment_ref'] = star_ret['alignment_ref']
-            if star_ret['report_info'].get('name', None) is not None:
-                returnVal['report_name'] = star_ret['report_info']['name']
-                returnVal['report_ref'] = star_ret['report_info']['ref']
+        if input_obj_info['run_mode'] == 'single_library':
+            star_ret = star_runner.star_run_single(validated_params)
+        elif input_obj_info['run_mode'] == 'sample_set':
+            star_ret = star_runner.star_run_batch(validated_params)
+
+        if star_ret.get('alignment_ref', None) is not None:
+            returnVal['alignment_ref'] = star_ret['alignment_ref']
+        if star_ret['report_info'].get('name', None) is not None:
+            returnVal['report_name'] = star_ret['report_info']['name']
+            returnVal['report_ref'] = star_ret['report_info']['ref']
         #END run_star
 
         # At some point might do deeper type checking...
