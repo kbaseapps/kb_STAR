@@ -172,7 +172,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             input_params = params_ret.get('input_parameters', None)
             # generate the indices
             idx_ret = star_runner.run_star_indexing(input_params)
-            self.__class__.STARGenomeIndex = 'indexed'
+            if idx_ret == 0:
+                self.__class__.STARGenomeIndex = 'indexed'
         #END star_align_reads_to_assembly
 
         # At some point might do deeper type checking...
@@ -274,7 +275,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             input_params = params_ret.get('input_parameters', None)
             # generate the indices
             idx_ret = star_runner.run_star_indexing(input_params)
-            self.__class__.STARGenomeIndex = 'indexed'
+            if idx_ret == 0:
+                self.__class__.STARGenomeIndex = 'indexed'
 
         # 2. Run STAR with index and reads.
         # If there's only one, run it locally right now.
