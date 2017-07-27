@@ -44,11 +44,6 @@ parameters :
             Output Alignment(set) Name
         short-hint : |
             Name the alignment object
-    output_expression_matrix_name :
-        ui-name : |
-            Output Expression Matrix (IGNORED!)
-        short-hint : |
-            Name for output expression matrix object (optional; will not be generated if name is not given)
     quantMode :
         ui-name : |
             Output quantification method
