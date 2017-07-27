@@ -949,11 +949,14 @@ class STARUtil:
         save_result = set_api.save_reads_alignment_set_v1(alignment_set_save_params)
         print('Saved ReadsAlignment=')
         pprint(save_result)
-        objects_created.append({'ref': save_result['set_ref'], 'description': 'Set of all reads alignments generated'})
+        input_ref = save_result['set_ref']
+        objects_created.append({
+            'ref': input_ref,
+            'description': 'Set of all reads alignments generated'})
         set_name = save_result['set_info'][1]
 
         #run qualimap
-        qualimap_report = self.qualimap.run_bamqc({'input_ref': save_result['set_ref']})
+        qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
 
         # create the report
