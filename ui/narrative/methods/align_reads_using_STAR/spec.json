@@ -208,9 +208,6 @@
                 }, {
                     "input_parameter" : "output_alignment_filename_extension",
                     "target_property" : "output_alignment_filename_extension"
-                }, {
-                    "input_parameter": "output_expression_matrix_name",
-                    "target_property": "output_expression_matrix_name"
                 }
             ],
             "output_mapping": [
