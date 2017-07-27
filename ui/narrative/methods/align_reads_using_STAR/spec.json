@@ -18,7 +18,12 @@
         "default_values" : [ "" ],
         "field_type" : "text",
         "text_options" : {
-            "valid_ws_types" : ["KBaseSets.ReadsSet", "KBaseRNASeq.RNASeqSampleSet","KBaseAssembly.SingleEndLibrary", "KBaseAssembly.PairedEndLibrary", "KBaseFile.SingleEndLibrary", "KBaseFile.PairedEndLibrary"]
+            "valid_ws_types" :  [
+		    "KBaseRNASeq.RNASeqSampleSet",
+                    "KBaseSets.ReadsSet",
+                    "KBaseFile.SingleEndLibrary",
+                    "KBaseFile.PairedEndLibrary"
+                ]
         }
     }, {
         "id" : "genome_ref",
@@ -28,20 +33,9 @@
         "default_values" : [ "" ],
         "field_type" : "text",
         "text_options" : {
-            "valid_ws_types" : ["KBaseGenomes.Genome", "KBaseGenomeAnnotations.Assembly", "KBaseGenomes.ContigSet" ]
+            "valid_ws_types" : ["KBaseGenomes.Genome"]
         }
      }, {
-	    "id" : "output_expression_matrix_name",
-	    "optional" : true,
-	    "advanced" : false,
-	    "allow_multiple" : false,
-	    "default_values" : [ "" ],
-	    "field_type" : "text",
-	    "text_options" : {
-		"valid_ws_types" : [ "KBaseFeatureValues.ExpressionMatrix" ],
-		"is_output_name":true
-	    } 
-	}, {
         "id": "output_obj_name",
         "optional": false,
         "advanced": false,
