@@ -31,6 +31,17 @@
             "valid_ws_types" : ["KBaseGenomes.Genome", "KBaseGenomeAnnotations.Assembly", "KBaseGenomes.ContigSet" ]
         }
      }, {
+	    "id" : "output_expression_matrix_name",
+	    "optional" : true,
+	    "advanced" : false,
+	    "allow_multiple" : false,
+	    "default_values" : [ "" ],
+	    "field_type" : "text",
+	    "text_options" : {
+		"valid_ws_types" : [ "KBaseFeatureValues.ExpressionMatrix" ],
+		"is_output_name":true
+	    } 
+	}, {
         "id": "output_obj_name",
         "optional": false,
         "advanced": false,
@@ -38,7 +49,7 @@
         "default_values": [""],
         "field_type": "text",
         "text_options": {
-            "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment" ],
+            "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment", "KBaseRNASeq.RNASeqAlignmentSet"],
             "is_output_name" : true
         }
     }, {
@@ -203,6 +214,9 @@
                 }, {
                     "input_parameter" : "output_alignment_filename_extension",
                     "target_property" : "output_alignment_filename_extension"
+                }, {
+                    "input_parameter": "output_expression_matrix_name",
+                    "target_property": "output_expression_matrix_name"
                 }
             ],
             "output_mapping": [
