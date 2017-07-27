@@ -29,21 +29,26 @@ suggestions:
 parameters :
     sampleset_ref :
         ui-name : |
-            RNA-seq Sample Set or Reads Set
+            RNA-seq reads or ReadsSet, or RNA-seq sample set
         short-hint : |
-            Select the RNA-seq sampleSet or reads set
+            Select the RNA-seq read set associated with the RNA-seq experiment. Alternatively, if you have only one sample of RNA-seq reads, select the corresponding object.
         long-hint : |
-            Select the RNA-seq sample set or reads set (If you have only one sample of RNA-seq reads, select the corresponding library object.)
+            Select the RNA-seq read set associated with the RNA-seq experiment. Alternatively, if you have only one sample of RNA-seq reads, select the corresponding object.
     genome_ref :
         ui-name : |
             Genome
         short-hint : |
-            Select the assembly or genome on which to align to
+            Select the Genome to align the reads
     output_obj_name :
         ui-name : |
-            Output Alignment Name
+            Output Alignment(set) Name
         short-hint : |
             Name the alignment object
+    output_expression_matrix_name :
+        ui-name : |
+            Output Expression Matrix (IGNORED!)
+        short-hint : |
+            Name for output expression matrix object (optional; will not be generated if name is not given)
     quantMode :
         ui-name : |
             Output quantification method
