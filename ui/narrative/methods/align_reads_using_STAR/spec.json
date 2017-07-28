@@ -36,16 +36,19 @@
             "valid_ws_types" : ["KBaseGenomes.Genome"]
         }
      }, {
-        "id": "output_obj_name",
-        "optional": false,
-        "advanced": false,
-        "allow_multiple": false,
-        "default_values": [""],
-        "field_type": "text",
-        "text_options": {
-            "valid_ws_types" : ["KBaseRNASeq.RNASeqAlignment", "KBaseRNASeq.RNASeqAlignmentSet"],
-            "is_output_name" : true
-        }
+        "id" : "alignment_suffix",
+        "optional" : false,
+        "advanced" : true,
+        "allow_multiple" : false,
+        "default_values" : [ "_alignment" ],
+        "field_type" : "text"
+    }, {
+        "id" : "alignmentset_suffix",
+        "optional" : true,
+        "advanced" : true,
+        "allow_multiple" : false,
+        "default_values" : [ "_alignment_set" ],
+        "field_type" : "text"
     }, {
         "id": "reads_condition",
         "optional" : true,
@@ -179,8 +182,11 @@
                     "target_property" : "genome_ref",
                     "target_type_transform": "resolved-ref"
                 }, {
-                    "input_parameter" : "output_obj_name",
-                    "target_property" : "output_name"
+                    "input_parameter" : "alignment_suffix",
+                    "target_property" : "alignment_suffix"
+                }, {
+                    "input_parameter" : "alignmentset_suffix",
+                    "target_property" : "alignmentset_suffix"
                 }, {
                     "input_parameter": "quantMode",
                     "target_property": "quantMode"
@@ -205,14 +211,11 @@
                 }, {
                     "input_parameter" : "reads_condition",
                     "target_property" : "condition"
-                }, {
-                    "input_parameter" : "output_alignment_filename_extension",
-                    "target_property" : "output_alignment_filename_extension"
                 }
             ],
             "output_mapping": [
                 {
-                    "service_method_output_path": [0,"alignment_ref"],
+                    "service_method_output_path": [0,"alignmentset_ref"],
                     "target_property": "output"
                 },
                 {
