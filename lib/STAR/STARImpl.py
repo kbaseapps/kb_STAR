@@ -278,7 +278,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             "report_name": None
         }
 
-        star_runner = STARUtil(self.config)
+        star_runner = STARUtil(self.config, ctx.provenance())
         # 1. validate & process the input parameters
         validated_params = star_runner.process_params(params)
         input_obj_info = star_runner.determine_input_info(validated_params)

@@ -60,7 +60,7 @@ class STARUtil:
     PARAM_IN_READS = 'readsset_ref'
     PARAM_IN_GENOME = 'genome_ref'
 
-    def __init__(self, config):
+    def __init__(self, config, provenance):
         self.config = config
         self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
@@ -75,6 +75,15 @@ class STARUtil:
         self.STAR_output = ''
         self.STAR_idx = ''
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
+        self.provenance = provenance
+
+        # from the provenance, extract out the version to run by exact hash if possible
+        self.my_version = 'release'
+        if len(provenance) > 0:
+            if 'subactions' in provenance[0]:
+                self.my_version = self.get_version_from_subactions('kb_STAR', provenance[0]['subactions'])
+        print('Running kb_STAR version = ' + self.my_version)
+
         self.parallel_runner = KBParallel(self.callback_url)
         self.qualimap = kb_QualiMap(self.callback_url, service_ver="dev")
 
@@ -112,10 +121,6 @@ class STARUtil:
                 not valid_string(params[self.PARAM_IN_READS], is_ref=True)):
             raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
                       "not {}".format(params.get(self.PARAM_IN_READS, None)))
-        if (params.get(self.PARAM_IN_OUTPUT_NAME, None) is None or
-                not valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
-            raise ValueError("Parameter alignment output_name must be a valid Workspace object string, "
-                      "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
         if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
             raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
                       "not {}".format(params.get("alignment_suffix", None)))
@@ -547,11 +552,11 @@ class STARUtil:
         '''fetch the refs and info from the input given by params[self.PARAM_IN_READS], which is a ref
         '''
         reads_refs = list()
-        readsset_ref = params[self.PARAM_IN_READS]
-	if readsset_ref is not None:
+        radsset_ref = params[self.PARAM_IN_READS]
+	if radsset_ref is not None:
             try:
-		print("Fetching reads ref(s) from sample/reads set ref {}".format(readsset_ref))
-		reads_refs = fetch_reads_refs_from_sampleset(readsset_ref, self.workspace_url, self.callback_url, params)
+		print("Fetching reads ref(s) from sample/reads set ref {}".format(radsset_ref))
+		reads_refs = fetch_reads_refs_from_sampleset(radsset_ref, self.workspace_url, self.callback_url, params)
 		print("Done fetching reads ref(s)!")
             except ValueError:
 		print("Incorrect object type for fetching reads ref(s)!")
@@ -573,8 +578,8 @@ class STARUtil:
                     ret_reads['condition'] = source_reads['condition']
                 else:
                     ret_reads['condition'] = params['condition']
-                if ret_reads.get('object_ref', None) != readsset_ref:
-                    ret_reads['readsset_ref'] = readsset_ref
+                if ret_reads.get('object_ref', None) != radsset_ref:
+                    ret_reads[self.PARAM_IN_READS] = radsset_ref
                 reads_info.append(ret_reads)
 
         return {'readsRefs': reads_refs, 'readsInfo': reads_info}
@@ -608,8 +613,7 @@ class STARUtil:
             'runMode': 'genomeGenerate',
             'alignment_suffix': input_params['alignment_suffix'],
             self.PARAM_IN_GENOME: input_params[self.PARAM_IN_GENOME],
-            'runThreadN': input_params[self.PARAM_IN_THREADN],
-            self.PARAM_IN_OUTPUT_NAME: input_params[self.PARAM_IN_OUTPUT_NAME]
+            'runThreadN': input_params[self.PARAM_IN_THREADN]
 	}
 
         if input_params.get('create_report', None) is not None:
@@ -895,16 +899,13 @@ class STARUtil:
 
 
     def star_run_batch(self, validated_params):
-        base_output_obj_name = validated_params[self.PARAM_IN_OUTPUT_NAME]
-
-        # convert the input parameters (from refs to file paths, especially)
+        ''' convert the input parameters (from refs to file paths, especially)'''
         reads_refs = fetch_reads_refs_from_sampleset(validated_params[self.PARAM_IN_READS], self.workspace_url, self.callback_url, validated_params)
 
         # build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
-            rds_align_name = r['alignment_output_name']
-            tasks.append(self.build_single_execution_task(r['ref'], validated_params, rds_align_name))
+            tasks.append(self.build_single_execution_task(r['ref'], validated_params))
 
         batch_run_params = {'tasks': tasks,
                             'runner': 'parallel',
@@ -924,13 +925,11 @@ class STARUtil:
         return batch_result
 
 
-    def build_single_execution_task(self, rds_ref, params, output_name):
+    def build_single_execution_task(self, rds_ref, params):
         task_params = copy.deepcopy(params)
 
         task_params[self.PARAM_IN_READS] = rds_ref
-        task_params[self.PARAM_IN_OUTPUT_NAME] = output_name
         task_params['create_report'] = 0
-        task_params['readsset_ref'] = rds_ref['ref']
 
         if 'condition' in rds_ref:
                 task_param['condition'] = rds_ref['condition']
@@ -939,7 +938,8 @@ class STARUtil:
 
         return {'module_name': 'STAR',
                 'function_name': 'run_star',
-                'version': 'dev',
+                'version': self.my_version,
+                #'version': 'dev',
                 'parameters': task_params}
 
 
@@ -950,7 +950,7 @@ class STARUtil:
         ran_locally = 0
         ran_njsw = 0
 
-        set_name = get_object_names([params["readsset_ref"]])[params["readsset_ref"]]
+        set_name = get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
         # reads alignment set items
         alignment_items = list()
         alignment_objs = list()
@@ -1158,3 +1158,21 @@ class STARUtil:
         for i in range(len(info["infos"])):
             name_map[ref_list[i]] = info["infos"][i][1]
         return name_map
+
+    def get_version_from_subactions(self, module_name, subactions):
+        # go through each sub action looking for
+        if not subactions:
+            return 'release'  # default to release if we can't find anything
+        for sa in subactions:
+            if 'name' in sa:
+                if sa['name'] == module_name:
+                    # local-docker-image implies that we are running in kb-test, so return 'dev'
+                    if sa['commit'] == 'local-docker-image':
+                        return 'dev'
+                    # to check that it is a valid hash, make sure it is the right
+                    # length and made up of valid hash characters
+                    if re.match('[a-fA-F0-9]{40}$', sa['commit']):
+                        return sa['commit']
+        # again, default to setting this to release
+        return 'release'
+
