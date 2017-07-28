@@ -116,6 +116,9 @@ class STARUtil:
                 not valid_string(params[self.PARAM_IN_OUTPUT_NAME])):
             raise ValueError("Parameter alignment output_name must be a valid Workspace object string, "
                       "not {}".format(params.get(self.PARAM_IN_OUTPUT_NAME, None)))
+        if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
+            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
+                      "not {}".format(params.get("alignment_suffix", None)))
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
 	else:
@@ -382,17 +385,22 @@ class STARUtil:
         return ret
 
 
-    def upload_STARalignment(self, input_params, reads_info, output_sam_file):
+    def upload_STARalignment(self, input_params, reads, output_sam_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
         """
+        reads_ref = reads.get('readsRefs', None)[0]
+        reads_info = reads.get('readsInfo', None)[0]
+
         aligner_opts = dict()
         for k in input_params:
             aligner_opts[k] = str(input_params[k])
         pprint(reads_info)
+
+        alignment_name = reads_ref['alignment_output_name']
         align_upload_params = {
-            "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], input_params[self.PARAM_IN_OUTPUT_NAME]),
+            "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], alignment_name),
             "file_path": output_sam_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
@@ -561,10 +569,12 @@ class STARUtil:
             if ret_reads.get("file_fwd", None) is None:
                 raise RuntimeError("FASTA file fetched from reads ref {} doesn't seem to exist!".format(source_reads['ref']))
             else:
-                if source_reads.get("condition", None) is not None:
-                    ret_reads["condition"] = source_reads["condition"]
+                if source_reads.get('condition', None) is not None:
+                    ret_reads['condition'] = source_reads['condition']
                 else:
-                    ret_reads["condition"] = 'unspecified'
+                    ret_reads['condition'] = params['condition']
+                if ret_reads.get('object_ref', None) != readsset_ref:
+                    ret_reads['readsset_ref'] = readsset_ref
                 reads_info.append(ret_reads)
 
         return {'readsRefs': reads_refs, 'readsInfo': reads_info}
@@ -596,6 +606,7 @@ class STARUtil:
 	params = {
             'output_workspace': input_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
+            'alignment_suffix': input_params['alignment_suffix'],
             self.PARAM_IN_GENOME: input_params[self.PARAM_IN_GENOME],
             'runThreadN': input_params[self.PARAM_IN_THREADN],
             self.PARAM_IN_OUTPUT_NAME: input_params[self.PARAM_IN_OUTPUT_NAME]
@@ -607,6 +618,8 @@ class STARUtil:
                 params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
         if input_params.get('concurrent_njsw_tasks', None) is not None:
                 params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
+        if input_params.get('alignmentset_suffix', None) is not None:
+                params['alignmentset_suffix'] = input_params['alignmentset_suffix']
 	# STEP 1: Converting refs to file locations in the scratch area
         reads = self.get_reads(input_params)
 
@@ -813,21 +826,21 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_single\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
-        rds_name = self.determine_unique_reads_names(validated_params)[0]
-
 	# convert the input parameters (from refs to file paths, especially)
         params_ret = self.convert_params(validated_params)
         input_params = params_ret.get('input_parameters', None)
         reads = params_ret.get('reads', None)
+        reads_ref = reads.get('readsRefs', None)[0]
         reads_info = reads.get('readsInfo', None)[0]
+        rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
 
-        alignments = dict()
+        alignment_objs = list()
         alignment_ref = None
         singlerun_output_info = {}
         report_info = {}
 
-        if not "condition" in reads_info:
-            reads_info["condition"] = input_params["condition"]
+        if not 'condition' in reads_info:
+            reads_info['condition'] = input_params['condition']
 
         rds_files = list()
         ret_fwd = reads_info["file_fwd"]
@@ -845,25 +858,40 @@ class STARUtil:
                 output_sam_file = '{}Aligned.out.sam'.format(prefix)
             else:
                 output_sam_file = 'Aligned.out.sam'
-
-            singlerun_output_info['output_dir'] = star_mp_ret['star_output']
             output_sam_file = os.path.join(star_mp_ret['star_output'], output_sam_file)
-            singlerun_output_info['output_sam_file'] = output_sam_file
 
             # Upload the alignment
             #print("Uploading STAR output object...")
-            upload_results = self.upload_STARalignment(input_params, reads_info, output_sam_file)
+            upload_results = self.upload_STARalignment(input_params, reads, output_sam_file)
             alignment_ref = upload_results['obj_ref']
-            alignments[reads_info["object_ref"]] = {
+            alignment_obj = {
                 "ref": alignment_ref,
-                "readsName": rds_name,
-                "alignment_name": input_params[self.PARAM_IN_OUTPUT_NAME]
+                "name": reads_ref['alignment_output_name']
             }
+            alignment_objs.append({
+                'reads_ref': reads_ref['ref'],
+                'AlignmentObj': alignment_obj
+            })
+
+            singlerun_output_info['output_dir'] = star_mp_ret['star_output']
+            singlerun_output_info['output_sam_file'] = output_sam_file
+
             singlerun_output_info['upload_results'] = upload_results
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.generate_report_for_single_run(singlerun_output_info, input_params)
-        return {'alignment_ref': alignment_ref, 'output_info': singlerun_output_info, 'report_info': report_info}
+
+        if ret_fwd is not None:
+            os.remove(ret_fwd)
+            if reads_info.get('file_rev', None) is not None:
+                os.remove(reads_info["file_rev"])
+
+        return {'alignmentset_ref': None,
+                'output_info': singlerun_output_info,
+                'alignment_objs': alignment_objs,
+                'report_name': report_info['name'],
+                'report_ref': report_info['ref']
+        }
 
 
     def star_run_batch(self, validated_params):
@@ -902,9 +930,15 @@ class STARUtil:
         task_params[self.PARAM_IN_READS] = rds_ref
         task_params[self.PARAM_IN_OUTPUT_NAME] = output_name
         task_params['create_report'] = 0
+        task_params['readsset_ref'] = rds_ref['ref']
+
+        if 'condition' in rds_ref:
+                task_param['condition'] = rds_ref['condition']
+        else:
+                task_params['condition'] = 'unspecified'
 
         return {'module_name': 'STAR',
-                'function_name': 'star_align_reads_to_assembly',
+                'function_name': 'run_star',
                 'version': 'dev',
                 'parameters': task_params}
 
@@ -986,10 +1020,10 @@ class STARUtil:
         result['output_info'] = batch_result
         result['alignment_ref'] = save_result['set_ref']
 
-        return result 
+        return result
 
 
-    def star_run_sequential(self, readsInfo, input_params, input_obj_info):
+    def star_run_sequential(self, reads, input_params, input_obj_info):
         """
         run_star_sequential: run the STAR app on each reads one by one
 	(Running star indexing and then mapping)
@@ -997,12 +1031,12 @@ class STARUtil:
         log('--->\nrunning STARUtil.run_star\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        alignment_set = dict()
-        star_out_dirs = list()
+        alignment_objs = list()
         output_sam_file = ''
         upload_out = {}
 
-        for rds in readsInfo:
+        reads_info = reads['readsInfo']
+        for rds in reads_info:
             rdsFiles = list()
             rdsName = input_obj_info['info'][1]
             ret_fwd = rds.get("file_fwd", None)
@@ -1024,19 +1058,24 @@ class STARUtil:
 
                 #print("Uploading STAR output object...")
                 # Upload the alignment
-                upload_out = self.upload_STARalignment(input_params, rds, output_sam_file)
-                alignment_ref = upload_out['object_ref']
-                alignment_set[rds['object_ref']] = {
-                        'ref': upload_out['obj_ref'],
-                        'readsName': rdsName,
-                        'alignment_name': '{}_{}_starAligned'.format(params[self.PARAM_IN_OUTPUT_NAME], rdsName)
+                upload_out = self.upload_STARalignment(input_params, reads, output_sam_file)
+                alignment_ref = upload_out['ob_ref']
+                alignObj = {'ref': alignment_ref,
+                            'name': '{}_starAligned'.format(rds['name'])
                 }
-                star_out_dirs.append(star_ret)
+                alignment_objs.append({
+                        'reads_ref': rds['object_ref'],
+                        'AlignmentObj': alignObj
+                })
 
+            if ret_fwd is not None:
+                os.remove(ret_fwd)
+                if rds.get('file_rev', None) is not None:
+                    os.remove(rds["file_rev"])
 	# STEP 3: Generating report
         returnVal = {
                 'output_info': {'upload_results': upload_out},
-                'alignment_set': alignment_set,
+                'alignment_objs': alignment_objs,
         }
 
         report_info = self._generate_extended_report(alignment_set, input_params)
@@ -1073,3 +1112,18 @@ class STARUtil:
     def get_obj_infos(self, ref):
         return self.ws_client.get_object_info3({'objects': [{'ref': ref}]})['infos']
 
+    def get_object_names(self, ref_list):
+        """
+        From a list of workspace references, returns a mapping from ref -> name of the object.
+        """
+        ws = self.ws_client
+        obj_ids = list()
+        for ref in ref_list:
+            obj_ids.append({"ref": ref})
+        info = ws.get_object_info3({"objects": obj_ids})
+        name_map = dict()
+        # we already have the refs as passed previously, so use those for mapping, as they're in
+        # the same order as what's returned.
+        for i in range(len(info["infos"])):
+            name_map[ref_list[i]] = info["infos"][i][1]
+        return name_map

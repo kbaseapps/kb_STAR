@@ -147,17 +147,7 @@
             "validate_as": "int",
             "min_int" : 0
         }
-    }, {
-        "id" : "output_alignment_filename_extension",
-        "optional" : true,
-        "advanced" : true,
-        "allow_multiple" : false,
-        "default_values" : [ "_starAlignment" ],
-        "field_type" : "text",
-        "text_options" : { 
-            "is_output_name" : true
-        }   
-   }],
+    }],
     "behavior": {
         "service-mapping": {
             "url": "",

@@ -224,7 +224,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star_single")
+    #@unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
@@ -238,6 +238,9 @@ class STARTest(unittest.TestCase):
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
                   'runMode': 'genomeGenerate',
+                  'alignmentset_suffix': '_alignment_set',
+                  'alignment_suffix': '_alignment',
+                  'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
                   'create_report': 1
@@ -252,7 +255,7 @@ class STARTest(unittest.TestCase):
         self.assertIn('alignment_ref', res)
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star_batch")
+    @unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
@@ -261,6 +264,9 @@ class STARTest(unittest.TestCase):
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
+                  'alignmentset_suffix': '_alignment_set',
+                  'alignment_suffix': '_alignment',
+                  'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
                   'create_report': 1

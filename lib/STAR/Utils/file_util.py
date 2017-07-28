@@ -4,6 +4,9 @@ Utility functions to fetch files from various Workspace object types.
 Depends on the more general util.py that's here, too.
 """
 import re
+import fileinput
+import os.path
+import sys
 from pprint import pprint
 from SetAPI.SetAPIClient import SetAPI
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
@@ -132,10 +135,10 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
     # get object info so we can name things properly
     infos = ws.get_object_info3({'objects': refs_for_ws_info})['infos']
 
-    name_ext = '_starAlignment'
-    if 'output_alignment_filename_extension' in params \
-        and params['output_alignment_filename_extension'] is not None:
-        ext = params['output_alignment_filename_extension'].replace(' ', '')
+    name_ext = '_alignment'
+    if 'alignment_suffix' in params \
+        and params['alignment_suffix'] is not None:
+        ext = params['alignment_suffix'].replace(' ', '')
         if ext:
             name_ext = ext
 
@@ -169,7 +172,7 @@ def fetch_reads_from_reference(ref, callback_url):
     {
         "style": "paired", "single", or "interleaved",
         "file_fwd": path_to_file,
-        "file_name": name of the reads,
+        "name": name of the reads,
         "file_rev": path_to_file, only if paired end,
         "object_ref": reads reference for downstream convenience.
     }
@@ -187,7 +190,7 @@ def fetch_reads_from_reference(ref, callback_url):
             "object_ref": ref,
             "style": reads_files["type"],
             "file_fwd": reads_files["fwd"],
-            "file_name": reads_files["fwd_name"]
+            "name": reads_files["fwd_name"]
         }
         if reads_files.get("rev", None) is not None:
             ret_reads["file_rev"] = reads_files["rev"]
@@ -249,3 +252,29 @@ def get_object_type(ref, ws_url):
         raise RuntimeError("An error occurred while fetching type info from the Workspace. "
                            "No information returned for reference {}".format(ref))
     return obj_info[2]
+
+def generate_exp_matrix(ws_url, input_filenames, output_filename):
+    counts = dict()
+
+    with fileinput.input(files=set(input_filenames)) as fin:
+        for line in fin:
+            if not line or line.startswith("N_"):
+                continue
+        line2 = line.split("\t")
+        try:
+            counts[line2[0]][fileinput.filename()] = line2[1]
+        except KeyError:
+            counts[line2[0]] = dict()
+            counts[line2[0]][fileinput.filename()] = line2[1]
+
+    fout = open(output_filename, 'w')
+    print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in input_filenames])
+    fout.write ("feature_ids\t", "\t".join([os.path.dirname(fn) for fn in input_filenames]))
+    for fid in sorted(counts.iterkeys()):
+        counts2 = [counts[fid][filename] for filename in input_filenames]
+        print fid, "\t", "\t".join(counts2)
+        fout.write(fid, "\t", "\t".join(counts2))
+
+    fout.close()
+    return output_filename
+
