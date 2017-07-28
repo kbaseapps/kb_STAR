@@ -216,7 +216,7 @@
             "output_mapping": [
                 {
                     "service_method_output_path": [0,"alignmentset_ref"],
-                    "target_property": "output"
+                    "target_property": "alignmentset_ref"
                 },
                 {
                     "service_method_output_path": [0, "report_name"],
