@@ -252,7 +252,7 @@ class STARTest(unittest.TestCase):
         pprint(res)
         self.assertIn('report_ref', res)
         self.assertIn('report_name', res)
-        self.assertIn('alignment_ref', res)
+        self.assertIn('alignment_objs', res)
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_run_star_batch")
@@ -277,7 +277,7 @@ class STARTest(unittest.TestCase):
         pprint(res)
         self.assertIn('report_ref', res)
         self.assertIn('report_name', res)
-        self.assertIn('alignment_ref', res)
+        self.assertIn('alignment_objs', res)
 
 
     # Uncomment to skip this test

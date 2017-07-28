@@ -837,7 +837,7 @@ class STARUtil:
         alignment_objs = list()
         alignment_ref = None
         singlerun_output_info = {}
-        report_info = {}
+        report_info = {'name': None, 'ref': None}
 
         if not 'condition' in reads_info:
             reads_info['condition'] = input_params['condition']
@@ -944,18 +944,20 @@ class STARUtil:
 
 
     def process_batch_result(self, batch_result, params, reads_refs):
-
         n_jobs = len(batch_result['results'])
         n_success = 0
         n_error = 0
         ran_locally = 0
         ran_njsw = 0
 
+        set_name = get_object_names([params["readsset_ref"]])[params["readsset_ref"]]
         # reads alignment set items
-        items = []
-        objects_created = []
+        alignment_items = list()
+        alignment_objs = list()
+        alignments = dict()
 
         for k in range(0, len(batch_result['results'])):
+            reads_ref = reads_refs[k]
             job = batch_result['results'][k]
             result_package = job['result_package']
             if job['is_error']:
@@ -964,9 +966,14 @@ class STARUtil:
                 n_success += 1
                 output_info = result_package['result'][0]['output_info']
                 ra_ref = output_info['upload_results']['obj_ref']
-                # Note: could add a label to the alignment here?
-                items.append({'ref': ra_ref, 'label': reads_refs[k]['condition']})
-                objects_created.append({'ref': ra_ref})
+                alignment_items.append({
+                        'ref': ra_ref,
+                        'label': reads_ref.get(
+                                "condition",
+                                params.get("condition","unspecified"))
+                })
+                alignments[reads_ref] = result_package["result"][0]["alignment_objs"][reads_ref]
+                alignment_objs += result_package["result"][0]["alignment_objs"]
 
             if result_package['run_context']['location'] == 'local':
                 ran_locally += 1
@@ -974,20 +981,15 @@ class STARUtil:
                 ran_njsw += 1
 
         # Save the alignment set
-        alignment_set_data = {'description': '', 'items': items}
-        alignment_set_save_params = {'data': alignment_set_data,
-                                     'workspace': params['output_workspace'],
-                                     'output_object_name': params[self.PARAM_IN_OUTPUT_NAME]}
+        output_alignmentset_name = set_name + params['alignmentset_suffix']
+        save_result = self.upload_alignment_set(
+                        alignment_items,
+                        output_alignmentset_name,
+                        params['output_workspace'])
 
-        set_api = SetAPI(self.srv_wiz_url)
-        save_result = set_api.save_reads_alignment_set_v1(alignment_set_save_params)
-        print('Saved ReadsAlignment=')
-        pprint(save_result)
+        # Report
+        report_info = {'name': None, 'ref': None}
         input_ref = save_result['set_ref']
-        objects_created.append({
-            'ref': input_ref,
-            'description': 'Set of all reads alignments generated'})
-        set_name = save_result['set_info'][1]
 
         #run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
@@ -995,7 +997,7 @@ class STARUtil:
 
         # create the report
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
-        report_text += 'Created ReadsAlignmentSet: ' + str(set_name) + '\n\n'
+        report_text += 'Created ReadsAlignmentSet: ' + str(output_alignmentset_name) + '\n\n'
         report_text += 'Total ReadsLibraries = ' + str(n_jobs) + '\n'
         report_text += '        Successful runs = ' + str(n_success) + '\n'
         report_text += '            Failed runs = ' + str(n_error) + '\n'
@@ -1016,11 +1018,40 @@ class STARUtil:
                                                   'workspace_name': params['output_workspace']
                                                   })
 
-        result = {'report_info': report_info} #{'report_name': report_info['name'], 'report_ref': report_info['ref']}}
-        result['output_info'] = batch_result
-        result['alignment_ref'] = save_result['set_ref']
+        result = {'alignmentset_ref': save_result['set_ref'],
+                'output_info': batch_result,
+                'alignment_objs': alignment_objs,
+                'report_name': report_info['name'],
+                'report_ref': report_info['ref']
+        }
 
         return result
+
+
+    def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
+        """
+        Compiles and saves a set of alignment references (+ other stuff) into a
+        KBaseRNASeq.RNASeqAlignmentSet.
+        Returns the reference to the new alignment set.
+        alignment_items: [{
+            "ref": alignment_ref,
+            "label": condition label.
+        }]
+        """
+        print("Uploading completed alignment set")
+        alignment_set_data = {
+            "description": "Alignments using STAR, v.{}".format(self.STAR_VERSION),
+            "items": alignment_items
+        }
+        set_api = SetAPI(self.srv_wiz_url)
+        set_info = set_api.save_reads_alignment_set_v1({
+            "workspace": ws_name,
+            "output_object_name": alignmentset_name,
+            "data": alignment_set_data
+        })
+        pprint(set_info)
+
+        return set_info
 
 
     def star_run_sequential(self, reads, input_params, input_obj_info):
