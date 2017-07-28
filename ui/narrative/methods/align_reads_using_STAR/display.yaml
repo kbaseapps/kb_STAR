@@ -39,11 +39,16 @@ parameters :
             Genome
         short-hint : |
             Select the Genome to align the reads
-    output_obj_name :
+    alignmentset_suffix :
         ui-name : |
-            Output Alignment(set) Name
+            Alignment Set Suffix
         short-hint : |
-            Name the alignment object
+            Provide a suffix that will appended to the name of the set of reads used as input.
+    alignment_suffix :
+        ui-name : |
+            Alignment Suffix
+        short-hint : |
+            Provide a suffix that will be appended to the name of each reads library aligned.
     quantMode :
         ui-name : |
             Output quantification method
@@ -91,9 +96,6 @@ parameters :
             Set the condition for the reads input. Ignored for sets of reads, required for singletons.
         long-hint : |
             Set the condition associated with the input reads object. This is required for a single sample, but ignored for sets of samples, since that is included in the set.
-    output_alignment_filename_extension :
-        ui-name : Alignment output filename extensions
-        short-hint : When run on a set, individual alignments will be given names based on the reads object name appended with this extension        
     
 description : |
     <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
