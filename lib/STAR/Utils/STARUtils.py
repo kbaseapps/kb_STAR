@@ -954,7 +954,7 @@ class STARUtil:
         # reads alignment set items
         alignment_items = []
         alignment_objs = list()
-        alignments = dict()
+        alignments = list()
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
@@ -972,7 +972,10 @@ class STARUtil:
                                 'condition',
                                 params.get('condition','unspecified'))
                 })
-                alignments[reads_ref] = result_package['result'][0]['alignment_objs'][0]
+                alignments.append{
+                        'reads_ref': reads_ref,
+                        'AlignmentObj': result_package['result'][0]['alignment_objs'][0]
+                }
                 alignment_objs += result_package['result'][0]['alignment_objs']
 
             if result_package['run_context']['location'] == 'local':

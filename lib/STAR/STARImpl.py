@@ -39,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "07b03b309880309cc5b019a1ae53991a890467cc"
+    GIT_COMMIT_HASH = "73791cacbf464f1df442acd79770e8aba3a9ce3d"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -85,110 +85,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #END_CONSTRUCTOR
         pass
 
-
-    def star_align_reads_to_assembly(self, ctx, params):
-        """
-        :param params: instance of type "AlignReadsParams" (Will align the
-           input reads (or set of reads specified in a SampleSet) to the
-           specified assembly or assembly for the specified Genome (accepts
-           Assembly, ContigSet, or Genome types) and produces a
-           ReadsAlignment object, or in the case of a SampleSet, a
-           ReadsAlignmentSet object obj_ref genome_ref: KBase workspace
-           reference Genome obj_ref readsset_ref: the workspace reference for
-           the set of reads to align, referring to either a
-           SingleEnd/PairedEnd reads, or a ReadsSet input string
-           output_workspace - name or id of the WS to save the results to,
-           provided by the narrative for housing output in KBase string
-           output_name - name of the output ReadsAlignment or
-           ReadsAlignmentSet object int runThreadN - the number of threads
-           for STAR to use (default to 2) string outFileNamePrefix: you can
-           change the file prefixes using --outFileNamePrefix
-           /path/to/output/dir/prefix By default, this parameter is ./, i.e.
-           all output files are written in current directory without a prefix
-           string quantMode: types of quantification
-           requested--none/TranscriptomeSAM/GeneCounts int
-           outFilterMultimapNmax: max number of multiple alignments allowed
-           for a read: if exceeded, the read is considered unmapped, default
-           to 20 int alignSJoverhangMin: minimum overhang for unannotated
-           junctions, default to 8 int alignSJDBoverhangMin: minimum overhang
-           for annotated junctions, default to 1 int outFilterMismatchNmax:
-           maximum number of mismatches per pair, large number switches off
-           this filter, default to 999 int alignIntronMin: minimum intron
-           length, default to 20 int alignIntronMax: maximum intron length,
-           default to 1000000 int alignMatesGapMax: maximum genomic distance
-           between mates, default to 1000000 create_report = 1 if we build a
-           report, 0 otherwise. (default 1) (shouldn not be user set - mainly
-           used for subtasks) @optional alignmentset_suffix @optional
-           outFilterType @optional outFilterMultimapNmax @optional outSAMtype
-           @optional outSAMattrIHstart @optional outSAMstrandField @optional
-           quantMode @optional alignSJoverhangMin @optional
-           alignSJDBoverhangMin @optional outFilterMismatchNmax @optional
-           alignIntronMin @optional alignIntronMax @optional alignMatesGapMax
-           @optional outFileNamePrefix) -> structure: parameter
-           "readsset_ref" of type "obj_ref" (An X/Y/Z style reference),
-           parameter "genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "output_workspace" of String, parameter
-           "output_name" of String, parameter "alignment_suffix" of String,
-           parameter "alignmentset_suffix" of String, parameter "runThreadN"
-           of Long, parameter "condition" of String, parameter
-           "outFilterType" of String, parameter "outSAMtype" of String,
-           parameter "outSAMattrIHstart" of Long, parameter
-           "outSAMstrandField" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
-           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
-           Long, parameter "outFilterMismatchNmax" of Long, parameter
-           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
-           parameter "alignMatesGapMax" of Long, parameter
-           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
-           of Long, parameter "concurrent_local_tasks" of Long, parameter
-           "create_report" of type "bool" (A boolean - 0 for false, 1 for
-           true. @range (0, 1))
-        :returns: instance of type "AlignReadsResult" (Here is the definition
-           of the output of the function.  The output can be used by other
-           SDK modules which call your code, or the output visualizations in
-           the Narrative.  'report_name' and 'report_ref' are special output
-           fields- if defined, the Narrative can automatically render your
-           Report. alignmentset_ref if an alignment set is created
-           alignment_objs for each individual alignment created. The keys are
-           the references to the reads object being aligned. report_name:
-           report name generated by KBaseReport report_ref: report reference
-           generated by KBaseReport) -> structure: parameter "report_name" of
-           String, parameter "report_ref" of String, parameter
-           "alignmentset_ref" of String, parameter "alignment_objs" of
-           mapping from String to type "AlignmentObj" (Created alignment
-           object returned. alignment_ref = the workspace reference of the
-           new alignment object name = the name of the new object, for
-           convenience.) -> structure: parameter "alignment_ref" of String,
-           parameter "name" of String
-        """
-        # ctx is the context object
-        # return variables are: result
-        #BEGIN star_align_reads_to_assembly
-        star_runner = STARUtil(self.config)
-
-        result = {}
-        # pre-process the input parameters
-        validated_params = star_runner.process_params(params)
-
-        # indexing if not yet existing
-        if not hasattr(self.__class__, 'STARGenomeIndex'):
-            # convert the input parameters (from refs to file paths, especially)
-            params_ret = star_runner.convert_params(validated_params)
-            input_params = params_ret.get('input_parameters', None)
-            # generate the indices
-            idx_ret = star_runner.run_star_indexing(input_params)
-            if idx_ret == 0:
-                self.__class__.STARGenomeIndex = 'indexed'
-
-        result = star_runner.star_run_single(validated_params)
-        #END star_align_reads_to_assembly
-
-        # At some point might do deeper type checking...
-        if not isinstance(result, dict):
-            raise ValueError('Method star_align_reads_to_assembly return value ' +
-                             'result is not type dict as required.')
-        # return the results
-        return [result]
 
     def run_star(self, ctx, params):
         """
@@ -285,7 +181,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         unique_reads_names = star_runner.determine_unique_reads_names(validated_params)
 
         # indexing if not yet existing
-        if not hasattr(self.__class__, 'STARGenomeIndex'):
+        index_file = os.path.join(self.shared_folder, 'STAR_Genome_index/SAindex')
+        if not os.path.isfile(index_file):
             # convert the input parameters (from refs to file paths, especially)
             params_ret = star_runner.convert_params(validated_params)
             input_params = params_ret.get('input_parameters', None)
