@@ -869,7 +869,7 @@ class STARUtil:
             upload_results = self.upload_STARalignment(input_params, reads, output_sam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
-                "ref": alignment_ref,
+                "alignment_ref": alignment_ref,
                 "name": reads_ref['alignment_output_name']
             }
             alignment_objs.append({
@@ -952,7 +952,7 @@ class STARUtil:
 
         set_name = self.get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
         # reads alignment set items
-        alignment_items = list()
+        alignment_items = []
         alignment_objs = list()
         alignments = dict()
 
@@ -969,11 +969,11 @@ class STARUtil:
                 alignment_items.append({
                         'ref': ra_ref,
                         'label': reads_ref.get(
-                                "condition",
-                                params.get("condition","unspecified"))
+                                'condition',
+                                params.get('condition','unspecified'))
                 })
-                alignments[reads_ref] = result_package["result"][0]["alignment_objs"][reads_ref]
-                alignment_objs += result_package["result"][0]["alignment_objs"]
+                alignments[reads_ref] = result_package['result'][0]['alignment_objs'][0]
+                alignment_objs += result_package['result'][0]['alignment_objs']
 
             if result_package['run_context']['location'] == 'local':
                 ran_locally += 1
