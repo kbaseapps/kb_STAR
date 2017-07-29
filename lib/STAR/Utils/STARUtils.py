@@ -85,7 +85,7 @@ class STARUtil:
         print('Running kb_STAR version = ' + self.my_version)
 
         self.parallel_runner = KBParallel(self.callback_url)
-        self.qualimap = kb_QualiMap(self.callback_url, service_ver="dev")
+        self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
 
 
     def _mkdir_p(self, dir):
@@ -421,7 +421,7 @@ class STARUtil:
 
         pprint(align_upload_params)
 
-        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver="dev")
+        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver='dev')
         rau_upload_ret = ra_util.upload_alignment(align_upload_params)
         alignment_ref = rau_upload_ret["obj_ref"]
         print("STAR alignment uploaded as object {}".format(alignment_ref))
@@ -1039,16 +1039,16 @@ class STARUtil:
             "label": condition label.
         }]
         """
-        print("Uploading completed alignment set")
+        print('Uploading completed alignment set...')
         alignment_set_data = {
-            "description": "Alignments using STAR, v.{}".format(self.STAR_VERSION),
-            "items": alignment_items
+            'description': 'Alignments using STAR, v.{}'.format(self.STAR_VERSION),
+            'items': alignment_items
         }
-        set_api = SetAPI(self.srv_wiz_url)
+        set_api = SetAPI(self.srv_wiz_url, service_ver='dev')
         set_info = set_api.save_reads_alignment_set_v1({
-            "workspace": ws_name,
-            "output_object_name": alignmentset_name,
-            "data": alignment_set_data
+            'workspace': ws_name,
+            'output_object_name': alignmentset_name,
+            'data': alignment_set_data
         })
         pprint(set_info)
 
