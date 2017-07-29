@@ -972,7 +972,7 @@ class STARUtil:
                                 'condition',
                                 params.get('condition','unspecified'))
                 })
-                alignments_objs.append({
+                alignment_objs.append({
                     result_package['result'][0]['alignment_objs'][0]['AlignmentObj']
                 })
                 alignments += result_package['result'][0]['alignment_objs']
