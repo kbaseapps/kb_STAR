@@ -869,8 +869,8 @@ class STARUtil:
             upload_results = self.upload_STARalignment(input_params, reads, output_sam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
-                "alignment_ref": alignment_ref,
-                "name": reads_ref['alignment_output_name']
+                'ref': alignment_ref,
+                'name': reads_ref['alignment_output_name']
             }
             alignment_objs.append({
                 'reads_ref': reads_ref['ref'],
@@ -972,11 +972,10 @@ class STARUtil:
                                 'condition',
                                 params.get('condition','unspecified'))
                 })
-                alignments.append({
-                        'reads_ref': reads_ref,
-                        'AlignmentObj': result_package['result'][0]['alignment_objs'][0]
+                alignments_objs.append({
+                    result_package['result'][0]['alignment_objs'][0]['AlignmentObj']
                 })
-                alignment_objs += result_package['result'][0]['alignment_objs']
+                alignments += result_package['result'][0]['alignment_objs']
 
             if result_package['run_context']['location'] == 'local':
                 ran_locally += 1
@@ -1012,7 +1011,7 @@ class STARUtil:
 
         kbr = KBaseReport(self.callback_url)
         report_info = kbr.create_extended_report({'message': report_text,
-                                                  'objects_created': objects_created,
+                                                  'objects_created': alignment_objs,
                                                   'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
                                                   'direct_html_link_index': 0,
                                                   'html_links': [{'shock_id': qc_result_zip_info['shock_id'],

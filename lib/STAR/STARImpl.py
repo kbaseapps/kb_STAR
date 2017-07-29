@@ -39,7 +39,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
-    GIT_COMMIT_HASH = "73791cacbf464f1df442acd79770e8aba3a9ce3d"
+    GIT_COMMIT_HASH = "edad162d9f4ff7f1d8896b2b2264b1f545d0f35f"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -156,10 +156,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
            String, parameter "report_ref" of String, parameter
            "alignmentset_ref" of String, parameter "alignment_objs" of
            mapping from String to type "AlignmentObj" (Created alignment
-           object returned. alignment_ref = the workspace reference of the
-           new alignment object name = the name of the new object, for
-           convenience.) -> structure: parameter "alignment_ref" of String,
-           parameter "name" of String
+           object returned. ref = the workspace reference of the new
+           alignment object name = the name of the new object, for
+           convenience.) -> structure: parameter "ref" of String, parameter
+           "name" of String
         """
         # ctx is the context object
         # return variables are: returnVal

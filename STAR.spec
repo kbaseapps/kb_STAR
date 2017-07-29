@@ -100,11 +100,11 @@ module STAR {
 
     /*
         Created alignment object returned.
-        alignment_ref = the workspace reference of the new alignment object
+        ref = the workspace reference of the new alignment object
         name = the name of the new object, for convenience.
     */
     typedef structure {
-        string alignment_ref;
+        string ref;
         string name;
     } AlignmentObj;
 
@@ -127,9 +127,6 @@ module STAR {
         string alignmentset_ref;
         mapping<string reads_ref, AlignmentObj> alignment_objs;
     } AlignReadsResult;
-   
-    funcdef star_align_reads_to_assembly(AlignReadsParams params)
-        returns (AlignReadsResult result) authentication required;
 
     funcdef run_star(AlignReadsParams params)
         returns (AlignReadsResult returnVal) authentication required;
