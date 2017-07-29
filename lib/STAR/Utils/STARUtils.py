@@ -1162,7 +1162,7 @@ class STARUtil:
     def get_version_from_subactions(self, module_name, subactions):
         # go through each sub action looking for
         if not subactions:
-            return 'release'  # default to release if we can't find anything
+            return 'dev' #'release'  # default to release if we can't find anything
         for sa in subactions:
             if 'name' in sa:
                 if sa['name'] == module_name:
@@ -1174,5 +1174,5 @@ class STARUtil:
                     if re.match('[a-fA-F0-9]{40}$', sa['commit']):
                         return sa['commit']
         # again, default to setting this to release
-        return 'release'
+        return 'dev' #'release'
 
