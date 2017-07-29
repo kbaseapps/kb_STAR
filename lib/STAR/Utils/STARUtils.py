@@ -972,10 +972,10 @@ class STARUtil:
                                 'condition',
                                 params.get('condition','unspecified'))
                 })
-                alignments.append{
+                alignments.append({
                         'reads_ref': reads_ref,
                         'AlignmentObj': result_package['result'][0]['alignment_objs'][0]
-                }
+                })
                 alignment_objs += result_package['result'][0]['alignment_objs']
 
             if result_package['run_context']['location'] == 'local':
