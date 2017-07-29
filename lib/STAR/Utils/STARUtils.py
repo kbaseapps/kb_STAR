@@ -97,6 +97,9 @@ class STARUtil:
             return
         if not os.path.exists(dir):
             os.makedirs(dir)
+        else:
+            log('{} has existed, so skip creating.'.format(dir))
+
 
     def process_params(self, params):
         """
@@ -690,7 +693,7 @@ class STARUtil:
         try:
             os.mkdir(idx_dir)
         except OSError:
-            print("Ignoring error for already existing {} directory".format(idx_dir))
+            print("Indices have already been existing in directory {}.".format(idx_dir))
 
         # build the indexing parameters
         params_idx = self._get_indexing_params(genome_params)
@@ -953,8 +956,7 @@ class STARUtil:
         set_name = self.get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
         # reads alignment set items
         alignment_items = []
-        alignment_objs = list()
-        alignments = list()
+        alignment_objs = []
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
@@ -972,9 +974,7 @@ class STARUtil:
                                 'condition',
                                 params.get('condition','unspecified'))
                 })
-                ra_ref = output_info['upload_results']['obj_ref']
                 alignment_objs.append({'ref': ra_ref})
-                alignments += result_package['result'][0]['alignment_objs']
 
             if result_package['run_context']['location'] == 'local':
                 ran_locally += 1
