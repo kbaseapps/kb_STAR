@@ -950,7 +950,7 @@ class STARUtil:
         ran_locally = 0
         ran_njsw = 0
 
-        set_name = get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
+        set_name = self.get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
         # reads alignment set items
         alignment_items = list()
         alignment_objs = list()
