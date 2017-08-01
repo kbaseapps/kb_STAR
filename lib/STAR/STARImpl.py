@@ -81,7 +81,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             os.makedirs(self.scratch)
 
         self.shared_folder = config['scratch']
-
+        self.__INDEX_DIR = None
+        self.__OUTPUT_DIR = None
         #END_CONSTRUCTOR
         pass
 
@@ -176,16 +177,16 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # 0. create the star folders
         star_utils = STARUtils(self.config, ctx.provenance())
-        if not hasattr(self.__class__, 'star_idx_dir'):
+        if self.__INDEX_DIR is None:
             (idx_dir, out_dir) = star_utils.create_star_dirs(self.shared_folder)
-            self.__class__.star_idx_dir = idx_dir
-            self.__class__.star_out_dir = out_dir
+            self.__INDEX_DIR = idx_dir
+            self.__OUTPUT_DIR = out_dir
 
         star_runner = STAR_Aligner(
                 self.config,
                 ctx.provenance(),
-                self.__class__.star_idx_dir,
-                self.__class__.star_out_dir
+                self.__INDEX_DIR,
+                self.__OUTPUT_DIR
         )
 
         # 1. validate & process the input parameters
@@ -193,8 +194,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         input_obj_info = star_utils.determine_input_info(validated_params)
 
         # indexing if not yet existing
-        index_file = os.path.join(star_idx_dir, 'SAindex')
-        if not os.path.isfile(index_file):
+        if not os.path.isfile(s.path.join(self.__INDEX_DIR, 'SAindex')):
             # convert the input parameters (from refs to file paths, especially)
             params_ret = star_utils.convert_params(validated_params)
             input_params = params_ret.get('input_parameters', None)
