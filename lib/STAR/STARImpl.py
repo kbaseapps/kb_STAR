@@ -194,7 +194,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         input_obj_info = star_utils.determine_input_info(validated_params)
 
         # indexing if not yet existing
-        if not os.path.isfile(s.path.join(self.__INDEX_DIR, 'SAindex')):
+        if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'SAindex')):
             # convert the input parameters (from refs to file paths, especially)
             params_ret = star_utils.convert_params(validated_params)
             input_params = params_ret.get('input_parameters', None)
