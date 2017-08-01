@@ -50,6 +50,20 @@
         "default_values" : [ "_alignment_set" ],
         "field_type" : "text"
     }, {
+    	"id" : "expression_suffix",
+    	"optional" : false,
+    	"advanced" : true,
+    	"allow_multiple" : false,
+    	"default_values" : [ "_expression" ],
+    	"field_type" : "text"
+    }, {
+    	"id" : "expression_set_suffix",
+    	"optional" : true,
+    	"advanced" : true,
+    	"allow_multiple" : false,
+    	"default_values" : [ "_expression_set" ],
+    	"field_type" : "text"
+    }, {
         "id": "reads_condition",
         "optional" : true,
         "advanced": false,
@@ -178,6 +192,12 @@
                     "input_parameter" : "alignmentset_suffix",
                     "target_property" : "alignmentset_suffix"
                 }, {
+            	    "input_parameter" : "expression_suffix",
+            	    "target_property" : "expression_suffix"
+        	}, {
+            	    "input_parameter" : "expression_set_suffix",
+            	    "target_property" : "expression_set_suffix"
+        	}, {
                     "input_parameter": "quantMode",
                     "target_property": "quantMode"
                 }, {
@@ -208,6 +228,14 @@
                     "service_method_output_path": [0,"alignmentset_ref"],
                     "target_property": "alignmentset_ref"
                 },
+		{
+          	    "service_method_output_path": [0, "result_directory"],
+          	    "target_property": "result_directory"
+        	},
+        	{
+         	    "service_method_output_path": [0,"expression_obj_ref"],
+         	    "target_property": "expression_obj_ref"
+        	},
                 {
                     "service_method_output_path": [0, "report_name"],
                     "target_property": "report_name"
