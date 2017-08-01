@@ -176,8 +176,17 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # 0. create the star folders
         star_utils = STARUtils(self.config, ctx.provenance())
-        (star_idx_dir, star_out_dir) = star_utils.create_star_dirs(self.shared_folder)
-        star_runner = STAR_Aligner(self.config, ctx.provenance(), star_idx_dir, star_out_dir)
+        if not hasattr(self.__class__, 'star_idx_dir'):
+            (idx_dir, out_dir) = star_utils.create_star_dirs(self.shared_folder)
+            self.__class__.star_idx_dir = idx_dir
+            self.__class__.star_out_dir = out_dir
+
+        star_runner = STAR_Aligner(
+                self.config,
+                ctx.provenance(),
+                self.__class__.star_idx_dir,
+                self.__class__.star_out_dir
+        )
 
         # 1. validate & process the input parameters
         validated_params = star_utils.process_params(params)
