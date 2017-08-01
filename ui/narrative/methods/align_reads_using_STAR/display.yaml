@@ -49,6 +49,16 @@ parameters :
             Alignment Suffix
         short-hint : |
             Provide a suffix that will be appended to the name of each reads library aligned.
+    expression_suffix :
+        ui-name : |
+            Expression Name Suffix
+        short-hint : |
+            Suffix append to Alignment object name to form Expression name
+    expression_set_suffix :
+        ui-name : |
+            ExpressionSet Name Suffix
+        short-hint : |
+            Suffix append to Alignment Set object name to form ExpressionSet name
     quantMode :
         ui-name : |
             Output quantification method
