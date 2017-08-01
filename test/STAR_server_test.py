@@ -18,7 +18,7 @@ from pprint import pprint, pformat # noqa: F401
 from biokbase.workspace.client import Workspace as workspaceService
 from Workspace.WorkspaceClient import Workspace as Workspace
 from STAR.STARImpl import STAR
-from STAR.Utils.STARUtils import STARUtil
+from STAR.Utils.STARUtils import STARUtils
 from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
 
@@ -233,13 +233,15 @@ class STARTest(unittest.TestCase):
         #pe_reads_ref = self.loadPairedEndReads()
 
         # STAR input parameters
-        params = {'readsset_ref': se_lib_ref,#pe_reads_ref,
+        params = {'readsset_ref': se_lib_ref,
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
                   'runMode': 'genomeGenerate',
+                  'quantMode': 'GeneCounts',
                   'alignmentset_suffix': '_alignment_set',
                   'alignment_suffix': '_alignment',
+                  'expression_suffix': '_expression',
                   'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
@@ -264,8 +266,11 @@ class STARTest(unittest.TestCase):
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
+                  'quantMode': 'Both', #'GeneCounts',
                   'alignmentset_suffix': '_alignment_set',
                   'alignment_suffix': '_alignment',
+                  'expression_suffix': '_expression',
+                  'expression_set_suffix': '_expression_set',
                   'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
@@ -307,7 +312,7 @@ class STARTest(unittest.TestCase):
 	    'genomeFastaFiles': [genome_file, genome_file2]
         }
         # test build directly from the genome reference file
-	star_util = STARUtil(self.cfg)
+	star_util = STARUtils(self.cfg)
         result1 = star_util._exec_indexing(params_idx)
 
         self.assertTrue(os.path.isfile('/kb/module/STAR_genome_dir/Genome'))
@@ -369,7 +374,7 @@ class STARTest(unittest.TestCase):
 		'outFileNamePrefix': 'STAR_'
 	}
         # 3) test running star directly from files (not KBase refs)
-	star_util = STARUtil(self.cfg)
+	star_util = STARUtils(self.cfg)
         result = star_util._exec_star_pipeline(params, rnaseq_file, 'Ath_Hy5_R1')
 
         pprint('RESULT from velveth is saved in:\n' + os.path.join(self.scratch,''))

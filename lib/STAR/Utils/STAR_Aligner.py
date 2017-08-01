@@ -1,7 +1,7 @@
-import time
 import json
 import os
 import re
+import time
 import copy
 import sys
 from pprint import pprint
@@ -34,10 +34,6 @@ class STAR_Aligner(object):
         the index files.
         """
         genome_params = copy.deepcopy(input_params)
-
-        # GTF file -create only once as the index is being generated
-        genome_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
-                                        input_params[STARUtils.PARAM_IN_GENOME], self.star_idx_dir)
 
         # build the indexing parameters
         params_idx = self.star_utils._get_indexing_params(genome_params, self.star_idx_dir)
@@ -126,8 +122,8 @@ class STAR_Aligner(object):
                 output_sam_file = 'Aligned.out.sam'
             output_sam_file = os.path.join(star_mp_ret['star_output'], output_sam_file)
 
-            # Upload the alignment
             #print("Uploading STAR output object...")
+            # Upload the alignment
             upload_results = self.star_utils.upload_STARalignment(input_params, reads, output_sam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
@@ -144,6 +140,15 @@ class STAR_Aligner(object):
 
             singlerun_output_info['upload_results'] = upload_results
 
+            workspace_name = validated_params[STARUtils.PARAM_IN_WS]
+            expr_suffix = validated_params['expression_suffix']
+            gtf_file = validated_params['sjdbGTFfile'] 
+            #expression_ref = self.star_utils._save_expression(
+            #                    star_mp_ret['star_output'],
+            #                    alignment_ref,
+            #                    workspace_name,
+            #                    gtf_file,
+            #                    expr_suffix)
             if input_params.get("create_report", 0) == 1:
                 report_info = self.star_utils.generate_report_for_single_run(singlerun_output_info, input_params)
 
@@ -153,6 +158,7 @@ class STAR_Aligner(object):
                 os.remove(reads_info["file_rev"])
 
         return {'alignmentset_ref': None,
+                'output_directory': singlerun_output_info['output_dir'],
                 'output_info': singlerun_output_info,
                 'alignment_objs': alignment_objs,
                 'report_name': report_info['name'],
@@ -186,6 +192,7 @@ class STAR_Aligner(object):
         pprint(results)
 
         batch_result = self.star_utils.process_batch_result(results, validated_params, reads_refs)
+        batch_result['output_directory'] = self.star_out_dir
 
         return batch_result
 

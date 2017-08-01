@@ -21,6 +21,8 @@ RUN pip install cffi --upgrade \
     && pip install requests --upgrade \
     && pip install 'requests[security]' --upgrade
 
+RUN pip install pathos
+
 ###### STAR installation                                                                                                                                       
 #  Directions from https://github.com/alexdobin/STAR 
 #  with more details at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3530905/ 

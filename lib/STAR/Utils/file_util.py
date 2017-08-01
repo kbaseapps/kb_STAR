@@ -253,7 +253,9 @@ def get_object_type(ref, ws_url):
                            "No information returned for reference {}".format(ref))
     return obj_info[2]
 
-def generate_exp_matrix(ws_url, input_filenames, output_filename):
+def extract_expression(ws_url, input_filenames, output_filename):
+    '''Grind through the ReadsPerGene.out.tab  files and output a single TSV file
+       that shows the counts for each gene id across the input files'''
     counts = dict()
 
     with fileinput.input(files=set(input_filenames)) as fin:
@@ -276,5 +278,5 @@ def generate_exp_matrix(ws_url, input_filenames, output_filename):
         fout.write(fid, "\t", "\t".join(counts2))
 
     fout.close()
-    return output_filename
+    return counts2 #output_filename
 
