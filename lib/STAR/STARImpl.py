@@ -8,10 +8,10 @@ from STAR.Utils.file_util import (
     fetch_reads_from_reference,
     fetch_reads_refs_from_sampleset
 )
-from KBParallel.KBParallelClient import KBParallel
 from pprint import pprint, pformat
 
-from STAR.Utils.STARUtils import STARUtil
+from STAR.Utils.STARUtils import STARUtils
+from STAR.Utils.STAR_Aligner import STAR_Aligner
 #END_HEADER
 
 
@@ -174,23 +174,24 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             "report_name": None
         }
 
-        star_runner = STARUtil(self.config, ctx.provenance())
+        # 0. create the star folders
+        star_utils = STARUtils(self.config, ctx.provenance())
+        (star_idx_dir, star_out_dir) = star_utils.create_star_dirs(self.shared_folder)
+        star_runner = STAR_Aligner(self.config, ctx.provenance(), star_idx_dir, star_out_dir)
+
         # 1. validate & process the input parameters
-        validated_params = star_runner.process_params(params)
-        input_obj_info = star_runner.determine_input_info(validated_params)
-        unique_reads_names = star_runner.determine_unique_reads_names(validated_params)
+        validated_params = star_utils.process_params(params)
+        input_obj_info = star_utils.determine_input_info(validated_params)
 
         # indexing if not yet existing
-        index_file = os.path.join(self.shared_folder, 'STAR_Genome_index/SAindex')
+        index_file = os.path.join(star_idx_dir, 'SAindex')
         if not os.path.isfile(index_file):
             # convert the input parameters (from refs to file paths, especially)
-            params_ret = star_runner.convert_params(validated_params)
+            params_ret = star_utils.convert_params(validated_params)
             input_params = params_ret.get('input_parameters', None)
             # generate the indices
             idx_ret = star_runner.run_star_indexing(input_params)
-            if idx_ret == 0:
-                self.__class__.STARGenomeIndex = 'indexed'
-            else:
+            if idx_ret != 0:
                 raise ValueError("Failed to generate genome indices.")
 
         # 2. Run STAR with index and reads.
