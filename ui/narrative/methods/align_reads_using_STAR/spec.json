@@ -229,8 +229,8 @@
                     "target_property": "alignmentset_ref"
                 },
 		{
-          	    "service_method_output_path": [0, "result_directory"],
-          	    "target_property": "result_directory"
+          	    "service_method_output_path": [0, "output_directory"],
+          	    "target_property": "output_directory"
         	},
         	{
          	    "service_method_output_path": [0,"expression_obj_ref"],
