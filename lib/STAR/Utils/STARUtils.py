@@ -140,11 +140,14 @@ class STARUtils:
             params['outSAMattrIHstart'] = 0
         if params.get('outSAMstrandField', None) is None:
             params['outSAMstrandField'] = "intronMotif"
+        if params.get('sjdbGTFfile', None) is None:
+            params['sjdbGTFfile'] = self._get_genome_gtf_file(
+                    params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
 
         return params
 
 
-    def get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
+    def _get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
         """
         Get data from genome object ref and return the GTF filename (with path)
         for STAR indexing and mapping.
