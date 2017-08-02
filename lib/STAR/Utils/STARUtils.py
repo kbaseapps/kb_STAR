@@ -101,13 +101,11 @@ class STARUtils:
 
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
-	else:
-            if params[self.PARAM_IN_STARMODE] == "genomeGenerate":
-		if params.get(self.PARAM_IN_GENOME, None) is None:
-                    raise ValueError(self.PARAM_IN_GENOME +
+	if params.get(self.PARAM_IN_GENOME, None) is None:
+            raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
-                params['sjdbGTFfile'] = self._get_genome_gtf_file(
-                                        params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
+        params['sjdbGTFfile'] = self._get_genome_gtf_file(
+                            params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
