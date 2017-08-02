@@ -104,8 +104,6 @@ class STARUtils:
 	if params.get(self.PARAM_IN_GENOME, None) is None:
             raise ValueError(self.PARAM_IN_GENOME +
 				' parameter is required for generating genome index')
-        params['sjdbGTFfile'] = self._get_genome_gtf_file(
-                            params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
 
         if (params.get(self.PARAM_IN_STARMODE, None) is not None and
 		params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
@@ -146,7 +144,7 @@ class STARUtils:
         return params
 
 
-    def _get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
+    def get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
         """
         Get data from genome object ref and return the GTF filename (with path)
         for STAR indexing and mapping.
@@ -463,98 +461,98 @@ class STARUtils:
         return {'readsRefs': reads_refs, 'readsInfo': reads_info}
 
 
-    def _get_genome_fasta(self, genome_ref):
+    def _get_genome_fasta(self, gnm_ref):
         genome_fasta_files = list()
-	if genome_ref is not None:
+	if gnm_ref is not None:
             try:
-		print("Fetching FASTA file from object {}".format(genome_ref))
-		genome_fasta_file = fetch_fasta_from_object(genome_ref, self.workspace_url, self.callback_url)
+		print("Fetching FASTA file from object {}".format(gnm_ref))
+		genome_fasta_file = fetch_fasta_from_object(gnm_ref, self.workspace_url, self.callback_url)
 		print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
             except ValueError:
 		print("Incorrect object type for fetching a FASTA file!")
 		raise
 
             if genome_fasta_file.get("path", None) is None:
-		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(genome_ref))
+		raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(gnm_ref))
             else:
 		genome_fasta_files.append(genome_fasta_file["path"])
         return genome_fasta_files
 
 
-    def convert_params(self, input_params):
+    def convert_params(self, validated_params):
         """
         Convert input parameters with KBase ref format into STAR parameters,
         and add the advanced options.
         """
 	params = {
-            'output_workspace': input_params[self.PARAM_IN_WS],
+            'output_workspace': validated_params[self.PARAM_IN_WS],
             'runMode': 'genomeGenerate',
-            'alignment_suffix': input_params['alignment_suffix'],
-            'expression_suffix': input_params['expression_suffix'],
-            self.PARAM_IN_GENOME: input_params[self.PARAM_IN_GENOME],
-            'runThreadN': input_params[self.PARAM_IN_THREADN]
+            'alignment_suffix': validated_params['alignment_suffix'],
+            'expression_suffix': validated_params['expression_suffix'],
+            self.PARAM_IN_GENOME: validated_params[self.PARAM_IN_GENOME],
+            'runThreadN': validated_params[self.PARAM_IN_THREADN]
 	}
 
-        if input_params.get('create_report', None) is not None:
-                params['create_report'] = input_params['create_report']
-        if input_params.get('concurrent_local_tasks', None) is not None:
-                params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
-        if input_params.get('concurrent_njsw_tasks', None) is not None:
-                params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
-        if input_params.get('alignmentset_suffix', None) is not None:
-                params['alignmentset_suffix'] = input_params['alignmentset_suffix']
-        if input_params.get('expression_set_suffix', None) is not None:
-                params['expression_set_suffix'] = input_params['expression_set_suffix']
+        if validated_params.get('create_report', None) is not None:
+                params['create_report'] = validated_params['create_report']
+        if validated_params.get('concurrent_local_tasks', None) is not None:
+                params['concurrent_local_tasks'] = validated_params['concurrent_local_tasks']
+        if validated_params.get('concurrent_njsw_tasks', None) is not None:
+                params['concurrent_njsw_tasks'] = validated_params['concurrent_njsw_tasks']
+        if validated_params.get('alignmentset_suffix', None) is not None:
+                params['alignmentset_suffix'] = validated_params['alignmentset_suffix']
+        if validated_params.get('expression_set_suffix', None) is not None:
+                params['expression_set_suffix'] = validated_params['expression_set_suffix']
 	# STEP 1: Converting refs to file locations in the scratch area
-        reads = self._get_reads(input_params)
+        reads = self._get_reads(validated_params)
 
-        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(input_params[self.PARAM_IN_GENOME])
+        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(validated_params[self.PARAM_IN_GENOME])
 
-        # STEP 2: Add advanced options from input_params to params
-        sjdbGTFfile = input_params.get("sjdbGTFfile", None)
+        # STEP 2: Add advanced options from validated_params to params
+        sjdbGTFfile = validated_params.get("sjdbGTFfile", None)
 	if sjdbGTFfile is not None:
             params['sjdbGTFfile'] = sjdbGTFfile
-            if input_params.get('sjdbOverhang', None) is not None :
-                params['sjdbOverhang'] = input_params['sjdbOverhang']
+            if validated_params.get('sjdbOverhang', None) is not None :
+                params['sjdbOverhang'] = validated_params['sjdbOverhang']
             else:
                 params['sjdbOverhang'] = 100
 
-        if input_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = input_params[self.PARAM_IN_OUTFILE_PREFIX]
+        if validated_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = validated_params[self.PARAM_IN_OUTFILE_PREFIX]
         else:
             params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
 
-        if input_params.get('outFilterType', None) is not None:
-            params['outFilterType'] = input_params['outFilterType']
-        if input_params.get('outFilterMultimapNmax', None) is not None:
-            params['outFilterMultimapNmax'] = input_params['outFilterMultimapNmax']
-        if input_params.get('outSAMtype', None) is not None:
-            params['outSAMType'] = input_params['outSAMType']
-        if input_params.get('outSAMattrIHstart', None) is not None:
-            params['outSAMattrIHstart'] = input_params['outSAMattrIHstart']
-        if input_params.get('outSAMstrandField', None) is not None:
-            params['outSAMstrandField'] = input_params['outSAMstrandField']
+        if validated_params.get('outFilterType', None) is not None:
+            params['outFilterType'] = validated_params['outFilterType']
+        if validated_params.get('outFilterMultimapNmax', None) is not None:
+            params['outFilterMultimapNmax'] = validated_params['outFilterMultimapNmax']
+        if validated_params.get('outSAMtype', None) is not None:
+            params['outSAMType'] = validated_params['outSAMType']
+        if validated_params.get('outSAMattrIHstart', None) is not None:
+            params['outSAMattrIHstart'] = validated_params['outSAMattrIHstart']
+        if validated_params.get('outSAMstrandField', None) is not None:
+            params['outSAMstrandField'] = validated_params['outSAMstrandField']
 
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (input_params.get('quantMode', None) is not None
-                and input_params.get('quantMode', None) in quant_modes):
-            params['quantMode'] = input_params['quantMode']
+        if (validated_params.get('quantMode', None) is not None
+                and validated_params.get('quantMode', None) in quant_modes):
+            params['quantMode'] = validated_params['quantMode']
         else:
             params['quantMode'] = 'Both'
-        if input_params.get('alignSJoverhangMin', None) is not None:
-            params['alignSJoverhangMin'] = input_params['alignSJoverhangMin']
-        if (input_params.get('alignSJDBoverhangMin', None) is not None
-                and isinstance(input_params['alignSJDBoverhangMin'], int)
-                and input_params['alignSJDBoverhangMin'] > 0):
-            params['alignSJDBoverhangMin'] = input_params['alignSJDBoverhangMin']
-        if input_params.get('outFilterMismatchNmax', None) is not None:
-            params['outFilterMismatchNmax'] = input_params['outFilterMismatchNmax']
-        if input_params.get('alignIntronMin', None) is not None:
-            params['alignIntronMin'] = input_params['alignIntronMin']
-        if input_params.get('alignIntronMax', None) is not None:
-            params['alignIntronMax'] = input_params['alignIntronMax']
-        if input_params.get('alignMatesGapMax', None) is not None:
-            params['alignMatesGapMax'] = input_params['alignMatesGapMax']
+        if validated_params.get('alignSJoverhangMin', None) is not None:
+            params['alignSJoverhangMin'] = validated_params['alignSJoverhangMin']
+        if (validated_params.get('alignSJDBoverhangMin', None) is not None
+                and isinstance(validated_params['alignSJDBoverhangMin'], int)
+                and validated_params['alignSJDBoverhangMin'] > 0):
+            params['alignSJDBoverhangMin'] = validated_params['alignSJDBoverhangMin']
+        if validated_params.get('outFilterMismatchNmax', None) is not None:
+            params['outFilterMismatchNmax'] = validated_params['outFilterMismatchNmax']
+        if validated_params.get('alignIntronMin', None) is not None:
+            params['alignIntronMin'] = validated_params['alignIntronMin']
+        if validated_params.get('alignIntronMax', None) is not None:
+            params['alignIntronMax'] = validated_params['alignIntronMax']
+        if validated_params.get('alignMatesGapMax', None) is not None:
+            params['alignMatesGapMax'] = validated_params['alignMatesGapMax']
 
         return {'input_parameters': params, 'reads': reads}
 

@@ -198,6 +198,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # indexing if not yet existing
         if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'SAindex')):
+            validated_params['sjdbGTFfile'] = star_utils.get_genome_gtf_file(
+                    validated_params['genome_ref'], self.__INDEX_DIR)
             # convert the input parameters (from refs to file paths, especially)
             params_ret = star_utils.convert_params(validated_params)
             input_params = params_ret.get('input_parameters', None)
