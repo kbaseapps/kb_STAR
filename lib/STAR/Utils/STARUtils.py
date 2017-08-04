@@ -699,8 +699,6 @@ class STARUtils:
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
-            print "\n%%%%%%%%%%%checking rds_refs:\n"
-            pprint(rds_refs)
             reads_name_map = self.get_object_names(rds_refs)
             gene_count_files = ['{}/ReadsPerGene.out.tab'.format(
                         reads_name_map[rds_ref] for rds_ref in rds_refs)]
