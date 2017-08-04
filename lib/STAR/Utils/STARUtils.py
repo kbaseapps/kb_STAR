@@ -1288,17 +1288,6 @@ class STARUtils:
         kbase_report_client = KBaseReport(self.callback_url, token=self.token)
         report_output = kbase_report_client.create_extended_report(report_params)
 
-        #kbr = KBaseReport(self.callback_url)
-        #report_info = kbr.create_extended_report({'message': report_text,
-        #                                          'objects_created': alignment_objs,
-        #                                          'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
-        #                                          'direct_html_link_index': 0,
-        #                                          'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
-        #                                                          'name': qc_result_zip_info['index_html_file_name'],
-        #                                                          'label': qc_result_zip_info['name']}],
-        #                                          'workspace_name': params['output_workspace']
-        #                                          })
-        #report_info = {'report_name': output['name'], 'report_ref': output['ref']}
         return report_output
 
 
