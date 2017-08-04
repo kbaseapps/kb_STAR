@@ -76,7 +76,7 @@ class STAR_Aligner(object):
         except ValueError as emp:
             log('STAR mapping raised error:\n')
             pprint(emp)
-            retVal = {'star_idx': self.star_dx_dir, 'star_output': None}
+            retVal = {'star_idx': self.star_idx_dir, 'star_output': None}
         else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 
