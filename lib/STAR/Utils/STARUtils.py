@@ -146,9 +146,6 @@ class STARUtils:
             params['outSAMstrandField'] = 'intronMotif'
         if params.get('outFilterIntronMotifs', None) is None:
             params['outFilterIntronMotifs'] = 'RemoveNoncanonical'
-        if params.get('sjdbGTFfile', None) is None:
-            params['sjdbGTFfile'] = self._get_genome_gtf_file(
-                    params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
 
         return params
 
@@ -442,15 +439,20 @@ class STARUtils:
 
 
     def _get_reads(self, params):
-        '''fetch the refs and info from the input given by params[self.PARAM_IN_READS], which is a ref
+        '''
+        fetch the refs and info from the input given by params[self.PARAM_IN_READS], which is a ref
         '''
         reads_refs = list()
         radsset_ref = params[self.PARAM_IN_READS]
 	if radsset_ref is not None:
             try:
 		print("Fetching reads ref(s) from sample/reads set ref {}".format(radsset_ref))
-		reads_refs = fetch_reads_refs_from_sampleset(radsset_ref, self.workspace_url, self.callback_url, params)
-		print("Done fetching reads ref(s)!")
+		reads_refs = fetch_reads_refs_from_sampleset(
+                                        radsset_ref,
+                                        self.workspace_url,
+                                        self.callback_url, params)
+		print("\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(radsset_ref))
+                pprint(reads_refs)
             except ValueError:
 		print("Incorrect object type for fetching reads ref(s)!")
 		raise
@@ -502,6 +504,8 @@ class STARUtils:
         and add the advanced options.
         """
         params = copy.deepcopy(validated_params)
+        reads = self._get_reads(validated_params)
+
         params['runMode'] = 'genomeGenerate'
 
         if validated_params.get('create_report', None) is not None:
@@ -514,20 +518,19 @@ class STARUtils:
                 params['alignmentset_suffix'] = validated_params['alignmentset_suffix']
         if validated_params.get('expression_set_suffix', None) is not None:
                 params['expression_set_suffix'] = validated_params['expression_set_suffix']
-	# STEP 1: Converting refs to file locations in the scratch area
-        reads = self._get_reads(validated_params)
 
-        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(
-                                                validated_params[self.PARAM_IN_GENOME])
-
-        # STEP 2: Add advanced options from validated_params to params
+        # Add advanced options from validated_params to params
         sjdbGTFfile = validated_params.get("sjdbGTFfile", None)
 	if sjdbGTFfile is not None:
             params['sjdbGTFfile'] = sjdbGTFfile
-            if validated_params.get('sjdbOverhang', None) is not None :
-                params['sjdbOverhang'] = validated_params['sjdbOverhang']
-            else:
-                params['sjdbOverhang'] = 100
+        else:
+            params['sjdbGTFfile'] = self._get_genome_gtf_file(
+                                        params[self.PARAM_IN_GENOME],
+                                        os.path.join(self.scratch, self.STAR_IDX_DIR))
+        if validated_params.get('sjdbOverhang', None) is not None :
+            params['sjdbOverhang'] = validated_params['sjdbOverhang']
+        else:
+            params['sjdbOverhang'] = 100
 
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
         if (validated_params.get('quantMode', None) is not None
@@ -593,7 +596,7 @@ class STARUtils:
 
     def _get_indexing_params(self, params, star_idx_dir):
         params_idx = {
-                'runMode': 'genomeGenerate', #params[self.PARAM_IN_STARMODE],
+                'runMode': 'genomeGenerate',
 		'runThreadN': params[self.PARAM_IN_THREADN],
 		self.STAR_IDX_DIR: star_idx_dir,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]

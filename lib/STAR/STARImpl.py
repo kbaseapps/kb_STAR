@@ -198,11 +198,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # indexing if not yet existing
         if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'SAindex')):
-            # convert the input parameters (from refs to file paths, especially)
-            params_ret = star_utils.convert_params(validated_params)
-            input_params = params_ret.get('input_parameters', None)
             # generate the indices
-            idx_ret = star_runner.run_star_indexing(input_params)
+            (idx_ret, validated_params) = star_runner.run_star_indexing(validated_params)
             if idx_ret != 0:
                 raise ValueError("Failed to generate genome indices.")
 

@@ -26,20 +26,28 @@ class STAR_Aligner(object):
         self.star_out_dir = output_dir
 
 
-    def run_star_indexing(self, input_params):
+    def run_star_indexing(self, validated_params):
         """
         Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
         It creates a directory as defined by self.star_idx_dir in the scratch area that houses
         the index files.
         """
-        genome_params = copy.deepcopy(input_params)
+        ret_params = copy.deepcopy(validated_params)
+
+	#Converting refs to file locations in the scratch area
+        ret_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
+                                               ret_params[STARUtils.PARAM_IN_GENOME])
+        if ret_params.get('sjdbGTFfile', None) is None:
+            ret_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
+                                        ret_params[STARUtils.PARAM_IN_GENOME],
+                                        os.path.join(self.scratch, STARUtils.STAR_IDX_DIR))
 
         # build the indexing parameters
-        params_idx = self.star_utils._get_indexing_params(genome_params, self.star_idx_dir)
+        params_idx = self.star_utils._get_indexing_params(ret_params, self.star_idx_dir)
 
         ret = 1
         try:
-            if genome_params[STARUtils.PARAM_IN_STARMODE]=='genomeGenerate':
+            if ret_params[STARUtils.PARAM_IN_STARMODE]=='genomeGenerate':
                 ret = self.star_utils._exec_indexing(params_idx)
             else:
 		ret = 0
@@ -51,8 +59,7 @@ class STAR_Aligner(object):
         else:
             ret = 0
 
-        return ret
-
+        return (ret, ret_params)
 
     def run_star_mapping(self, params, rds_files, rds_name):
         """
@@ -95,6 +102,8 @@ class STAR_Aligner(object):
         reads_ref = reads.get('readsRefs', None)[0]
         reads_info = reads.get('readsInfo', None)[0]
         rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
+        log('%%%%-->\nAfter parameter conversion, the reads_ref details are:\n' +
+                'params:\n{}--%%%%>'.format(json.dumps(reads_ref, indent=1)))
 
         alignment_objs = list()
         alignment_ref = None
