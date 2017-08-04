@@ -121,6 +121,8 @@ class STARUtils:
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
                 raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
+        else:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
 
         if params.get('create_report', None) is None:
             params['create_report'] = 0
@@ -211,9 +213,6 @@ class STARUtils:
             star_out_dir = self.scratch
 	else:
             star_out_dir = params['align_output']
-
-        log('--->\nconstructing_mapping_cmd\n' +
-                'with params:\n{}'.format(json.dumps(params, indent=1)))
 
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
@@ -518,7 +517,8 @@ class STARUtils:
 	# STEP 1: Converting refs to file locations in the scratch area
         reads = self._get_reads(validated_params)
 
-        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(validated_params[self.PARAM_IN_GENOME])
+        params[self.PARAM_IN_FASTA_FILES] = self._get_genome_fasta(
+                                                validated_params[self.PARAM_IN_GENOME])
 
         # STEP 2: Add advanced options from validated_params to params
         sjdbGTFfile = validated_params.get("sjdbGTFfile", None)
@@ -528,11 +528,6 @@ class STARUtils:
                 params['sjdbOverhang'] = validated_params['sjdbOverhang']
             else:
                 params['sjdbOverhang'] = 100
-
-        if validated_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = validated_params[self.PARAM_IN_OUTFILE_PREFIX]
-        else:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
 
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
         if (validated_params.get('quantMode', None) is not None

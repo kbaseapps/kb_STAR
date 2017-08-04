@@ -84,7 +84,7 @@ class STAR_Aligner(object):
         Performs a single run of STAR against a single reads reference. The rest of the info
         is taken from the params dict - see the spec for details.
         """
-        log('--->\nrunning STARUtils.run_single\n' +
+        log('--->\nrunning STAR_Aligner.star_run_single\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
 	# convert the input parameters (from refs to file paths, especially)
@@ -172,7 +172,12 @@ class STAR_Aligner(object):
 
 
     def star_run_batch(self, validated_params):
-        ''' convert the input parameters (from refs to file paths, especially)'''
+        """
+        star_run_batch: running the STAR align in batch
+        """
+        log('--->\nrunning STAR_Aligner.star_run_batch\n' +
+                'params:\n{}'.format(json.dumps(validated_params, indent=1)))
+
         reads_refs = self.star_utils.get_reads_refs(validated_params)
 
         # build task list and send it to KBParallel

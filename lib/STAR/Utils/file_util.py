@@ -272,7 +272,7 @@ def extract_geneCount_matrix(geneCount_filenames, output_dir):
     Assuming each of the geneCount_filenames comes with its upper one level parent,
     i.e., in the pattern of '[reads_name]/ReadsPerGene.out.tab' as the way STAR outputs
     """
-    print "\nExtracting geneCount results from these files:\n"
+    print "\nExtracting geneCount results from these files:"
     pprint(geneCount_filenames)
 
     counts = dict()
@@ -294,11 +294,11 @@ def extract_geneCount_matrix(geneCount_filenames, output_dir):
     output_filename = os.path.join(output_dir, 'ReadsPerGene_matrix.tsv')
     fout = open(output_filename, 'w')
     print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
-    fout.write ("feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]))
+    fout.write ("feature_ids\t" + "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]))
     for fid in sorted(counts.iterkeys()):
         counts2 = [counts[fid][filename] for filename in gene_count_file_paths]
         print fid, "\t", "\t".join(counts2)
-        fout.write(fid, "\t", "\t".join(counts2))
+        fout.write(stri(fid) + "\t" + "\t".join(counts2))
 
     fout.close()
     return output_filename
