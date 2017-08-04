@@ -279,16 +279,17 @@ def extract_geneCount_matrix(ws_url, geneCount_filenames, output_dir):
 
     gene_count_file_paths = [os.path.join(output_dir, gcf) for gcf in geneCount_filenames]
 
-    with fileinput.input(files=set(gene_count_file_paths)) as fin:
-        for line in fin:
-            if not line or line.startswith("N_"):
-                continue
-            line_arr = line.split("\t")
-            try:
-                counts[line_arr[0]][fileinput.filename()] = line_arr[1]
-            except KeyError:
-                counts[line_arr[0]] = dict()
-                counts[line_arr[0]][fileinput.filename()] = line_arr[1]
+    fin = fileinput.input(files=set(gene_count_file_paths))
+    for line in fin:
+        if not line or line.startswith("N_"):
+            continue
+        line_arr = line.split("\t")
+        try:
+            counts[line_arr[0]][fileinput.filename()] = line_arr[1]
+        except KeyError:
+            counts[line_arr[0]] = dict()
+            counts[line_arr[0]][fileinput.filename()] = line_arr[1]
+    fin.close()
 
     output_filename = os.path.join(output_dir, 'ReadsPerGene_matrix.tsv')
     fout = open(output_filename, 'w')
