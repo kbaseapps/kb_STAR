@@ -253,7 +253,7 @@ def get_object_type(ref, ws_url):
                            "No information returned for reference {}".format(ref))
     return obj_info[2]
 
-def extract_geneCount_matrix(ws_url, geneCount_filenames, output_dir):
+def extract_geneCount_matrix(geneCount_filenames, output_dir):
     """
     extract_expression_matrix: Grind through the ReadsPerGene.out.tab  files and output a single
     TSV file that shows the counts for each gene id across the input files
@@ -272,7 +272,7 @@ def extract_geneCount_matrix(ws_url, geneCount_filenames, output_dir):
     Assuming each of the geneCount_filenames comes with its upper one level parent,
     i.e., in the pattern of '[reads_name]/ReadsPerGene.out.tab' as the way STAR outputs
     """
-    print "extracting geneCount results from these files:\n"
+    print "\nExtracting geneCount results from these files:\n"
     pprint(geneCount_filenames)
 
     counts = dict()

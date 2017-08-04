@@ -267,7 +267,7 @@ class STARUtils:
         #allowed values of --outSAMtype are BAM Unsorted or SortedByCoordinate or both
         if params.get('outSAMtype', None) is not None:
             mp_cmd.append('--outSAMtype')
-	    mp_cmd.append(params['outSAMtype'])
+            mp_cmd.append(params['outSAMtype'])
             if params.get('outSAMtype', None) == 'BAM':
                 mp_cmd.append('SortedByCoordinate')
 
@@ -658,11 +658,11 @@ class STARUtils:
         # reads alignment set items
         alignment_items = []
         alignment_objs = []
-        rds_refs = []
+        rds_names = []
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
-            rds_refs.append(reads_ref['ref'])
+            rds_names.append(reads_ref['alignment_output_name'].replace(params['alignment_suffix'], ''))
 
             job = batch_result['results'][k]
             result_package = job['result_package']
@@ -700,14 +700,10 @@ class STARUtils:
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
-            reads_name_map = self.get_object_names(rds_refs)
-            gene_count_files = ['{}/ReadsPerGene.out.tab'.format(
-                        reads_name_map[rds_ref] for rds_ref in rds_refs)]
-            extract_geneCount_matrix(
-                        self.workspace_url,
-                        gene_count_files,
-                        output_dir
-            )
+            for reads_name in rds_names:
+                gene_count_files.append('{}/ReadsPerGene.out.tab'.format(reads_name))
+
+            extract_geneCount_matrix(gene_count_files, output_dir)
 
         # Reporting...
         report_info = {'name': None, 'ref': None}
