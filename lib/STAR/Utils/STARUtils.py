@@ -262,10 +262,10 @@ class STARUtils:
 
         if params.get('outSAMtype', None) is not None:
             mp_cmd.append('--outSAMtype')
-            mp_cmd.append(params['outSAMtype'])
             if params.get('outSAMtype', None) == 'BAM':
                 #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
-                mp_cmd.append('Unsorted SortedByCoordinate')
+                #allowed values of --outSAMtype BAM are Unsorted or SortedByCoordinate or both
+                mp_cmd.append('BAM Unsorted SortedByCoordinate')
 
         if (params.get('outSAMattrIHstart', None) is not None
                 and isinstance(params['outSAMattrIHstart'], int)
