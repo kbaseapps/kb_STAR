@@ -22,7 +22,9 @@
 		    "KBaseRNASeq.RNASeqSampleSet",
                     "KBaseSets.ReadsSet",
                     "KBaseFile.SingleEndLibrary",
-                    "KBaseFile.PairedEndLibrary"
+		    "KBaseFile.PairedEndLibrary",
+		    "KBaseAssembly.SingleEndLibrary",
+		    "KBaseAssembly.PairedEndLibrary"
                 ]
         }
     }, {
