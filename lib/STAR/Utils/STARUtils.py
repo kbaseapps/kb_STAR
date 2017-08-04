@@ -260,17 +260,13 @@ class STARUtils:
             mp_cmd.append('--outFilterMultimapNmax')
             mp_cmd.append(str(params['outFilterMultimapNmax']))
 
-        print '%%%%%%%---The trouble:{}'.format(params['outSAMtype']) + '---%%%%%%%'
-        print "\nCheck isinstance(str):" + str(isinstance(params['outSAMtype'], str))
         if (params.get('outSAMtype', None) is not None
                 and isinstance(params['outSAMtype'], str)):
             mp_cmd.append('--outSAMtype')
             mp_cmd.append(params['outSAMtype'])
-            print '\n%%%%%%%---The mp_cmd so far1: {}'.format(mp_cmd) + '---%%%%%%%'
             if params.get('outSAMtype', None) == 'BAM':
                 #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
                 mp_cmd.append('Unsorted SortedByCoordinate')
-            print '\n%%%%%%%---The mp_cmd so far2: {}'.format(mp_cmd) + '---%%%%%%%'
 
         if (params.get('outSAMattrIHstart', None) is not None
                 and isinstance(params['outSAMattrIHstart'], int)
