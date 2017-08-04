@@ -695,6 +695,10 @@ class STARUtils:
         result_obj_ref = save_result['set_ref']
 
         output_dir = os.path.join(self.working_dir, self.STAR_OUT_DIR)
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            prefix = params[self.PARAM_IN_OUTFILE_PREFIX]
+        else:
+            prefix = ''
 
         # Extract the ReadsPerGene counts if necessary
         gene_count_files = []
@@ -702,7 +706,7 @@ class STARUtils:
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
             for reads_name in rds_names:
-                gene_count_files.append('{}/ReadsPerGene.out.tab'.format(reads_name))
+                gene_count_files.append('{}/{}ReadsPerGene.out.tab'.format(reads_name, prefix))
 
             extract_geneCount_matrix(gene_count_files, output_dir)
 
