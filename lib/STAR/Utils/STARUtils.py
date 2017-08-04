@@ -262,12 +262,13 @@ class STARUtils:
             mp_cmd.append('--outFilterMultimapNmax')
             mp_cmd.append(str(params['outFilterMultimapNmax']))
 
-        #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
+        #output sorted file:Aligned.sortedByCoord.out.bam
         #allowed values of --outSAMtype are BAM Unsorted or SortedByCoordinate or both
         if params.get('outSAMtype', None) is not None:
             mp_cmd.append('--outSAMtype')
+	    mp_cmd.append(params['outSAMtype'])
             if params.get('outSAMtype', None) == 'BAM':
-                mp_cmd.append('BAM Unsorted SortedByCoordinate')
+                mp_cmd.append('SortedByCoordinate')
 
         # 'It is recommended to remove the non-canonical junctions for Cnks runs using
         # --outFilterIntronMotifs RemoveNoncanonical'
