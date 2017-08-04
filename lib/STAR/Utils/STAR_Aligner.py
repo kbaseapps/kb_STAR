@@ -9,10 +9,6 @@ from pprint import pprint
 from KBParallel.KBParallelClient import KBParallel
 from STAR.Utils.STARUtils import STARUtils
 
-from file_util import (
-    extract_geneCount_matrix
-)
-
 def log(message, prefix_newline=False):
     """Logging function, provides a hook to suppress or redirect log messages."""
     print(('\n' if prefix_newline else '') + '{0:.2f}'.format(time.time()) + ': ' + str(message))

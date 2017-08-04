@@ -272,6 +272,9 @@ def extract_geneCount_matrix(ws_url, geneCount_filenames, output_dir):
     Assuming each of the geneCount_filenames comes with its upper one level parent,
     i.e., in the pattern of '[reads_name]/ReadsPerGene.out.tab' as the way STAR outputs
     """
+    print "extracting geneCount results from these files:\n"
+    pprint(geneCount_filenames)
+
     counts = dict()
 
     gene_count_file_paths = [os.path.join(output_dir, gcf) for gcf in geneCount_filenames]

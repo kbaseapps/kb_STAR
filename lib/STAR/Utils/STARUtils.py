@@ -31,7 +31,8 @@ from file_util import (
     get_unique_names,
     fetch_fasta_from_object,
     fetch_reads_refs_from_sampleset,
-    fetch_reads_from_reference
+    fetch_reads_from_reference,
+    extract_geneCount_matrix
 )
 
 def log(message, prefix_newline=False):
