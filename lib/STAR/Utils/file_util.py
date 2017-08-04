@@ -293,12 +293,12 @@ def extract_geneCount_matrix(geneCount_filenames, output_dir):
 
     output_filename = os.path.join(output_dir, 'ReadsPerGene_matrix.tsv')
     fout = open(output_filename, 'w')
-    print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
-    fout.write ("feature_ids\t" + "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]))
+    #print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
+    fout.write ("feature_ids\t" + "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]) + "\n")
     for fid in sorted(counts.iterkeys()):
         counts2 = [counts[fid][filename] for filename in gene_count_file_paths]
-        print fid, "\t", "\t".join(counts2)
-        fout.write(str(fid) + "\t" + "\t".join(counts2))
+        #print fid, "\t", "\t".join(counts2)
+        fout.write(str(fid) + "\t" + "\t".join(counts2) + "\n")
 
     fout.close()
     return output_filename
