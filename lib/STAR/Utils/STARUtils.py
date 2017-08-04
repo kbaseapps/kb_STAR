@@ -127,15 +127,16 @@ class STARUtils:
         return self._setDefaultParameters(params)
 
 
-    def _setDefaultParameters(self, params):
+    def _setDefaultParameters(self, params_in):
         """set default for this group of parameters
         """
+        params = copy.deepcopy(params_in)
         if params.get('outFilterType', None) is None:
             params['outFilterType'] = "\"BySJout\""
         if params.get('outFilterMultimapNmax', None) is None:
             params['outFilterMultimapNmax'] = 20
-        if params.get('outSAMtype', None) is not None:
-            params['outSAMtype'] = "BAM" #SortedByCoordinate
+        if params.get('outSAMtype', None) is None:
+            params['outSAMtype'] = 'BAM'
         if params.get('outSAMattrIHstart', None) is None:
             params['outSAMattrIHstart'] = 0
         if params.get('outSAMstrandField', None) is None:
@@ -145,7 +146,6 @@ class STARUtils:
                     params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
 
         return params
-
 
     def _get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
         """
@@ -209,6 +209,9 @@ class STARUtils:
 	else:
             star_out_dir = params['align_output']
 
+        log('--->\nconstructing_mapping_cmd\n' +
+                'with params:\n{}'.format(json.dumps(params, indent=1)))
+
         # STEP 2: construct the command for running STAR mapping
         mp_cmd = [self.STAR_BIN]
 	mp_cmd.append('--genomeDir')
@@ -219,7 +222,7 @@ class STARUtils:
 	mp_cmd.append(str(params[self.PARAM_IN_THREADN]))
 
 	if params.get(self.PARAM_IN_READS_FILES, None) is not None:
-            print('Input reads files:' + pformat(params[self.PARAM_IN_READS_FILES]))
+            print('Input reads files:\n' + pformat(params[self.PARAM_IN_READS_FILES]))
             mp_cmd.append('--' + self.PARAM_IN_READS_FILES)
             for reads_file in params[self.PARAM_IN_READS_FILES]:
                 mp_cmd.append(reads_file)
@@ -256,11 +259,19 @@ class STARUtils:
                 and params['outFilterMultimapNmax'] >= 0):
             mp_cmd.append('--outFilterMultimapNmax')
             mp_cmd.append(str(params['outFilterMultimapNmax']))
+
+        print '%%%%%%%---The trouble:{}'.format(params['outSAMtype']) + '---%%%%%%%'
+        print "\nCheck isinstance(str):" + str(isinstance(params['outSAMtype'], str))
         if (params.get('outSAMtype', None) is not None
                 and isinstance(params['outSAMtype'], str)):
-            mp_cmd.append('--outSAMType')
-            mp_cmd.append(params['outSAMType'])
-            mp_cmd.append('SortedByCoordinate')#BAM SortedByCoordinate
+            mp_cmd.append('--outSAMtype')
+            mp_cmd.append(params['outSAMtype'])
+            print '\n%%%%%%%---The mp_cmd so far1: {}'.format(mp_cmd) + '---%%%%%%%'
+            if params.get('outSAMtype', None) == 'BAM':
+                #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
+                mp_cmd.append('Unsorted SortedByCoordinate')
+            print '\n%%%%%%%---The mp_cmd so far2: {}'.format(mp_cmd) + '---%%%%%%%'
+
         if (params.get('outSAMattrIHstart', None) is not None
                 and isinstance(params['outSAMattrIHstart'], int)
                 and params['outSAMattrIHstart'] >= 0):
@@ -366,7 +377,7 @@ class STARUtils:
         return ret
 
 
-    def upload_STARalignment(self, input_params, reads, output_sam_file):
+    def upload_STARalignment(self, input_params, reads, output_bam_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
@@ -382,7 +393,7 @@ class STARUtils:
         alignment_name = reads_ref['alignment_output_name']
         align_upload_params = {
             "destination_ref": "{}/{}".format(input_params[self.PARAM_IN_WS], alignment_name),
-            "file_path": output_sam_file,
+            "file_path": output_bam_file,
             "assembly_or_genome_ref": input_params[self.PARAM_IN_GENOME],
             "read_library_ref": reads_info['object_ref'],
             "library_type": reads_info['style'],
@@ -424,7 +435,6 @@ class STARUtils:
                                                   'workspace_name': params['output_workspace']
                                                   })
         return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
-
 
 
     def _get_reads(self, params):
@@ -487,14 +497,8 @@ class STARUtils:
         Convert input parameters with KBase ref format into STAR parameters,
         and add the advanced options.
         """
-	params = {
-            'output_workspace': validated_params[self.PARAM_IN_WS],
-            'runMode': 'genomeGenerate',
-            'alignment_suffix': validated_params['alignment_suffix'],
-            'expression_suffix': validated_params['expression_suffix'],
-            self.PARAM_IN_GENOME: validated_params[self.PARAM_IN_GENOME],
-            'runThreadN': validated_params[self.PARAM_IN_THREADN]
-	}
+        params = copy.deepcopy(validated_params)
+        params['runMode'] = 'genomeGenerate'
 
         if validated_params.get('create_report', None) is not None:
                 params['create_report'] = validated_params['create_report']
@@ -525,44 +529,71 @@ class STARUtils:
         else:
             params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
 
-        if validated_params.get('outFilterType', None) is not None:
-            params['outFilterType'] = validated_params['outFilterType']
-        if validated_params.get('outFilterMultimapNmax', None) is not None:
-            params['outFilterMultimapNmax'] = validated_params['outFilterMultimapNmax']
-        if validated_params.get('outSAMtype', None) is not None:
-            params['outSAMType'] = validated_params['outSAMType']
-        if validated_params.get('outSAMattrIHstart', None) is not None:
-            params['outSAMattrIHstart'] = validated_params['outSAMattrIHstart']
-        if validated_params.get('outSAMstrandField', None) is not None:
-            params['outSAMstrandField'] = validated_params['outSAMstrandField']
-
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
         if (validated_params.get('quantMode', None) is not None
                 and validated_params.get('quantMode', None) in quant_modes):
             params['quantMode'] = validated_params['quantMode']
         else:
             params['quantMode'] = 'Both'
-        if validated_params.get('alignSJoverhangMin', None) is not None:
+
+        return {'input_parameters': params, 'reads': reads}
+
+    def _add_advanced_options(self, validated_params):
+        if (validated_params.get('outFilterType', None) is not None
+                and isinstance(validated_params['outFilterType'], str)):
+            params['outFilterType'] = validated_params['outFilterType']
+        if (validated_params.get('outFilterMultimapNmax', None) is not None
+                and isinstance(validated_params['outFilterMultimapNmax'], int)):
+            params['outFilterMultimapNmax'] = validated_params['outFilterMultimapNmax']
+        if (validated_params.get('outSAMtype', None) is not None
+                and isinstance(validated_params['outSAMtype'], str)):
+            params['outSAMtype'] = validated_params['outSAMtype']
+        if (validated_params.get('outSAMattrIHstart', None) is not None
+                and isinstance(validated_params['outSAMattrIHstart'], int)):
+            params['outSAMattrIHstart'] = validated_params['outSAMattrIHstart']
+        if (validated_params.get('outSAMstrandField', None) is not None
+                and isinstance(validated_params['outSAMstrandField'], str)):
+            params['outSAMstrandField'] = validated_params['outSAMstrandField']
+        if (validated_params.get('alignSJoverhangMin', None) is not None
+		and isinstance(validated_params['alignSJoverhangMin'], int)
+                and validated_params['alignSJoverhangMin'] > 0):
             params['alignSJoverhangMin'] = validated_params['alignSJoverhangMin']
         if (validated_params.get('alignSJDBoverhangMin', None) is not None
                 and isinstance(validated_params['alignSJDBoverhangMin'], int)
                 and validated_params['alignSJDBoverhangMin'] > 0):
             params['alignSJDBoverhangMin'] = validated_params['alignSJDBoverhangMin']
-        if validated_params.get('outFilterMismatchNmax', None) is not None:
+        if (validated_params.get('outFilterMismatchNmax', None) is not None
+		and isinstance(validated_params['outFilterMismatchNmax'], int)
+                and validated_params['outFilterMismatchNmax'] > 0):
             params['outFilterMismatchNmax'] = validated_params['outFilterMismatchNmax']
-        if validated_params.get('alignIntronMin', None) is not None:
+        if (validated_params.get('alignIntronMin', None) is not None
+		and isinstance(validated_params['alignIntronMin'], int)
+                and validated_params['alignIntronMin'] > 0):
             params['alignIntronMin'] = validated_params['alignIntronMin']
-        if validated_params.get('alignIntronMax', None) is not None:
-            params['alignIntronMax'] = validated_params['alignIntronMax']
-        if validated_params.get('alignMatesGapMax', None) is not None:
+        if (validated_params.get('alignMatesGapMax', None) is not None
+		and isinstance(validated_params['alignMatesGapMax'], int)
+                and validated_params['alignMatesGapMax'] >= 0):
             params['alignMatesGapMax'] = validated_params['alignMatesGapMax']
 
-        return {'input_parameters': params, 'reads': reads}
+        if validated_params.get('sjdbGTFfile', None) is not None:
+            params['sjdbGTFfile'] = validated_params['sjdbGTFfile']
+        if validated_params.get('sjdbOverhang', None) is not None :
+            params['sjdbOverhang'] = validated_params['sjdbOverhang']
 
+        if validated_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = validated_params[self.PARAM_IN_OUTFILE_PREFIX]
+
+
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (params.get('quantMode', None) is not None
+                and params.get('quantMode', None) in quant_modes):
+            params_mp['quantMode'] = params['quantMode']
+
+        return params
 
     def _get_indexing_params(self, params, star_idx_dir):
         params_idx = {
-                'runMode': params[self.PARAM_IN_STARMODE],
+                'runMode': 'genomeGenerate', #params[self.PARAM_IN_STARMODE],
 		'runThreadN': params[self.PARAM_IN_THREADN],
 		self.STAR_IDX_DIR: star_idx_dir,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
@@ -583,66 +614,11 @@ class STARUtils:
             self._mkdir_p(aligndir)
             print '\n**********STAR output directory created: ' + aligndir
 
-        params_mp = {
-                'runMode': 'alignReads',#params[self.PARAM_IN_STARMODE],
-		'runThreadN': params[self.PARAM_IN_THREADN],
-                'readFilesIn': rds_files,
-		self.STAR_IDX_DIR: idx_dir,
-		'align_output': aligndir
-        }
-
-        if params.get('sjdbGTFfile', None) is not None:
-            params_mp['sjdbGTFfile'] = params['sjdbGTFfile']
-        if params.get('sjdbOverhang', None) is not None :
-            params_mp['sjdbOverhang'] = params['sjdbOverhang']
-
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            params_mp[self.PARAM_IN_OUTFILE_PREFIX] = params[self.PARAM_IN_OUTFILE_PREFIX]
-
-        if (params.get('outFilterType', None) is not None
-                and isinstance(params['outFilterType'], str)):
-            params_mp['outFilterType'] = params['outFilterType']
-        if (params.get('outFilterMultimapNmax', None) is not None
-                and isinstance(params['outFilterMultimapNmax'], int)):
-            params_mp['outFilterMultimapNmax'] = params['outFilterMultimapNmax']
-        if (params.get('outSAMtype', None) is not None
-                and isinstance(params['outSAMtype'], str)):
-            params_mp['outSAMtype'] = params['outSAMtype']
-        if (params.get('outSAMattrIHstart', None) is not None
-                and isinstance(params['outSAMattrIHstart'], int)):
-            params_mp['outSAMattrIHstart'] = params['outSAMattrIHstart']
-        if (params.get('outSAMstrandField', None) is not None
-                and isinstance(params['outSAMstrandField'], str)):
-            params_mp['outSAMstrandField'] = params['outSAMstrandField']
-
-        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (params.get('quantMode', None) is not None
-                and params.get('quantMode', None) in quant_modes):
-            params_mp['quantMode'] = params['quantMode']
-        if (params.get('alignSJoverhangMin', None) is not None
-		and isinstance(params['alignSJoverhangMin'], int)
-                and params['alignSJoverhangMin'] > 0):
-            params_mp['alignSJoverhangMin'] = params['alignSJoverhangMin']
-        if (params.get('alignSJDBoverhangMin', None) is not None
-                and isinstance(params['alignSJDBoverhangMin'], int)
-                and params['alignSJDBoverhangMin'] > 0):
-            params_mp['alignSJDBoverhangMin'] = params['alignSJDBoverhangMin']
-        if (params.get('outFilterMismatchNmax', None) is not None
-		and isinstance(params['outFilterMismatchNmax'], int)
-                and params['outFilterMismatchNmax'] > 0):
-            params_mp['outFilterMismatchNmax'] = params['outFilterMismatchNmax']
-        if (params.get('alignIntronMin', None) is not None
-		and isinstance(params['alignIntronMin'], int)
-                and params['alignIntronMin'] > 0):
-            params_mp['alignIntronMin'] = params['alignIntronMin']
-        if (params.get('alignIntronMax', None) is not None
-		and isinstance(params['alignIntronMax'], int)
-                and params['alignIntronMax'] >= 0):
-            params_mp['alignIntronMax'] = params['alignIntronMax']
-        if (params.get('alignMatesGapMax', None) is not None
-		and isinstance(params['alignMatesGapMax'], int)
-                and params['alignMatesGapMax'] >= 0):
-            params_mp['alignMatesGapMax'] = params['alignMatesGapMax']
+        params_mp = copy.deepcopy(params)
+        params_mp['runMode'] = 'alignReads'
+        params_mp['readFilesIn'] = rds_files
+	params_mp[self.STAR_IDX_DIR] = idx_dir
+        params_mp['align_output'] = aligndir
 
         return params_mp
 
@@ -664,7 +640,6 @@ class STARUtils:
                 #'version': 'dev',
                 'parameters': task_params}
 
-
     def process_batch_result(self, batch_result, params, reads_refs):
         n_jobs = len(batch_result['results'])
         n_success = 0
@@ -672,13 +647,18 @@ class STARUtils:
         ran_locally = 0
         ran_njsw = 0
 
-        set_name = self.get_object_names([params[self.PARAM_IN_READS]])[params[self.PARAM_IN_READS]]
+        set_name_map = self.get_object_names([params[self.PARAM_IN_READS]])
+        set_name = set_name_map[params[self.PARAM_IN_READS]]
+
         # reads alignment set items
         alignment_items = []
         alignment_objs = []
+        rds_refs = []
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
+            rds_refs.append(reads_ref)
+
             job = batch_result['results'][k]
             result_package = job['result_package']
             if job['is_error']:
@@ -707,13 +687,32 @@ class STARUtils:
                         output_alignmentset_name,
                         params['output_workspace'])
 
-        # Report
+        result_obj_ref = save_result['set_ref']
+
+        output_dir = os.path.join(self.working_dir, self.STAR_OUT_DIR)
+
+        # Extract the ReadsPerGene counts if necessary
+        if (params.get('quantMode', None) is not None
+                    and (params['quantMode'] == 'Both'
+                            or 'GeneCounts' in params['quantMode'])):
+            reads_name_map = self.get_object_names(rds_refs)
+            gene_count_files = ['{}/ReadsPerGene.out.tab'.format(
+                        reads_name_map[rds_ref] for rds_ref in rds_refs)]
+            extract_geneCount_matrix(
+                        self.workspace_url,
+                        gene_count_files,
+                        output_dir
+            )
+
+        # Reporting...
         report_info = {'name': None, 'ref': None}
-        input_ref = save_result['set_ref']
 
         #run qualimap
-        qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
+        qualimap_report = self.qualimap.run_bamqc({'input_ref': result_obj_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
+        qc_result = [{'shock_id': qc_result_zip_info['shock_id'],
+                      'name': qc_result_zip_info['index_html_file_name'],
+                      'label': qc_result_zip_info['name']}]
 
         # create the report
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
@@ -727,18 +726,14 @@ class STARUtils:
         print('Report text=')
         print(report_text)
 
-        kbr = KBaseReport(self.callback_url)
-        report_info = kbr.create_extended_report({'message': report_text,
-                                                  'objects_created': alignment_objs,
-                                                  'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
-                                                  'direct_html_link_index': 0,
-                                                  'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
-                                                                  'name': qc_result_zip_info['index_html_file_name'],
-                                                                  'label': qc_result_zip_info['name']}],
-                                                  'workspace_name': params['output_workspace']
-                                                  })
+        report_info = self._generate_star_report(
+                        result_obj_ref,
+                        report_text,
+                        qc_result,
+                        params['output_workspace'],
+                        output_dir)
 
-        result = {'alignmentset_ref': save_result['set_ref'],
+        result = {'alignmentset_ref': result_obj_ref,
                 'output_info': batch_result,
                 'alignment_objs': alignment_objs,
                 'report_name': report_info['name'],
@@ -818,7 +813,7 @@ class STARUtils:
     def get_version_from_subactions(self, module_name, subactions):
         # go through each sub action looking for
         if not subactions:
-            return 'release'  # default to release if we can't find anything
+            return 'dev' #'release'  # default to release if we can't find anything
         for sa in subactions:
             if 'name' in sa:
                 if sa['name'] == module_name:
@@ -859,8 +854,54 @@ class STARUtils:
 
 
     def get_reads_refs(self, validated_params):
-        return fetch_reads_refs_from_sampleset(validated_params[self.PARAM_IN_READS], self.workspace_url, self.callback_url, validated_params)
+        return fetch_reads_refs_from_sampleset(
+                        validated_params[self.PARAM_IN_READS],
+                        self.workspace_url,
+                        self.callback_url,
+                        validated_params)
 
+
+    def _get_alignment_gtf_file(self, alignment_ref, output_directory):
+        """
+        _get_alignment_gtf_file: get the reference annotation file (in GTF or GFF3 format)
+        """
+        alignment_data = self.ws_client.get_objects2({'objects':
+                                               [{'ref': alignment_ref}]})['data'][0]['data']
+
+        genome_ref = alignment_data.get('genome_id')
+        genome_data = self.ws_client.get_objects2({'objects':
+                                            [{'ref': genome_ref}]})['data'][0]['data']
+
+        gff_handle_ref = genome_data.get('gff_handle_ref')
+
+        if gff_handle_ref:
+            log('getting reference annotation file from genome')
+            annotation_file = self.dfu.shock_to_file({'handle_id': gff_handle_ref,
+                                                      'file_path': output_directory,
+                                                      'unpack': 'unpack'})['file_path']
+        else:
+            annotation_file = self._create_genome_gtf_file(genome_ref, output_directory)
+
+        return annotation_file
+
+    def _create_genome_gtf_file(self, genome_ref, output_directory):
+        """
+        _create_gtf_file: create reference annotation file from genome
+        """
+
+        log('start generating reference annotation file')
+
+        genome_gff_file = self.gfu.genome_to_gff({'genome_ref': genome_ref,
+                                                  'target_dir': output_directory})['file_path']
+
+        gtf_ext = '.gtf'
+        if not genome_gff_file.endswith(gtf_ext):
+            gtf_path = os.path.splitext(genome_gff_file)[0] + '.gtf'
+            self._run_gffread(genome_gff_file, gtf_path)
+        else:
+            gtf_path = genome_gff_file
+
+        return gtf_path
 
     # borrowed from kb_stringtie
     def _save_expression(self, output_dir, alignment_ref, workspace_name, gtf_file,
@@ -903,7 +944,7 @@ class STARUtils:
         for alignment_expression in alignment_expression_map:
             items.append({'ref': alignment_expression.get('expression_obj_ref')})
 
-        expression_set_data = {'description': 'ExpressionSet using StringTie', 
+        expression_set_data = {'description': 'ExpressionSet using STAR', 
                                'items': items}
 
         alignment_set_data_object = self.ws_client.get_objects2({'objects':
@@ -945,9 +986,9 @@ class STARUtils:
         self._mkdir_p(output_directory)
 
         # input files
-        params['input_file'] = self._get_input_file(alignment_ref)
+        params['input_file'] = self._get_bam_file(alignment_ref)
         if not params.get('gtf_file'):
-            params['gtf_file'] = self._get_gtf_file(alignment_ref, output_directory)
+            params['gtf_file'] = self._get_alignment_gtf_file(alignment_ref, output_directory)
         else:
             shutil.copy(params.get('gtf_file'), output_directory)
         log('using {} as reference annotation file.'.format(params.get('gtf_file')))
@@ -963,7 +1004,7 @@ class STARUtils:
         self._run_command(command)
 
         if not params.get('merge'):
-            expression_obj_ref = self._save_expression(output_directory,
+            star_obj_obj_ref = self._save_expression(output_directory,
                                                        alignment_ref,
                                                        params.get('workspace_name'),
                                                        params['gtf_file'],
@@ -1027,7 +1068,7 @@ class STARUtils:
             alignment_name = self.ws_client.get_object_info([{"ref": alignment_ref}],
                                                      includeMetadata=None)[0][1]
             self._run_command('cp -R {} {}'.format(proc_alignment_return.get('output_directory'),
-                                                   os.path.join(output_directory, 
+                                                   os.path.join(output_directory,
                                                                 alignment_name)))
         if not params.get('merge'):
             expression_obj_ref = self._save_expression_set(alignment_expression_map,
@@ -1039,8 +1080,8 @@ class STARUtils:
             expression_obj_ref = ''
 
         annotation_file_name = os.path.basename(alignment_expression_map[0]['annotation_file'])
-        annotation_file_path = os.path.join(output_directory, 
-                                            os.listdir(output_directory)[0], 
+        annotation_file_path = os.path.join(output_directory,
+                                            os.listdir(output_directory)[0],
                                             annotation_file_name)
 
         returnVal = {'output_directory': output_directory,
@@ -1048,5 +1089,215 @@ class STARUtils:
                      'annotation_file': annotation_file_path}
 
         return returnVal
+
+    def _get_bam_file(self, alignment_ref):
+        """
+        _get_bam_file: get input  SAM/BAM file from Alignment object
+        """
+
+        log('getting bam file from alignment')
+
+        bam_file_dir = self.rau.download_alignment({'source_ref': alignment_ref})['destination_dir']
+
+        files = os.listdir(bam_file_dir)
+        bam_file_list = [file for file in files if re.match(r'.*\_sorted\.bam', file)]
+        if not bam_file_list:
+            bam_file_list = [file for file in files if re.match(r'.*(?<!sorted)\.bam', file)]
+
+        if not bam_file_list:
+            raise ValueError('Cannot find .bam file from alignment {}'.format(alignment_ref))
+
+        bam_file_name = bam_file_list[0]
+
+        bam_file = os.path.join(bam_file_dir, bam_file_name)
+
+        return bam_file
+
+    def _generate_output_file_list(self, output_directory):
+        """
+        _generate_output_file_list: zip result files and generate file_links for report
+        """
+
+        log('start packing result files')
+
+        output_files = list()
+
+        output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
+        self._mkdir_p(output_directory)
+        result_file = os.path.join(output_directory, 'star_result.zip')
+
+        with zipfile.ZipFile(result_file, 'w',
+                             zipfile.ZIP_DEFLATED,
+                             allowZip64=True) as zip_file:
+            for root, dirs, files in os.walk(output_directory):
+                for file in files:
+                    if not (file.endswith('.DS_Store') or
+                            os.path.basename(root) == 'merge_result'):
+                        zip_file.write(os.path.join(root, file),
+                                       os.path.join(os.path.basename(root), file))
+
+        output_files.append({'path': result_file,
+                             'name': os.path.basename(result_file),
+                             'label': os.path.basename(result_file),
+                             'description': 'File(s) generated by STAR'})
+
+        result_dirs = os.listdir(output_directory)
+        if 'merge_result' in result_dirs:
+            merge_file = os.path.join(output_directory, 'merge_result', 'star_merge.gtf')
+            output_files.append({'path': merge_file,
+                                 'name': os.path.basename(merge_file),
+                                 'label': os.path.basename(merge_file),
+                                 'description': 'merge file generated by STAR'})
+
+        return output_files
+
+
+    def _generate_html_report(self, out_dir, obj_ref):
+        """
+        _generate_html_report: generate html summary report
+        """
+
+        log('start generating html report')
+        html_report = list()
+
+        output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
+        self._mkdir_p(output_directory)
+        result_file_path = os.path.join(output_directory, 'report.html')
+
+        star_obj = self.ws_client.get_objects2({'objects':
+                                                 [{'ref': obj_ref}]})['data'][0]
+        star_obj_info = star_obj['info']
+        star_obj_data = star_obj['data']
+        star_obj_type = star_obj_info[2]
+
+        Overview_Content = ''
+        if re.match('KBaseRNASeq.RNASeqAlignment-\d.\d', star_obj_type):
+            Overview_Content += '<br/><table><tr><th>Generated Alignment Object</th>'
+            Overview_Content += '<th></th></tr>'
+            Overview_Content += '<tr><th>Alignment Name</th><th>Condition</th></tr>'
+            Overview_Content += '<tr><td>{} ({})</td>'.format(star_obj_info[1],obj_ref)
+            Overview_Content += '<td>{}</td></tr>'.format(star_obj_data['condition'])
+            Overview_Content += '</table>'
+        elif (re.match('KBaseRNASeq.RNASeqAlignmentSet-\d.\d', star_obj_type)
+                or re.match('KBaseSets.ReadsAlignmentSet-\d.\d', star_obj_type)
+                or re.match('KBaseSet.RNASeqAlignmentSet-\d.\d', star_obj_type)):
+            Overview_Content += '<br/><table><tr><th>Generated AlignmentSet Object</th></tr>'
+            Overview_Content += '<tr><td>{} ({})'.format(star_obj_info[1],obj_ref)
+            Overview_Content += '</td></tr></table>'
+            Overview_Content += '<p><br/></p>'
+            Overview_Content += '<table><tr><th>Generated Alignment Objects</th>'
+            Overview_Content += '<th></th></tr>'
+            Overview_Content += self._fill_html_trs('Alignment Name', star_obj_data)
+            Overview_Content += '</table>'
+        elif re.match('KBaseRNASeq.RNASeqExpression-\d.\d', star_obj_type):
+            Overview_Content += '<br/><table><tr><th>Generated Expression Object</th>'
+            Overview_Content += '<th></th></tr>'
+            Overview_Content += '<tr><th>Expression Name</th><th>Condition</th></tr>'
+            Overview_Content += '<tr><td>{} ({})</td>'.format(star_obj_info[1], obj_ref)
+            Overview_Content += '<td>{}</td></tr>'.format(star_obj_data['condition'])
+            Overview_Content += '</table>'
+        elif re.match('KBaseSets.ExpressionSet-\d.\d', star_obj_type):
+            Overview_Content += '<br/><table><tr><th>Generated ExpressionSet Object</th></tr>'
+            Overview_Content += '<tr><td>{} ({})'.format(star_obj_info[1], obj_ref)
+            Overview_Content += '</td></tr></table>'
+            Overview_Content += '<p><br/></p>'
+            Overview_Content += '<table><tr><th>Generated Expression Objects</th>'
+            Overview_Content += '<th></th></tr>'
+            Overview_Content += self._fill_html_trs('Expression Name', star_obj_data)
+            Overview_Content += '</table>'
+
+        with open(result_file_path, 'w') as result_file:
+            with open(os.path.join(os.path.dirname(__file__), 'report_template.html'),
+                      'r') as report_template_file:
+                report_template = report_template_file.read()
+                report_template = report_template.replace('<p>Overview_Content</p>',
+                                                          Overview_Content)
+                result_file.write(report_template)
+
+        html_report.append({'path': result_file_path,
+                            'name': os.path.basename(result_file_path),
+                            'label': os.path.basename(result_file_path),
+                            'description': 'HTML summary report for StringTie App'})
+        return html_report
+
+    def _fill_html_trs(self, col_caption, obj_data):
+        '''
+        _fill_html_trs: simple creates an html string that has rows (tr) of td for a table
+        '''
+        tr_html_str = '<tr><th>{}</th><th>Condition</th></tr>'.format(col_caption)
+
+        for item in obj_data['items']:
+            item_obj = self.ws_client.get_objects2({'objects':[{'ref': item['ref']}]})['data'][0]
+            item_obj_info = item_obj['info']
+            item_obj_data = item_obj['data']
+            obj_name = item_obj_info[1]
+
+            tr_html_str += '<tr><td>{} ({})</td>'.format(obj_name, item['ref'])
+            tr_html_str += '<td>{}</td></tr>'.format(item_obj_data['condition'])
+
+        return tr_html_str
+
+    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name, output_directory):
+        """
+        _generate_star_report: generate summary report
+        """
+        log('creating STAR report')
+
+        output_files = self._generate_output_file_list(output_directory)
+        output_html_files = self._generate_html_report(output_directory, obj_ref)
+        output_html_files += html_links
+
+        star_obj = self.ws_client.get_objects2({'objects':[{'ref': obj_ref}]})['data'][0]
+        star_obj_info = star_obj['info']
+        star_obj_data = star_obj['data']
+
+        star_obj_type = star_obj_info[2]
+        if re.match('KBaseRNASeq.RNASeqAlignment-\d+.\d+', star_obj_type):
+            objects_created = [{'ref': obj_ref,
+                                'description': 'RNASeqAlignment generated by STAR'}]
+        elif (re.match('KBaseRNASeq.RNASeqAlignmentSet-\d+.\d+', star_obj_type)
+                or re.match('KBaseSets.ReadsAlignmentSet-\d+.\d+', star_obj_type)
+                or re.match('KBaseSet.RNASeqAlignmentSet-\d+.\d+', star_obj_type)):
+            objects_created = [{'ref': obj_ref,
+                'description': '{} generated by STAR'.format(re.sub(r"-\d+.\d+", "",star_obj_type))}]
+            items = star_obj_data['items']
+            for item in items:
+                objects_created.append({'ref': item['ref'],
+                                        'description': 'Alignment generated by STAR'})
+        elif re.match('KBaseRNASeq.RNASeqExpression-\d+.\d+', star_obj_type):
+            objects_created = [{'ref': obj_ref,
+                                'description': 'Expression generated by STAR'}]
+        elif re.match('KBaseSets.ExpressionSet-\d+.\d+', star_obj_type):
+            objects_created = [{'ref': obj_ref,
+                                'description': 'ExpressionSet generated by STAR'}]
+            items = star_obj_data['items']
+            for item in items:
+                objects_created.append({'ref': item['ref'],
+                                        'description': 'Expression generated by STAR'})
+
+        report_params = {'message': report_text,
+                         'workspace_name': workspace_name,
+                         'file_links': output_files,
+                         'objects_created': objects_created,
+                         'html_links': output_html_files,
+                         'direct_html_link_index': 0,
+                         'html_window_height': 366,
+                         'report_object_name': 'kb_STAR_report_' + str(uuid.uuid4())}
+
+        kbase_report_client = KBaseReport(self.callback_url, token=self.token)
+        report_output = kbase_report_client.create_extended_report(report_params)
+
+        #kbr = KBaseReport(self.callback_url)
+        #report_info = kbr.create_extended_report({'message': report_text,
+        #                                          'objects_created': alignment_objs,
+        #                                          'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
+        #                                          'direct_html_link_index': 0,
+        #                                          'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
+        #                                                          'name': qc_result_zip_info['index_html_file_name'],
+        #                                                          'label': qc_result_zip_info['name']}],
+        #                                          'workspace_name': params['output_workspace']
+        #                                          })
+        #report_info = {'report_name': output['name'], 'report_ref': output['ref']}
+        return report_output
 
 

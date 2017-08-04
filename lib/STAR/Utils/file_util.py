@@ -1,5 +1,5 @@
 """
---copied from kb_hisat2
+--modified based on the same file in kb_hisat2
 Utility functions to fetch files from various Workspace object types.
 Depends on the more general util.py that's here, too.
 """
@@ -253,30 +253,49 @@ def get_object_type(ref, ws_url):
                            "No information returned for reference {}".format(ref))
     return obj_info[2]
 
-def extract_expression(ws_url, input_filenames, output_filename):
-    '''Grind through the ReadsPerGene.out.tab  files and output a single TSV file
-       that shows the counts for each gene id across the input files'''
+def extract_geneCount_matrix(ws_url, geneCount_filenames, output_dir):
+    """
+    extract_expression_matrix: Grind through the ReadsPerGene.out.tab  files and output a single
+    TSV file that shows the counts for each gene id across the input files
+
+    STAR outputs read counts per gene into
+    ReadsPerGene.out.table with 4 columns which correspond to different strandedness options--
+    column 1--gene ID
+    column 2--counts for unstranded RNA-seq
+    column 3--counts for the 1st read strand aligned with RNA (htseq-count option -s yes)
+    column 4--counts for the 2nd read strand aligned with RNA (htseq-count option -s reverse)
+    Select the output according to the strandedness of your data. Note, that if you have stranded
+    data and choose one of the columns 3 or 4, the other column (4 or 3) will give you the
+    count of antisense reads. With --quantMode TranscriptomeSAM GeneCounts, and get both the
+    Aligned.toTranscriptome.out.bam and ReadsPerGene.out.tab outputs.
+
+    Assuming each of the geneCount_filenames comes with its upper one level parent,
+    i.e., in the pattern of '[reads_name]/ReadsPerGene.out.tab' as the way STAR outputs
+    """
     counts = dict()
 
-    with fileinput.input(files=set(input_filenames)) as fin:
+    gene_count_file_paths = [os.path.join(output_dir, gcf) for gcf in geneCount_filenames]
+
+    with fileinput.input(files=set(gene_count_file_paths)) as fin:
         for line in fin:
             if not line or line.startswith("N_"):
                 continue
-        line2 = line.split("\t")
-        try:
-            counts[line2[0]][fileinput.filename()] = line2[1]
-        except KeyError:
-            counts[line2[0]] = dict()
-            counts[line2[0]][fileinput.filename()] = line2[1]
+            line_arr = line.split("\t")
+            try:
+                counts[line_arr[0]][fileinput.filename()] = line_arr[1]
+            except KeyError:
+                counts[line_arr[0]] = dict()
+                counts[line_arr[0]][fileinput.filename()] = line_arr[1]
 
+    output_filename = os.path.join(output_dir, 'ReadsPerGene_matrix.tsv')
     fout = open(output_filename, 'w')
-    print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in input_filenames])
-    fout.write ("feature_ids\t", "\t".join([os.path.dirname(fn) for fn in input_filenames]))
+    print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
+    fout.write ("feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]))
     for fid in sorted(counts.iterkeys()):
-        counts2 = [counts[fid][filename] for filename in input_filenames]
+        counts2 = [counts[fid][filename] for filename in gene_count_file_paths]
         print fid, "\t", "\t".join(counts2)
         fout.write(fid, "\t", "\t".join(counts2))
 
     fout.close()
-    return counts2 #output_filename
+    return output_filename
 

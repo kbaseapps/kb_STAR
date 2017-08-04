@@ -224,7 +224,7 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star_single")
+    @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
@@ -245,6 +245,7 @@ class STARTest(unittest.TestCase):
                   'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
+                  'outSAMtype': 'BAM',
                   'create_report': 1
                   #'genomeFastaFile_refs': [self.loadAssembly()],
                   #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
@@ -257,7 +258,7 @@ class STARTest(unittest.TestCase):
         self.assertIn('alignment_objs', res)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star_batch")
+    #@unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
@@ -274,6 +275,7 @@ class STARTest(unittest.TestCase):
                   'condition': 'wt',
                   'concurrent_njsw_tasks': 0,
                   'concurrent_local_tasks': 1,
+                  'outSAMtype': 'BAM',
                   'create_report': 1
         }
         pprint('Running with a SampleSet')

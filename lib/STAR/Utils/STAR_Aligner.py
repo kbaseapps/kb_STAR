@@ -9,6 +9,9 @@ from pprint import pprint
 from KBParallel.KBParallelClient import KBParallel
 from STAR.Utils.STARUtils import STARUtils
 
+from file_util import (
+    extract_geneCount_matrix
+)
 
 def log(message, prefix_newline=False):
     """Logging function, provides a hook to suppress or redirect log messages."""
@@ -91,6 +94,7 @@ class STAR_Aligner(object):
 	# convert the input parameters (from refs to file paths, especially)
         params_ret = self.star_utils.convert_params(validated_params)
         input_params = params_ret.get('input_parameters', None)
+
         reads = params_ret.get('reads', None)
         reads_ref = reads.get('readsRefs', None)[0]
         reads_info = reads.get('readsInfo', None)[0]
@@ -115,16 +119,20 @@ class STAR_Aligner(object):
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
         if star_mp_ret.get('star_output', None) is not None:
+            bam_sort = ''
+            prefix = ''
+            if input_params.get('outSAMtype', None) == 'BAM':
+                bam_sort = 'sortedByCoord'
             if input_params.get(STARUtils.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-                prefix = format(input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX])
-                output_sam_file = '{}Aligned.out.sam'.format(prefix)
+                prefix = input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX]
+                output_bam_file = '{}Aligned.{}.out.bam'.format(prefix, bam_sort)
             else:
-                output_sam_file = 'Aligned.out.sam'
-            output_sam_file = os.path.join(star_mp_ret['star_output'], output_sam_file)
+                output_bam_file = 'Aligned.{}.out.bam'.format(bam_sort)
+            output_bam_file = os.path.join(star_mp_ret['star_output'], output_bam_file)
 
             #print("Uploading STAR output object...")
             # Upload the alignment
-            upload_results = self.star_utils.upload_STARalignment(input_params, reads, output_sam_file)
+            upload_results = self.star_utils.upload_STARalignment(input_params, reads, output_bam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
                 'ref': alignment_ref,
@@ -136,19 +144,20 @@ class STAR_Aligner(object):
             })
 
             singlerun_output_info['output_dir'] = star_mp_ret['star_output']
-            singlerun_output_info['output_sam_file'] = output_sam_file
+            singlerun_output_info['output_bam_file'] = output_bam_file
 
             singlerun_output_info['upload_results'] = upload_results
 
-            workspace_name = validated_params[STARUtils.PARAM_IN_WS]
-            expr_suffix = validated_params['expression_suffix']
-            gtf_file = validated_params['sjdbGTFfile'] 
+            #workspace_name = validated_params[STARUtils.PARAM_IN_WS]
+            #expr_suffix = validated_params['expression_suffix']
+            #gtf_file = validated_params['sjdbGTFfile']
             #expression_ref = self.star_utils._save_expression(
             #                    star_mp_ret['star_output'],
             #                    alignment_ref,
             #                    workspace_name,
             #                    gtf_file,
             #                    expr_suffix)
+
             if input_params.get("create_report", 0) == 1:
                 report_info = self.star_utils.generate_report_for_single_run(singlerun_output_info, input_params)
 
