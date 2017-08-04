@@ -140,7 +140,9 @@ class STARUtils:
         if params.get('outSAMattrIHstart', None) is None:
             params['outSAMattrIHstart'] = 0
         if params.get('outSAMstrandField', None) is None:
-            params['outSAMstrandField'] = "intronMotif"
+            params['outSAMstrandField'] = 'intronMotif'
+        if params.get('outFilterIntronMotifs', None) is None:
+            params['outFilterIntronMotifs'] = 'RemoveNoncanonical'
         if params.get('sjdbGTFfile', None) is None:
             params['sjdbGTFfile'] = self._get_genome_gtf_file(
                     params[self.PARAM_IN_GENOME], os.path.join(self.scratch, self.STAR_IDX_DIR))
@@ -260,12 +262,18 @@ class STARUtils:
             mp_cmd.append('--outFilterMultimapNmax')
             mp_cmd.append(str(params['outFilterMultimapNmax']))
 
+        #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
+        #allowed values of --outSAMtype are BAM Unsorted or SortedByCoordinate or both
         if params.get('outSAMtype', None) is not None:
             mp_cmd.append('--outSAMtype')
             if params.get('outSAMtype', None) == 'BAM':
-                #output both unsorted and sorted files:Aligned.out.bam and Aligned.sortedByCoord.out.bam
-                #allowed values of --outSAMtype BAM are Unsorted or SortedByCoordinate or both
                 mp_cmd.append('BAM Unsorted SortedByCoordinate')
+
+        # 'It is recommended to remove the non-canonical junctions for Cnks runs using
+        # --outFilterIntronMotifs RemoveNoncanonical'
+        if params.get('outFilterIntronMotifs', None) is not None:
+            mp_cmd.append('--outFilterIntronMotifs')
+            mp_cmd.append('RemoveNoncanonical')
 
         if (params.get('outSAMattrIHstart', None) is not None
                 and isinstance(params['outSAMattrIHstart'], int)
