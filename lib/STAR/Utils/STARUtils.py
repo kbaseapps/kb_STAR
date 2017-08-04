@@ -697,6 +697,7 @@ class STARUtils:
         output_dir = os.path.join(self.working_dir, self.STAR_OUT_DIR)
 
         # Extract the ReadsPerGene counts if necessary
+        gene_count_files = []
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
