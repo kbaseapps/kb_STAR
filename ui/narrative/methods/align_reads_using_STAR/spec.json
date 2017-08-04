@@ -61,7 +61,7 @@
         "optional": true,
         "advanced": true,
         "allow_multiple": false,
-        "default_values": [ "TranscriptomeSAM" ],
+        "default_values": [ "Both" ],
         "field_type" : "dropdown",
         "dropdown_options":{
             "options": [{
