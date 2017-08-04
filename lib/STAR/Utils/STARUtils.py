@@ -260,8 +260,7 @@ class STARUtils:
             mp_cmd.append('--outFilterMultimapNmax')
             mp_cmd.append(str(params['outFilterMultimapNmax']))
 
-        if (params.get('outSAMtype', None) is not None
-                and isinstance(params['outSAMtype'], str)):
+        if params.get('outSAMtype', None) is not None:
             mp_cmd.append('--outSAMtype')
             mp_cmd.append(params['outSAMtype'])
             if params.get('outSAMtype', None) == 'BAM':
