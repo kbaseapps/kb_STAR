@@ -661,7 +661,7 @@ class STARUtils:
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
-            rds_refs.append(reads_ref)
+            rds_refs.append(reads_ref['ref'])
 
             job = batch_result['results'][k]
             result_package = job['result_package']
@@ -699,6 +699,8 @@ class STARUtils:
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
+            print "\n%%%%%%%%%%%checking rds_refs:\n"
+            pprint(rds_refs)
             reads_name_map = self.get_object_names(rds_refs)
             gene_count_files = ['{}/ReadsPerGene.out.tab'.format(
                         reads_name_map[rds_ref] for rds_ref in rds_refs)]
