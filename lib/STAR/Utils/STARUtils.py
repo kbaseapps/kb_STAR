@@ -95,9 +95,9 @@ class STARUtils:
         if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
             raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
                       "not {}".format(params.get("alignment_suffix", None)))
-        if "expression_suffix" not in params or not valid_string(params["expression_suffix"]):
-            raise ValueError("Parameter expression_suffix must be a valid Workspace object string, "
-                      "not {}".format(params.get("expression_suffix", None)))
+        #if "expression_suffix" not in params or not valid_string(params["expression_suffix"]):
+        #    raise ValueError("Parameter expression_suffix must be a valid Workspace object string, "
+        #              "not {}".format(params.get("expression_suffix", None)))
 
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
@@ -971,12 +971,12 @@ class STARUtils:
                                                                                      indent=1)))
         alignment_ref = params.get('alignment_ref')
 
-        alignment_object_info = self.ws_client.get_object_info3({"objects": 
+        alignment_object_info = self.ws_client.get_object_info3({"objects":
                                                          [{"ref": alignment_ref}]}
                                                          )['infos'][0]
         alignment_name = alignment_object_info[1]
 
-        output_directory = os.path.join(self.scratch, 
+        output_directory = os.path.join(self.scratch,
                                         alignment_name + '_' + str(int(time.time() * 100)))
         self._mkdir_p(output_directory)
 
