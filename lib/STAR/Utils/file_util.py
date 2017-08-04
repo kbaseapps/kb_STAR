@@ -298,7 +298,7 @@ def extract_geneCount_matrix(geneCount_filenames, output_dir):
     for fid in sorted(counts.iterkeys()):
         counts2 = [counts[fid][filename] for filename in gene_count_file_paths]
         print fid, "\t", "\t".join(counts2)
-        fout.write(stri(fid) + "\t" + "\t".join(counts2))
+        fout.write(str(fid) + "\t" + "\t".join(counts2))
 
     fout.close()
     return output_filename
