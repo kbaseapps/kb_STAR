@@ -644,7 +644,7 @@ class STARUtils:
             for reads_name in rds_names:
                 gene_count_files.append('{}/{}ReadsPerGene.out.tab'.format(reads_name, prefix))
 
-            extract_geneCount_matrix(gene_count_files, output_dir)
+            #extract_geneCount_matrix(gene_count_files, output_dir)
 
         # Reporting...
         report_info = {'name': None, 'ref': None}
