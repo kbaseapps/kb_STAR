@@ -149,8 +149,8 @@ class STARUtils:
             params['outFilterIntronMotifs'] = 'RemoveNoncanonical'
         if params.get(self.SET_READS, None) is None:
             reads_refs = self._get_reads_refs_from_setref(params)
-            log('%%%%-->\nsetDefaultParameters, the reads_ref details willl be:\n' +
-                            'reads_ref:\n{}---->%%%%'.format(json.dumps(reads_refs, indent=1)))
+            #log('%%%%-->\nsetDefaultParameters, the reads_ref details willl be:\n' +
+            #                'reads_ref:\n{}---->%%%%'.format(json.dumps(reads_refs, indent=1)))
             params[self.SET_READS] = reads_refs
 
         return params

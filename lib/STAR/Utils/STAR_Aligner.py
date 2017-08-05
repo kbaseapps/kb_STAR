@@ -33,6 +33,7 @@ class STAR_Aligner(object):
         the index files.
         """
         ret_params = copy.deepcopy(validated_params)
+        ret_params[STARUtils.PARAM_IN_STARMODE] = 'genomeGenerate'
 
 	#Converting refs to file locations in the scratch area
         ret_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
