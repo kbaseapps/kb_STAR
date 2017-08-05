@@ -32,36 +32,39 @@ class STAR_Aligner(object):
 
 
     def run_align(self, params):
-        # 1. validate & process the input parameters
-        validated_params = self.star_utils.process_params(params)
-        input_obj_info = self.star_utils.determine_input_info(validated_params)
-
         # 0. create the star folders
         if self.star_idx_dir is None:
             (idx_dir, out_dir) = self.star_utils.create_star_dirs(self.scratch)
             self.star_idx_dir = idx_dir
             self.star_out_dir = out_dir
 
+        # 1. validate & process the input parameters
+        validated_params = self.star_utils.process_params(params)
+        input_obj_info = self.star_utils.determine_input_info(validated_params)
+
+	# 2. convert the inpddut parameters (from refs to file paths, especially)
+        input_params = self.star_utils.convert_params(validated_params)
+
         returnVal = {
             "report_ref": None,
             "report_name": None
         }
         if input_obj_info['run_mode'] == 'single_library':
-            returnVal = self.star_run_single(validated_params)
+            returnVal = self.star_run_single(input_params)
 
         if input_obj_info['run_mode'] == 'sample_set':
-            returnVal = self.star_run_batch(validated_params)
+            returnVal = self.star_run_batch(input_params)
 
         return returnVal
 
 
-    def run_star_indexing(self, validated_params):
+    def run_star_indexing(self, input_params):
         """
         Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
         It creates a directory as defined by self.star_idx_dir in the scratch area that houses
         the index files.
         """
-        ret_params = copy.deepcopy(validated_params)
+        ret_params = copy.deepcopy(input_params)
         ret_params[STARUtils.PARAM_IN_STARMODE] = 'genomeGenerate'
 
         # build the indexing parameters
@@ -127,13 +130,13 @@ class STAR_Aligner(object):
             if idx_ret != 0:
                 raise ValueError("Failed to generate genome indices, aborting...")
 
-    def star_run_single(self, validated_params):
+    def star_run_single(self, input_params):
         """
         Performs a single run of STAR against a single reads reference. The rest of the info
         is taken from the params dict - see the spec for details.
         """
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
-                'params:\n{}'.format(json.dumps(validated_params, indent=1)))
+                'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         # 1. Prepare for mapping
         rds = None
@@ -221,15 +224,12 @@ class STAR_Aligner(object):
 
         return ret_val
 
-    def star_run_batch(self, validated_params):
+    def star_run_batch(self, input_params):
         """
         star_run_batch: running the STAR align in batch
         """
         log('--->\nrunning STAR_Aligner.star_run_batch\n' +
-                'params:\n{}'.format(json.dumps(validated_params, indent=1)))
-
-	# 0. convert the inpddut parameters (from refs to file paths, especially)
-        input_params = self.star_utils.convert_params(validated_params)
+                'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         # 1. get index
         self.get_index(input_params)
