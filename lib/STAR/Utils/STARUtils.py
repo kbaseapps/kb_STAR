@@ -496,8 +496,6 @@ class STARUtils:
                 params['concurrent_njsw_tasks'] = validated_params['concurrent_njsw_tasks']
         if validated_params.get('alignmentset_suffix', None) is not None:
                 params['alignmentset_suffix'] = validated_params['alignmentset_suffix']
-        if validated_params.get('expression_set_suffix', None) is not None:
-                params['expression_set_suffix'] = validated_params['expression_set_suffix']
 
         # Add advanced options from validated_params to params
         sjdbGTFfile = validated_params.get("sjdbGTFfile", None)
@@ -777,259 +775,6 @@ class STARUtils:
 
         return reads_refs
 
-
-    def _get_alignment_gtf_file(self, alignment_ref, output_directory):
-        """
-        _get_alignment_gtf_file: get the reference annotation file (in GTF or GFF3 format)
-        """
-        alignment_data = self.ws_client.get_objects2({'objects':
-                                               [{'ref': alignment_ref}]})['data'][0]['data']
-
-        genome_ref = alignment_data.get('genome_id')
-        genome_data = self.ws_client.get_objects2({'objects':
-                                            [{'ref': genome_ref}]})['data'][0]['data']
-
-        gff_handle_ref = genome_data.get('gff_handle_ref')
-
-        if gff_handle_ref:
-            log('getting reference annotation file from genome')
-            annotation_file = self.dfu.shock_to_file({'handle_id': gff_handle_ref,
-                                                      'file_path': output_directory,
-                                                      'unpack': 'unpack'})['file_path']
-        else:
-            annotation_file = self._create_genome_gtf_file(genome_ref, output_directory)
-
-        return annotation_file
-
-    def _create_genome_gtf_file(self, genome_ref, output_directory):
-        """
-        _create_gtf_file: create reference annotation file from genome
-        """
-
-        log('start generating reference annotation file')
-
-        genome_gff_file = self.gfu.genome_to_gff({'genome_ref': genome_ref,
-                                                  'target_dir': output_directory})['file_path']
-
-        gtf_ext = '.gtf'
-        if not genome_gff_file.endswith(gtf_ext):
-            gtf_path = os.path.splitext(genome_gff_file)[0] + '.gtf'
-            self._run_gffread(genome_gff_file, gtf_path)
-        else:
-            gtf_path = genome_gff_file
-
-        return gtf_path
-
-    # borrowed from kb_stringtie
-    def _save_expression(self, output_dir, alignment_ref, workspace_name, gtf_file,
-                         expression_suffix):
-        """
-        _save_expression: save Expression object to workspace
-        """
-
-        log('start saving Expression object')
-
-        alignment_data_object = self.ws_client.get_objects2({'objects':
-                                                     [{'ref': alignment_ref}]})['data'][0]
-
-        alignment_name = alignment_data_object['info'][1]
-        if re.match('.*_*[Aa]lignment', alignment_name):
-            expression_obj_name = re.sub('_*[Aa]lignment', expression_suffix, alignment_name)
-        else:
-            expression_obj_name = alignment_name + expression_suffix
-        destination_ref = workspace_name + '/' + expression_obj_name
-        upload_expression_params = {'destination_ref': destination_ref,
-                                    'source_dir': output_dir,
-                                    'alignment_ref': alignment_ref,
-                                    'tool_used': 'STAR',
-                                    'tool_version': self.STAR_VERSION}
-
-        expression_ref = self.eu.upload_expression(upload_expression_params)['obj_ref']
-
-        return expression_ref
-
-
-    def _save_expression_set(self, alignment_expression_map, alignment_set_ref, workspace_name,
-                             expression_set_suffix):
-        """
-        _save_expression_set: save ExpressionSet object to workspace
-        """
-
-        log('start saving ExpressionSet object')
-
-        items = []
-        for alignment_expression in alignment_expression_map:
-            items.append({'ref': alignment_expression.get('expression_obj_ref')})
-
-        expression_set_data = {'description': 'ExpressionSet using STAR', 
-                               'items': items}
-
-        alignment_set_data_object = self.ws_client.get_objects2({'objects':
-                                                         [{'ref': alignment_set_ref}]})['data'][0]
-
-        alignment_set_name = alignment_set_data_object['info'][1]
-        if re.match('.*_*[Aa]lignment_*[Ss]et', alignment_set_name):
-            expression_set_name = re.sub('_*[Aa]lignment_*[Ss]et',
-                                         expression_set_suffix,
-                                         alignment_set_name)
-        else:
-            expression_set_name = alignment_set_name + expression_set_suffix
-
-        expression_set_save_params = {'data': expression_set_data,
-                                      'workspace': workspace_name,
-                                      'output_object_name': expression_set_name}
-
-        save_result = self.set_api_client.save_expression_set_v1(expression_set_save_params)
-        expression_set_ref = save_result['set_ref']
-
-        return expression_set_ref
-
-
-    def _process_alignment_object(self, params):
-        """
-        _process_alignment_object: process KBaseRNASeq.RNASeqAlignment type input object
-        """
-        log('start processing RNASeqAlignment object\nparams:\n{}'.format(json.dumps(params, 
-                                                                                     indent=1)))
-        alignment_ref = params.get('alignment_ref')
-
-        alignment_object_info = self.ws_client.get_object_info3({"objects":
-                                                         [{"ref": alignment_ref}]}
-                                                         )['infos'][0]
-        alignment_name = alignment_object_info[1]
-
-        output_directory = os.path.join(self.scratch,
-                                        alignment_name + '_' + str(int(time.time() * 100)))
-        self._mkdir_p(output_directory)
-
-        # input files
-        params['input_file'] = self._get_bam_file(alignment_ref)
-        if not params.get('gtf_file'):
-            params['gtf_file'] = self._get_alignment_gtf_file(alignment_ref, output_directory)
-        else:
-            shutil.copy(params.get('gtf_file'), output_directory)
-        log('using {} as reference annotation file.'.format(params.get('gtf_file')))
-
-        # output files
-        self.output_transcripts = 'transcripts.gtf'
-        params['output_transcripts'] = os.path.join(output_directory, self.output_transcripts)
-
-        self.gene_abundances_file = 'genes.fpkm_tracking'
-        params['gene_abundances_file'] = os.path.join(output_directory, self.gene_abundances_file)
-
-        command = self._generate_command(params)
-        self._run_command(command)
-
-        if not params.get('merge'):
-            star_obj_obj_ref = self._save_expression(output_directory,
-                                                       alignment_ref,
-                                                       params.get('workspace_name'),
-                                                       params['gtf_file'],
-                                                       params['expression_suffix'])
-        else:
-            log('skip generating expression object')
-            expression_obj_ref = ''
-
-        returnVal = {'output_directory': output_directory,
-                     'expression_obj_ref': expression_obj_ref,
-                     'alignment_ref': alignment_ref,
-                     'annotation_file': params['gtf_file']}
-
-        return returnVal
-
-
-    def _process_alignment_set_object(self, params):
-        """
-        _process_alignment_set_object: process KBaseRNASeq.RNASeqAlignmentSet type input object
-        """
-
-        log('start processing AlignmentSet object\nparams:\n{}'.format(json.dumps(params, 
-                                                                                  indent=1)))
-
-        alignment_set_ref = params.get('alignment_set_ref')
-        alignment_set_object = self.ws_client.get_objects2({'objects':
-                                                    [{'ref': alignment_set_ref}]}
-                                                    )['data'][0]
-
-        alignment_set_info = alignment_set_object['info']
-        alignment_set_data = alignment_set_object['data']
-
-        alignment_set_type = alignment_set_info[2]
-
-        mul_processor_params = []
-        if re.match('KBaseRNASeq.RNASeqAlignmentSet-\d.\d', alignment_set_type):
-            mapped_alignment_ids = alignment_set_data['mapped_alignments_ids']
-            for i in mapped_alignment_ids:
-                for sample_name, alignment_id in i.items():
-                    alignment_upload_params = params.copy()
-                    alignment_upload_params['alignment_ref'] = alignment_id
-                    mul_processor_params.append(alignment_upload_params)
-        elif re.match('KBaseSets.ReadsAlignmentSet-\d.\d', alignment_set_type):
-            items = alignment_set_data['items']
-            for item in items:
-                alignment_ref = item['ref']
-                alignment_upload_params = params.copy()
-                alignment_upload_params['alignment_ref'] = alignment_ref
-                mul_processor_params.append(alignment_upload_params)
-
-        cpus = min(params.get('num_threads'), multiprocessing.cpu_count())
-        pool = Pool(ncpus=cpus)
-        log('running _process_alignment_object with {} cpus'.format(cpus))
-        alignment_expression_map = pool.map(self._process_alignment_object, mul_processor_params)
-
-        output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
-        self._mkdir_p(output_directory)
-
-        for proc_alignment_return in alignment_expression_map:
-            alignment_ref = proc_alignment_return.get('alignment_ref')
-            alignment_name = self.ws_client.get_object_info([{"ref": alignment_ref}],
-                                                     includeMetadata=None)[0][1]
-            self._run_command('cp -R {} {}'.format(proc_alignment_return.get('output_directory'),
-                                                   os.path.join(output_directory,
-                                                                alignment_name)))
-        if not params.get('merge'):
-            expression_obj_ref = self._save_expression_set(alignment_expression_map,
-                                                           alignment_set_ref,
-                                                           params.get('workspace_name'),
-                                                           params['expression_set_suffix'])
-        else:
-            log('skip generating expression set object')
-            expression_obj_ref = ''
-
-        annotation_file_name = os.path.basename(alignment_expression_map[0]['annotation_file'])
-        annotation_file_path = os.path.join(output_directory,
-                                            os.listdir(output_directory)[0],
-                                            annotation_file_name)
-
-        returnVal = {'output_directory': output_directory,
-                     'expression_obj_ref': expression_obj_ref,
-                     'annotation_file': annotation_file_path}
-
-        return returnVal
-
-    def _get_bam_file(self, alignment_ref):
-        """
-        _get_bam_file: get input  SAM/BAM file from Alignment object
-        """
-
-        log('getting bam file from alignment')
-
-        bam_file_dir = self.rau.download_alignment({'source_ref': alignment_ref})['destination_dir']
-
-        files = os.listdir(bam_file_dir)
-        bam_file_list = [file for file in files if re.match(r'.*\_sorted\.bam', file)]
-        if not bam_file_list:
-            bam_file_list = [file for file in files if re.match(r'.*(?<!sorted)\.bam', file)]
-
-        if not bam_file_list:
-            raise ValueError('Cannot find .bam file from alignment {}'.format(alignment_ref))
-
-        bam_file_name = bam_file_list[0]
-
-        bam_file = os.path.join(bam_file_dir, bam_file_name)
-
-        return bam_file
-
     def _generate_output_file_list(self, output_directory):
         """
         _generate_output_file_list: zip result files and generate file_links for report
@@ -1206,7 +951,6 @@ class STARUtils:
 
         return report_output
 
-    # def upload_alignment_set(self, input_params, alignment_info, reads_info, alignmentset_name):
     def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
         """
         Compiles and saves a set of alignment references (+ other stuff) into a
@@ -1222,8 +966,7 @@ class STARUtils:
             "description": "Alignments using STAR, v.{}".format(self.STAR_VERSION),
             "items": alignment_items
         }
-        set_api = SetAPI(self.callback_url)
-        set_info = set_api.save_reads_alignment_set_v1({
+        set_info = self.set_api_client.save_reads_alignment_set_v1({
             "workspace": ws_name,
             "output_object_name": alignmentset_name,
             "data": alignment_set
