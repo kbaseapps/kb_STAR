@@ -135,13 +135,7 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
-	# 0. convert the inpddut parameters (from refs to file paths, especially)
-        input_params = self.star_utils.convert_params(validated_params)
-
-        # 1. get index
-        self.get_index(input_params)
-
-        # 2. prepare for mapping
+        # 1. Prepare for mapping
         rds = None
         reads_refs = input_params[STARUtils.SET_READS]
         for r in reads_refs:
@@ -166,7 +160,7 @@ class STAR_Aligner(object):
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
-        # 3. After all is set, do the alignment and upload the output.
+        # 2. After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
         if star_mp_ret.get('star_output', None) is not None:
@@ -234,33 +228,35 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_batch\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
+	# 0. convert the inpddut parameters (from refs to file paths, especially)
+        input_params = self.star_utils.convert_params(validated_params)
+
         # 1. get index
-        self.get_index(validated_params)
+        self.get_index(input_params)
 
-        reads_refs = validated_params[STARUtils.SET_READS]
-
+        reads_refs = input_params[STARUtils.SET_READS]
         # 2. build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
             tasks.append(
                     self.star_utils.build_single_execution_task(
-                        r['ref'], validated_params)
+                        r['ref'], input_params)
                     )
 
         batch_run_params = {'tasks': tasks,
                             'runner': 'parallel',
                             'max_retries': 2}
 
-        if validated_params.get('concurrent_local_tasks', None) is not None:
-                batch_run_params['concurrent_local_tasks'] = validated_params['concurrent_local_tasks']
-        if validated_params.get('concurrent_njsw_tasks', None) is not None:
-                batch_run_params['concurrent_njsw_tasks'] = validated_params['concurrent_njsw_tasks']
+        if input_params.get('concurrent_local_tasks', None) is not None:
+                batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
+        if input_params.get('concurrent_njsw_tasks', None) is not None:
+                batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
 
         results = self.parallel_runner.run_batch(batch_run_params)
         print('Batch run results=')
         pprint(results)
 
-        batch_result = self.star_utils.process_batch_result(results, validated_params, reads_refs)
+        batch_result = self.star_utils.process_batch_result(results, input_params, reads_refs)
         batch_result['output_directory'] = self.star_out_dir
 
         return batch_result
