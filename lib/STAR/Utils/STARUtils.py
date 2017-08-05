@@ -659,7 +659,7 @@ class STARUtils:
             'items': alignment_items
         }
         set_info = self.set_api_client.save_reads_alignment_set_v1({
-            'workspace': ws_name,
+            'workspace': params['output_workspace'],
             'output_object_name': alignmentset_name,
             'data': alignment_set_data
         })
