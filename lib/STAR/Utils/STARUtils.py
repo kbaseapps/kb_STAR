@@ -53,6 +53,7 @@ class STARUtils:
     PARAM_IN_READS_FILES = 'readFilesIn'
     PARAM_IN_READS = 'readsset_ref'
     PARAM_IN_GENOME = 'genome_ref'
+    SET_READS = 'set_reads_refs'
 
     def __init__(self, config, provenance):
         self.config = config
@@ -146,6 +147,11 @@ class STARUtils:
             params['outSAMstrandField'] = 'intronMotif'
         if params.get('outFilterIntronMotifs', None) is None:
             params['outFilterIntronMotifs'] = 'RemoveNoncanonical'
+        if params.get(self.SET_READS, None) is None:
+            reads_refs = self._get_reads_refs_from_setref(params)
+            log('%%%%-->\nsetDefaultParameters, the reads_ref details willl be:\n' +
+                            'reads_ref:\n{}---->%%%%'.format(json.dumps(reads_refs, indent=1)))
+            params[self.SET_READS] = reads_refs
 
         return params
 
@@ -195,9 +201,8 @@ class STARUtils:
             idx_cmd.append('--sjdbOverhang')
             idx_cmd.append(str(params['sjdbOverhang']))
 
-        # STEP 3: return idx_cmd
-        print ('STAR indexing CMD:')
-        print ' '.join(idx_cmd)
+        #print ('STAR indexing CMD:')
+        #print ' '.join(idx_cmd)
         return idx_cmd
 
     def _construct_mapping_cmd(self, params):
@@ -323,9 +328,8 @@ class STARUtils:
             mp_cmd.append('--alignMatesGapMax')
             mp_cmd.append(str(params['alignMatesGapMax']))
 
-        # STEP 4: return mp_cmd
-        print ('STAR mapping CMD:')
-        print ' '.join(mp_cmd)
+        #print ('STAR mapping CMD:')
+        #print ' '.join(mp_cmd)
         return mp_cmd
 
     def _exec_indexing(self, params):
@@ -378,13 +382,11 @@ class STARUtils:
         return ret
 
 
-    def upload_STARalignment(self, input_params, reads, output_bam_file):
+    def upload_STARalignment(self, input_params, reads_ref, reads_info, output_bam_file):
         """
         Uploads the alignment file + metadata.
         Returns the STAR alignment reference.
         """
-        reads_ref = reads.get('readsRefs', None)[0]
-        reads_info = reads.get('readsInfo', None)[0]
 
         aligner_opts = dict()
         for k in input_params:
@@ -437,47 +439,37 @@ class STARUtils:
                                                   })
         return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-
-    def _get_reads(self, params):
+    def _get_reads_info(self, reads, readsSet_ref):
         '''
-        fetch the refs and info from the input given by params[self.PARAM_IN_READS], which is a ref
+        _get_reads_info:fetches the detailed info for each reads with ref in list reads_refs
+        return a list of objects of the following structure:
+        {
+            "style": "paired", "single", or "interleaved",
+            "file_fwd": path_to_file,
+            "name": name of the reads,
+            "file_rev": path_to_file, only if paired end,
+            "object_ref": reads reference for downstream convenience,
+            "condition": the condition for the reads.
+        }
         '''
-        reads_refs = list()
-        radsset_ref = params[self.PARAM_IN_READS]
-	if radsset_ref is not None:
-            try:
-		print("Fetching reads ref(s) from sample/reads set ref {}".format(radsset_ref))
-		reads_refs = fetch_reads_refs_from_sampleset(
-                                        radsset_ref,
-                                        self.workspace_url,
-                                        self.callback_url, params)
-		print("\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(radsset_ref))
-                pprint(reads_refs)
-            except ValueError:
-		print("Incorrect object type for fetching reads ref(s)!")
-		raise
+        try:
+            print("Fetching FASTA file from reads reference {}".format(reads['ref']))
+            ret_reads_info = fetch_reads_from_reference(reads['ref'], self.callback_url)
+        except ValueError:
+            print("Incorrect object type for fetching a FASTA file!")
+            raise
 
-        reads_info = list()
-	for source_reads in reads_refs:
-            try:
-                print("Fetching FASTA file from reads reference {}".format(source_reads['ref']))
-                ret_reads = fetch_reads_from_reference(source_reads['ref'], self.callback_url)
-            except ValueError:
-                print("Incorrect object type for fetching a FASTA file!")
-                raise
-
-            if ret_reads.get("file_fwd", None) is None:
-                raise RuntimeError("FASTA file fetched from reads ref {} doesn't seem to exist!".format(source_reads['ref']))
+        if ret_reads_info.get("file_fwd", None) is None:
+            raise RuntimeError("FASTA file fetched from reads {} doesn't seem to exist!".format(reads['ref']))
+        else:
+            if reads.get('condition', None) is not None:
+                ret_reads_info['condition'] = reads['condition']
             else:
-                if source_reads.get('condition', None) is not None:
-                    ret_reads['condition'] = source_reads['condition']
-                else:
-                    ret_reads['condition'] = params['condition']
-                if ret_reads.get('object_ref', None) != radsset_ref:
-                    ret_reads[self.PARAM_IN_READS] = radsset_ref
-                reads_info.append(ret_reads)
+                ret_reads_info['condition'] = 'unspecified'
+            if reads.get('object_ref', None) != readsSet_ref:
+                ret_reads_info[self.PARAM_IN_READS] = readsSet_ref
 
-        return {'readsRefs': reads_refs, 'readsInfo': reads_info}
+        return ret_reads_info
 
 
     def _get_genome_fasta(self, gnm_ref):
@@ -504,8 +496,6 @@ class STARUtils:
         and add the advanced options.
         """
         params = copy.deepcopy(validated_params)
-        reads = self._get_reads(validated_params)
-
         params['runMode'] = 'genomeGenerate'
 
         if validated_params.get('create_report', None) is not None:
@@ -539,60 +529,8 @@ class STARUtils:
         else:
             params['quantMode'] = 'Both'
 
-        return {'input_parameters': params, 'reads': reads}
-
-    def _add_advanced_options(self, validated_params):
-        if (validated_params.get('outFilterType', None) is not None
-                and isinstance(validated_params['outFilterType'], str)):
-            params['outFilterType'] = validated_params['outFilterType']
-        if (validated_params.get('outFilterMultimapNmax', None) is not None
-                and isinstance(validated_params['outFilterMultimapNmax'], int)):
-            params['outFilterMultimapNmax'] = validated_params['outFilterMultimapNmax']
-        if (validated_params.get('outSAMtype', None) is not None
-                and isinstance(validated_params['outSAMtype'], str)):
-            params['outSAMtype'] = validated_params['outSAMtype']
-        if (validated_params.get('outSAMattrIHstart', None) is not None
-                and isinstance(validated_params['outSAMattrIHstart'], int)):
-            params['outSAMattrIHstart'] = validated_params['outSAMattrIHstart']
-        if (validated_params.get('outSAMstrandField', None) is not None
-                and isinstance(validated_params['outSAMstrandField'], str)):
-            params['outSAMstrandField'] = validated_params['outSAMstrandField']
-        if (validated_params.get('alignSJoverhangMin', None) is not None
-		and isinstance(validated_params['alignSJoverhangMin'], int)
-                and validated_params['alignSJoverhangMin'] > 0):
-            params['alignSJoverhangMin'] = validated_params['alignSJoverhangMin']
-        if (validated_params.get('alignSJDBoverhangMin', None) is not None
-                and isinstance(validated_params['alignSJDBoverhangMin'], int)
-                and validated_params['alignSJDBoverhangMin'] > 0):
-            params['alignSJDBoverhangMin'] = validated_params['alignSJDBoverhangMin']
-        if (validated_params.get('outFilterMismatchNmax', None) is not None
-		and isinstance(validated_params['outFilterMismatchNmax'], int)
-                and validated_params['outFilterMismatchNmax'] > 0):
-            params['outFilterMismatchNmax'] = validated_params['outFilterMismatchNmax']
-        if (validated_params.get('alignIntronMin', None) is not None
-		and isinstance(validated_params['alignIntronMin'], int)
-                and validated_params['alignIntronMin'] > 0):
-            params['alignIntronMin'] = validated_params['alignIntronMin']
-        if (validated_params.get('alignMatesGapMax', None) is not None
-		and isinstance(validated_params['alignMatesGapMax'], int)
-                and validated_params['alignMatesGapMax'] >= 0):
-            params['alignMatesGapMax'] = validated_params['alignMatesGapMax']
-
-        if validated_params.get('sjdbGTFfile', None) is not None:
-            params['sjdbGTFfile'] = validated_params['sjdbGTFfile']
-        if validated_params.get('sjdbOverhang', None) is not None :
-            params['sjdbOverhang'] = validated_params['sjdbOverhang']
-
-        if validated_params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = validated_params[self.PARAM_IN_OUTFILE_PREFIX]
-
-
-        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (params.get('quantMode', None) is not None
-                and params.get('quantMode', None) in quant_modes):
-            params_mp['quantMode'] = params['quantMode']
-
         return params
+
 
     def _get_indexing_params(self, params, star_idx_dir):
         params_idx = {
@@ -727,8 +665,8 @@ class STARUtils:
         report_text += '       Ran on main node = ' + str(ran_locally) + '\n'
         report_text += '   Ran on remote worker = ' + str(ran_njsw) + '\n\n'
 
-        print('Report text=')
-        print(report_text)
+        #print('Report text=')
+        #print(report_text)
 
         report_info = self._generate_star_report(
                         result_obj_ref,
@@ -745,7 +683,6 @@ class STARUtils:
         }
 
         return result
-
 
     def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
         """
@@ -857,12 +794,23 @@ class STARUtils:
         return (idxdir, outdir)
 
 
-    def get_reads_refs(self, validated_params):
-        return fetch_reads_refs_from_sampleset(
-                        validated_params[self.PARAM_IN_READS],
-                        self.workspace_url,
-                        self.callback_url,
-                        validated_params)
+    def _get_reads_refs_from_setref(self, params):
+        readsSet_ref = params[self.PARAM_IN_READS]
+        reads_refs = list()
+        try:
+            print("Fetching reads ref(s) from sample/reads set ref {}".format(readsSet_ref))
+            reads_refs = fetch_reads_refs_from_sampleset(
+                                    readsSet_ref,
+                                    self.workspace_url,
+                                    self.callback_url,
+                                    params)
+            #print("\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(readsSet_ref))
+            pprint(reads_refs)
+        except ValueError:
+            print("Incorrect object type for fetching reads ref(s)!")
+            raise
+
+        return reads_refs
 
 
     def _get_alignment_gtf_file(self, alignment_ref, output_directory):

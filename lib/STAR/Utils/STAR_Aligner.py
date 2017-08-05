@@ -94,21 +94,20 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
-	# convert the input parameters (from refs to file paths, especially)
-        params_ret = self.star_utils.convert_params(validated_params)
-        input_params = params_ret.get('input_parameters', None)
+        reads_ref = self.star_utils._get_reads_refs_from_setref(validated_params)[0]
+        reads_info = self.star_utils._get_reads_info(
+                                reads_ref,
+                                validated_params[STARUtils.PARAM_IN_READS])
 
-        reads = params_ret.get('reads', None)
-        reads_ref = reads.get('readsRefs', None)[0]
-        reads_info = reads.get('readsInfo', None)[0]
+	# convert the inpddut parameters (from refs to file paths, especially)
+        input_params = self.star_utils.convert_params(validated_params)
         rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
-        log('%%%%-->\nAfter parameter conversion, the reads_ref details are:\n' +
-                'params:\n{}--%%%%>'.format(json.dumps(reads_ref, indent=1)))
 
         alignment_objs = list()
         alignment_ref = None
         singlerun_output_info = {}
         report_info = {'name': None, 'ref': None}
+        ret_val = None
 
         if not 'condition' in reads_info:
             reads_info['condition'] = input_params['condition']
@@ -137,7 +136,11 @@ class STAR_Aligner(object):
 
             #print("Uploading STAR output object...")
             # Upload the alignment
-            upload_results = self.star_utils.upload_STARalignment(input_params, reads, output_bam_file)
+            upload_results = self.star_utils.upload_STARalignment(
+                                        input_params,
+                                        reads_ref,
+                                        reads_info,
+                                        output_bam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
                 'ref': alignment_ref,
@@ -150,7 +153,6 @@ class STAR_Aligner(object):
 
             singlerun_output_info['output_dir'] = star_mp_ret['star_output']
             singlerun_output_info['output_bam_file'] = output_bam_file
-
             singlerun_output_info['upload_results'] = upload_results
 
             #workspace_name = validated_params[STARUtils.PARAM_IN_WS]
@@ -166,18 +168,28 @@ class STAR_Aligner(object):
             if input_params.get("create_report", 0) == 1:
                 report_info = self.star_utils.generate_report_for_single_run(singlerun_output_info, input_params)
 
+            ret_val = {'alignmentset_ref': None,
+                    'output_directory': singlerun_output_info['output_dir'],
+                    'output_info': singlerun_output_info,
+                    'alignment_objs': alignment_objs,
+                    'report_name': report_info['name'],
+                    'report_ref': report_info['ref']
+            }
+        else:
+            ret_val = {'alignmentset_ref': None,
+                    'output_directory': None,
+                    'output_info': None,
+                    'alignment_objs': None,
+                    'report_name': None,
+                    'report_ref': None
+            }
+
         if ret_fwd is not None:
             os.remove(ret_fwd)
             if reads_info.get('file_rev', None) is not None:
                 os.remove(reads_info["file_rev"])
 
-        return {'alignmentset_ref': None,
-                'output_directory': singlerun_output_info['output_dir'],
-                'output_info': singlerun_output_info,
-                'alignment_objs': alignment_objs,
-                'report_name': report_info['name'],
-                'report_ref': report_info['ref']
-        }
+        return ret_val
 
 
     def star_run_batch(self, validated_params):
@@ -187,7 +199,7 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_batch\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
-        reads_refs = self.star_utils.get_reads_refs(validated_params)
+        reads_refs = validated_params[STARUtils.SET_READS]
 
         # build task list and send it to KBParallel
         tasks = []

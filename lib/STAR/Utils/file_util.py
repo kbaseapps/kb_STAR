@@ -136,8 +136,8 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
     infos = ws.get_object_info3({'objects': refs_for_ws_info})['infos']
 
     name_ext = '_alignment'
-    if 'alignment_suffix' in params \
-        and params['alignment_suffix'] is not None:
+    if ('alignment_suffix' in params
+        and params['alignment_suffix'] is not None):
         ext = params['alignment_suffix'].replace(' ', '')
         if ext:
             name_ext = ext

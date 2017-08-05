@@ -194,10 +194,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
         # 1. validate & process the input parameters
         validated_params = star_utils.process_params(params)
-        input_obj_info = star_utils.determine_input_info(validated_params)
 
         # indexing if not yet existing
-        if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'SAindex')):
+        if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'genomeParameters.txt')):
             # generate the indices
             (idx_ret, validated_params) = star_runner.run_star_indexing(validated_params)
             if idx_ret != 0:
@@ -209,7 +208,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         #  1). make a list of tasks to send to KBParallel.
         #  2). add a flag to not make a report for each subtask.
         #  3). make the report when it's all done.
-
+        input_obj_info = star_utils.determine_input_info(validated_params)
         if input_obj_info['run_mode'] == 'single_library':
             returnVal = star_runner.star_run_single(validated_params)
         elif input_obj_info['run_mode'] == 'sample_set':
