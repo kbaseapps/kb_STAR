@@ -187,7 +187,7 @@ class STARUtils:
 	idx_cmd.append(str(params[self.PARAM_IN_THREADN]))
 
 	if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
-            print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
+            #print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
             idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
             for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
                 idx_cmd.append(fasta_file)
@@ -226,7 +226,7 @@ class STARUtils:
 	mp_cmd.append(str(params[self.PARAM_IN_THREADN]))
 
 	if params.get(self.PARAM_IN_READS_FILES, None) is not None:
-            print('Input reads files:\n' + pformat(params[self.PARAM_IN_READS_FILES]))
+            #print('Input reads files:\n' + pformat(params[self.PARAM_IN_READS_FILES]))
             mp_cmd.append('--' + self.PARAM_IN_READS_FILES)
             for reads_file in params[self.PARAM_IN_READS_FILES]:
                 mp_cmd.append(reads_file)
@@ -665,35 +665,6 @@ class STARUtils:
         report_text += '       Ran on main node = ' + str(ran_locally) + '\n'
         report_text += '   Ran on remote worker = ' + str(ran_njsw) + '\n\n'
 
-        #print('Report text=')
-        #print(report_text)
-
-        report_info = self._generate_star_report(
-                        result_obj_ref,
-                        report_text,
-                        qc_result,
-                        params['output_workspace'],
-                        output_dir)
-
-        result = {'alignmentset_ref': result_obj_ref,
-                'output_info': batch_result,
-                'alignment_objs': alignment_objs,
-                'report_name': report_info['name'],
-                'report_ref': report_info['ref']
-        }
-
-        return result
-
-    def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
-        """
-        Compiles and saves a set of alignment references (+ other stuff) into a
-        KBaseRNASeq.RNASeqAlignmentSet.
-        Returns the reference to the new alignment set.
-        alignment_items: [{
-            "ref": alignment_ref,
-            "label": condition label.
-        }]
-        """
         print('Uploading completed alignment set...')
         alignment_set_data = {
             'description': 'Alignments using STAR, v.{}'.format(self.STAR_VERSION),
@@ -704,7 +675,7 @@ class STARUtils:
             'output_object_name': alignmentset_name,
             'data': alignment_set_data
         })
-        pprint(set_info)
+        #pprint(set_info)
 
         return set_info
 
@@ -798,7 +769,7 @@ class STARUtils:
         readsSet_ref = params[self.PARAM_IN_READS]
         reads_refs = list()
         try:
-            print("Fetching reads ref(s) from sample/reads set ref {}".format(readsSet_ref))
+            #print("Fetching reads ref(s) from sample/reads set ref {}".format(readsSet_ref))
             reads_refs = fetch_reads_refs_from_sampleset(
                                     readsSet_ref,
                                     self.workspace_url,
