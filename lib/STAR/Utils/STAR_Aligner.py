@@ -142,11 +142,9 @@ class STAR_Aligner(object):
         self.get_index(input_params)
 
         # 2. prepare for mapping
-        reads_ref = input_params[STARUtils.SET_READS][0]
+        reads_ref = input_params[STARUtils.PARAM_IN_READS]
         #reads_ref = self.star_utils._get_reads_refs_from_setref(input_params)[0]
-        reads_info = self.star_utils._get_reads_info(
-                                reads_ref,
-                                input_params[STARUtils.PARAM_IN_READS])
+        reads_info = self.star_utils._get_reads_info(reads_ref, reads_ref)
 
         rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
 
