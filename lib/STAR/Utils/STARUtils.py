@@ -432,7 +432,7 @@ class STARUtils:
     def _get_reads_info(self, reads, readsSet_ref):
         '''
         _get_reads_info:fetches the detailed info for each reads with ref in list reads_refs
-        return a list of objects of the following structure:
+        return an object of the following structure:
         {
             "style": "paired", "single", or "interleaved",
             "file_fwd": path_to_file,

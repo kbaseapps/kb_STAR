@@ -142,11 +142,16 @@ class STAR_Aligner(object):
         self.get_index(input_params)
 
         # 2. prepare for mapping
-        reads_ref = input_params[STARUtils.PARAM_IN_READS]
-        #reads_ref = self.star_utils._get_reads_refs_from_setref(input_params)[0]
-        reads_info = self.star_utils._get_reads_info(reads_ref, reads_ref)
+        rds = None
+        reads_refs = input_params[STARUtils.SET_READS]
+        for r in reads_refs:
+            if r['ref'] == input_params[STARUtils.PARAM_IN_READS]:
+                rds = r
+                break
 
-        rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
+        reads_info = self.star_utils._get_reads_info(rds, input_params[STARUtils.PARAM_IN_READS])
+
+        rds_name = rds['alignment_output_name'].replace(input_params['alignment_suffix'], '')
 
         alignment_objs = list()
         alignment_ref = None
@@ -176,36 +181,25 @@ class STAR_Aligner(object):
                 output_bam_file = 'Aligned.{}.out.bam'.format(bam_sort)
             output_bam_file = os.path.join(star_mp_ret['star_output'], output_bam_file)
 
-            #print("Uploading STAR output object...")
             # Upload the alignment
             upload_results = self.star_utils.upload_STARalignment(
                                         input_params,
-                                        reads_ref,
+                                        rds,
                                         reads_info,
                                         output_bam_file)
             alignment_ref = upload_results['obj_ref']
             alignment_obj = {
                 'ref': alignment_ref,
-                'name': reads_ref['alignment_output_name']
+                'name': rds['alignment_output_name']
             }
             alignment_objs.append({
-                'reads_ref': reads_ref['ref'],
+                'reads_ref': rds['ref'],
                 'AlignmentObj': alignment_obj
             })
 
             singlerun_output_info['output_dir'] = star_mp_ret['star_output']
             singlerun_output_info['output_bam_file'] = output_bam_file
             singlerun_output_info['upload_results'] = upload_results
-
-            #workspace_name = validated_params[STARUtils.PARAM_IN_WS]
-            #expr_suffix = validated_params['expression_suffix']
-            #gtf_file = validated_params['sjdbGTFfile']
-            #expression_ref = self.star_utils._save_expression(
-            #                    star_mp_ret['star_output'],
-            #                    alignment_ref,
-            #                    workspace_name,
-            #                    gtf_file,
-            #                    expr_suffix)
 
             if input_params.get("create_report", 0) == 1:
                 report_info = self.star_utils.generate_report_for_single_run(singlerun_output_info, input_params)
