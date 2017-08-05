@@ -971,5 +971,5 @@ class STARUtils:
             "output_object_name": alignmentset_name,
             "data": alignment_set
         })
-        return set_info["set_ref"]
+        return set_info
 
