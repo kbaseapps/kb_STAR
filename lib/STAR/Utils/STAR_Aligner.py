@@ -138,6 +138,9 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
                 'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
+        # 0. get index
+        self.get_index(input_params)
+
         # 1. Prepare for mapping
         rds = None
         reads_refs = input_params[STARUtils.SET_READS]
@@ -231,11 +234,8 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_batch\n' +
                 'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        # 1. get index
-        self.get_index(input_params)
-
         reads_refs = input_params[STARUtils.SET_READS]
-        # 2. build task list and send it to KBParallel
+        # build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
             tasks.append(
