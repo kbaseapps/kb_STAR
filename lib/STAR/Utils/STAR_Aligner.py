@@ -15,15 +15,44 @@ def log(message, prefix_newline=False):
 
 class STAR_Aligner(object):
 
-    def __init__(self, config, provenance, index_dir, output_dir):
+    def __init__(self, config, provenance):
         self.config = config
+        self.workspace_url = config['workspace-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.scratch = config['scratch']
+        self.srv_wiz_url = config['srv-wiz-url']
         self.parallel_runner = KBParallel(self.callback_url)
-        self.star_utils = STARUtils(self.config, provenance)
         self.provenance = provenance
-        self.star_idx_dir = index_dir
-        self.star_out_dir = output_dir
+        self.star_utils = STARUtils(self.scratch,
+                        self.workspace_url,
+                        self.callback_url,
+                        self.srv_wiz_url, provenance)
+        self.star_idx_dir = None
+        self.star_out_dir = None
+
+
+    def run_align(self, params):
+        # 1. validate & process the input parameters
+        validated_params = self.star_utils.process_params(params)
+        input_obj_info = self.star_utils.determine_input_info(validated_params)
+
+        # 0. create the star folders
+        if self.star_idx_dir is None:
+            (idx_dir, out_dir) = self.star_utils.create_star_dirs(self.scratch)
+            self.star_idx_dir = idx_dir
+            self.star_out_dir = out_dir
+
+        returnVal = {
+            "report_ref": None,
+            "report_name": None
+        }
+        if input_obj_info['run_mode'] == 'single_library':
+            returnVal = self.star_run_single(validated_params)
+
+        if input_obj_info['run_mode'] == 'sample_set':
+            returnVal = self.star_run_batch(validated_params)
+
+        return returnVal
 
 
     def run_star_indexing(self, validated_params):
@@ -34,14 +63,6 @@ class STAR_Aligner(object):
         """
         ret_params = copy.deepcopy(validated_params)
         ret_params[STARUtils.PARAM_IN_STARMODE] = 'genomeGenerate'
-
-	#Converting refs to file locations in the scratch area
-        ret_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
-                                               ret_params[STARUtils.PARAM_IN_GENOME])
-        if ret_params.get('sjdbGTFfile', None) is None:
-            ret_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
-                                        ret_params[STARUtils.PARAM_IN_GENOME],
-                                        os.path.join(self.scratch, STARUtils.STAR_IDX_DIR))
 
         # build the indexing parameters
         params_idx = self.star_utils._get_indexing_params(ret_params, self.star_idx_dir)
@@ -60,7 +81,8 @@ class STAR_Aligner(object):
         else:
             ret = 0
 
-        return (ret, ret_params)
+        return (ret, params_idx[STARUtils.STAR_IDX_DIR])
+
 
     def run_star_mapping(self, params, rds_files, rds_name):
         """
@@ -86,6 +108,24 @@ class STAR_Aligner(object):
 
         return retVal
 
+    def get_index(self, input_params):
+        '''
+        get_index: generate the index if not yet existing
+        '''
+        gnm_ref = input_params[STARUtils.PARAM_IN_GENOME]
+	if input_params.get('sjdbGTFfile', None) is None:
+            input_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
+                                        gnm_ref,
+                                        self.star_idx_dir)
+
+        if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
+            # fetch genome fasta and GTF from refs to file location(s)
+            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(gnm_ref)
+
+            # generate the indices
+            (idx_ret, idx_dir) = self.run_star_indexing(input_params)
+            if idx_ret != 0:
+                raise ValueError("Failed to generate genome indices, aborting...")
 
     def star_run_single(self, validated_params):
         """
@@ -95,13 +135,19 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
-        reads_ref = self.star_utils._get_reads_refs_from_setref(validated_params)[0]
+	# 0. convert the inpddut parameters (from refs to file paths, especially)
+        input_params = self.star_utils.convert_params(validated_params)
+
+        # 1. get index
+        self.get_index(input_params)
+
+        # 2. prepare for mapping
+        reads_ref = input_params[STARUtils.SET_READS][0]
+        #reads_ref = self.star_utils._get_reads_refs_from_setref(input_params)[0]
         reads_info = self.star_utils._get_reads_info(
                                 reads_ref,
-                                validated_params[STARUtils.PARAM_IN_READS])
+                                input_params[STARUtils.PARAM_IN_READS])
 
-	# convert the inpddut parameters (from refs to file paths, especially)
-        input_params = self.star_utils.convert_params(validated_params)
         rds_name = reads_ref['alignment_output_name'].replace(input_params['alignment_suffix'], '')
 
         alignment_objs = list()
@@ -110,9 +156,6 @@ class STAR_Aligner(object):
         report_info = {'name': None, 'ref': None}
         ret_val = None
 
-        if not 'condition' in reads_info:
-            reads_info['condition'] = input_params['condition']
-
         rds_files = list()
         ret_fwd = reads_info["file_fwd"]
         if ret_fwd is not None:
@@ -120,7 +163,7 @@ class STAR_Aligner(object):
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
-        # After all is set, do the alignment and upload the output.
+        # 3. After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
         if star_mp_ret.get('star_output', None) is not None:
@@ -192,7 +235,6 @@ class STAR_Aligner(object):
 
         return ret_val
 
-
     def star_run_batch(self, validated_params):
         """
         star_run_batch: running the STAR align in batch
@@ -200,9 +242,12 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner.star_run_batch\n' +
                 'params:\n{}'.format(json.dumps(validated_params, indent=1)))
 
+        # 1. get index
+        self.get_index(validated_params)
+
         reads_refs = validated_params[STARUtils.SET_READS]
 
-        # build task list and send it to KBParallel
+        # 2. build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
             tasks.append(

@@ -55,20 +55,17 @@ class STARUtils:
     PARAM_IN_GENOME = 'genome_ref'
     SET_READS = 'set_reads_refs'
 
-    def __init__(self, config, provenance):
-        self.config = config
-        self.workspace_url = config['workspace-url']
-        self.callback_url = os.environ['SDK_CALLBACK_URL']
-        self.token = config['KB_AUTH_TOKEN']
-        self.shock_url = config['shock-url']
-        self.srv_wiz_url = config['srv-wiz-url']
+    def __init__(self, scratch_dir, workspace_url, callback_url, srv_wiz_url, provenance):
+        self.workspace_url = workspace_url
+        self.callback_url = callback_url
+        self.srv_wiz_url = srv_wiz_url
         self.au = AssemblyUtil(self.callback_url)
         self.dfu = DataFileUtil(self.callback_url)
-        self.scratch = config['scratch']
-        self.working_dir = self.scratch
+        self.scratch = scratch_dir
+        self.working_dir = scratch_dir
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
         self.provenance = provenance
-        self.ws_client = Workspace(self.workspace_url, token=self.token)
+        self.ws_client = Workspace(self.workspace_url)
 
         # from the provenance, extract out the version to run by exact hash if possible
         self.my_version = 'release'
@@ -97,9 +94,6 @@ class STARUtils:
         if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
             raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
                       "not {}".format(params.get("alignment_suffix", None)))
-        #if "expression_suffix" not in params or not valid_string(params["expression_suffix"]):
-        #    raise ValueError("Parameter expression_suffix must be a valid Workspace object string, "
-        #              "not {}".format(params.get("expression_suffix", None)))
 
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
@@ -148,10 +142,7 @@ class STARUtils:
         if params.get('outFilterIntronMotifs', None) is None:
             params['outFilterIntronMotifs'] = 'RemoveNoncanonical'
         if params.get(self.SET_READS, None) is None:
-            reads_refs = self._get_reads_refs_from_setref(params)
-            #log('%%%%-->\nsetDefaultParameters, the reads_ref details willl be:\n' +
-            #                'reads_ref:\n{}---->%%%%'.format(json.dumps(reads_refs, indent=1)))
-            params[self.SET_READS] = reads_refs
+            params[self.SET_READS] = self._get_reads_refs_from_setref(params)
 
         return params
 
@@ -187,7 +178,6 @@ class STARUtils:
 	idx_cmd.append(str(params[self.PARAM_IN_THREADN]))
 
 	if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
-            #print('Input fasta reads files:' + pformat(params[self.PARAM_IN_FASTA_FILES]))
             idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
             for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
                 idx_cmd.append(fasta_file)
@@ -681,7 +671,11 @@ class STARUtils:
 
 
     def determine_input_info(self, validated_params):
-        ''' get info on the readsset_ref object and determine if we run once or run on a set '''
+        ''' get info on the readsset_ref object and determine if we run once or run on a set
+        input info provides information on the input and tells us if we should
+        run as a single_library or as a set:
+             input_info = {'run_mode': '', 'info': [..], 'ref': '55/1/2'}
+        '''
         info = self.get_obj_infos(validated_params[self.PARAM_IN_READS])[0]
         obj_type = self.get_type_from_obj_info(info)
         if obj_type in ['KBaseAssembly.PairedEndLibrary', 'KBaseAssembly.SingleEndLibrary',
@@ -776,7 +770,7 @@ class STARUtils:
                                     self.callback_url,
                                     params)
             #print("\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(readsSet_ref))
-            pprint(reads_refs)
+            #pprint(reads_refs)
         except ValueError:
             print("Incorrect object type for fetching reads ref(s)!")
             raise
@@ -1212,4 +1206,27 @@ class STARUtils:
 
         return report_output
 
+    # def upload_alignment_set(self, input_params, alignment_info, reads_info, alignmentset_name):
+    def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
+        """
+        Compiles and saves a set of alignment references (+ other stuff) into a
+        KBaseRNASeq.RNASeqAlignmentSet.
+        Returns the reference to the new alignment set.
+        alignment_items: [{
+            "ref": alignment_ref,
+            "label": condition label.
+        }]
+        """
+        print("Uploading completed alignment set")
+        alignment_set = {
+            "description": "Alignments using STAR, v.{}".format(self.STAR_VERSION),
+            "items": alignment_items
+        }
+        set_api = SetAPI(self.callback_url)
+        set_info = set_api.save_reads_alignment_set_v1({
+            "workspace": ws_name,
+            "output_object_name": alignmentset_name,
+            "data": alignment_set
+        })
+        return set_info["set_ref"]
 

@@ -58,31 +58,10 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # Any configuration parameters that are important should be parsed and
         # saved in the constructor.
         self.config = config
-        self.config['SDK_CALLBACK_URL'] = os.environ['SDK_CALLBACK_URL']
-        self.config['KB_AUTH_TOKEN'] = os.environ['KB_AUTH_TOKEN']
-
-        if 'workspace-url' in config:
-            self.workspace_url = config['workspace-url']
-        if 'shock-url' in config:
-            self.__SHOCK_URL = config['shock-url']
-        if 'handle-service-url' in config:
-            self.__HS_URL = config['handle-service-url']
-        self.callback_url = os.environ['SDK_CALLBACK_URL']
+        self.scratch_dir = os.path.abspath(config['scratch'])
+        self.workspace_url = config['workspace-url']
         self.srv_wiz_url = config['srv-wiz-url']
-        self.__CALLBACK_URL = os.environ['SDK_CALLBACK_URL']
-
-        self.__SERVICES = {'workspace_service_url': self.workspace_url,
-                           'shock_service_url': self.__SHOCK_URL,
-                           'handle_service_url': self.__HS_URL,
-                           'callback_url': self.callback_url}
-
-        self.scratch = os.path.abspath(config['scratch'])
-        if not os.path.exists(self.scratch):
-            os.makedirs(self.scratch)
-
-        self.shared_folder = config['scratch']
-        self.__INDEX_DIR = None
-        self.__OUTPUT_DIR = None
+        self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
         pass
 
@@ -173,46 +152,9 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
             if isinstance(value, basestring):
                 params[key] = value.strip()
 
-        returnVal = {
-            "report_ref": None,
-            "report_name": None
-        }
+        star_aligner = STAR_Aligner(self.config, ctx.provenance())
 
-        # 0. create the star folders
-        star_utils = STARUtils(self.config, ctx.provenance())
-        if self.__INDEX_DIR is None:
-            (idx_dir, out_dir) = star_utils.create_star_dirs(self.shared_folder)
-            self.__INDEX_DIR = idx_dir
-            self.__OUTPUT_DIR = out_dir
-
-        star_runner = STAR_Aligner(
-                self.config,
-                ctx.provenance(),
-                self.__INDEX_DIR,
-                self.__OUTPUT_DIR
-        )
-
-        # 1. validate & process the input parameters
-        validated_params = star_utils.process_params(params)
-
-        # indexing if not yet existing
-        if not os.path.isfile(os.path.join(self.__INDEX_DIR, 'genomeParameters.txt')):
-            # generate the indices
-            (idx_ret, validated_params) = star_runner.run_star_indexing(validated_params)
-            if idx_ret != 0:
-                raise ValueError("Failed to generate genome indices.")
-
-        # 2. Run STAR with index and reads.
-        # If there's only one, run it locally right now.
-        # If there's more than one:
-        #  1). make a list of tasks to send to KBParallel.
-        #  2). add a flag to not make a report for each subtask.
-        #  3). make the report when it's all done.
-        input_obj_info = star_utils.determine_input_info(validated_params)
-        if input_obj_info['run_mode'] == 'single_library':
-            returnVal = star_runner.star_run_single(validated_params)
-        elif input_obj_info['run_mode'] == 'sample_set':
-            returnVal = star_runner.star_run_batch(validated_params)
+        returnVal = star_aligner.run_align(params)
         #END run_star
 
         # At some point might do deeper type checking...
