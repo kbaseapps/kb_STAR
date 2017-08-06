@@ -67,13 +67,6 @@ class STARUtils:
         self.provenance = provenance
         self.ws_client = Workspace(self.workspace_url)
 
-        # from the provenance, extract out the version to run by exact hash if possible
-        self.my_version = 'release'
-        if len(provenance) > 0:
-            if 'subactions' in provenance[0]:
-                self.my_version = self.get_version_from_subactions('kb_STAR', provenance[0]['subactions'])
-        print('Running kb_STAR version = ' + self.my_version)
-
         self.parallel_runner = KBParallel(self.callback_url)
         self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
@@ -152,7 +145,7 @@ class STARUtils:
         for STAR indexing and mapping.
         STAR uses the reference annotation to guide assembly and for creating alignment
         """
-        log("Converting genome {0} to GFF file {1}".format(gnm_ref, gtf_file_dir))
+        log("Converting genome {0} to GFF file in folder {1}".format(gnm_ref, gtf_file_dir))
         gfu = GenomeFileUtil(self.callback_url)
         try:
             gfu_ret = gfu.genome_to_gff({self.PARAM_IN_GENOME: gnm_ref,
@@ -541,7 +534,7 @@ class STARUtils:
         if rds_name:
             aligndir = os.path.join(out_dir, rds_name)
             self._mkdir_p(aligndir)
-            print '\n**********STAR output directory created: ' + aligndir
+            #print '**********STAR output directory created:{}'.format(aligndir)
 
         params_mp = copy.deepcopy(params)
         params_mp['runMode'] = 'alignReads'
@@ -550,122 +543,6 @@ class STARUtils:
         params_mp['align_output'] = aligndir
 
         return params_mp
-
-
-    def build_single_execution_task(self, rds_ref, params):
-        task_params = copy.deepcopy(params)
-
-        task_params[self.PARAM_IN_READS] = rds_ref
-        task_params['create_report'] = 0
-
-        if 'condition' in rds_ref:
-                task_param['condition'] = rds_ref['condition']
-        else:
-                task_params['condition'] = 'unspecified'
-
-        return {'module_name': 'STAR',
-                'function_name': 'run_star',
-                'version': self.my_version,
-                #'version': 'dev',
-                'parameters': task_params}
-
-    def process_batch_result(self, batch_result, params, reads_refs):
-        n_jobs = len(batch_result['results'])
-        n_success = 0
-        n_error = 0
-        ran_locally = 0
-        ran_njsw = 0
-
-        set_name_map = self.get_object_names([params[self.PARAM_IN_READS]])
-        set_name = set_name_map[params[self.PARAM_IN_READS]]
-
-        # reads alignment set items
-        alignment_items = []
-        alignment_objs = []
-        rds_names = []
-
-        for k in range(0, len(batch_result['results'])):
-            reads_ref = reads_refs[k]
-            rds_names.append(reads_ref['alignment_output_name'].replace(params['alignment_suffix'], ''))
-
-            job = batch_result['results'][k]
-            result_package = job['result_package']
-            if job['is_error']:
-                n_error += 1
-            else:
-                n_success += 1
-                output_info = result_package['result'][0]['output_info']
-                ra_ref = output_info['upload_results']['obj_ref']
-                alignment_items.append({
-                        'ref': ra_ref,
-                        'label': reads_ref.get(
-                                'condition',
-                                params.get('condition','unspecified'))
-                })
-                alignment_objs.append({'ref': ra_ref})
-
-            if result_package['run_context']['location'] == 'local':
-                ran_locally += 1
-            if result_package['run_context']['location'] == 'njsw':
-                ran_njsw += 1
-
-        # Save the alignment set
-        output_alignmentset_name = set_name + params['alignmentset_suffix']
-        save_result = self.upload_alignment_set(
-                        alignment_items,
-                        output_alignmentset_name,
-                        params['output_workspace'])
-
-        result_obj_ref = save_result['set_ref']
-
-        output_dir = os.path.join(self.working_dir, self.STAR_OUT_DIR)
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            prefix = params[self.PARAM_IN_OUTFILE_PREFIX]
-        else:
-            prefix = ''
-
-        # Extract the ReadsPerGene counts if necessary
-        gene_count_files = []
-        if (params.get('quantMode', None) is not None
-                    and (params['quantMode'] == 'Both'
-                            or 'GeneCounts' in params['quantMode'])):
-            for reads_name in rds_names:
-                gene_count_files.append('{}/{}ReadsPerGene.out.tab'.format(reads_name, prefix))
-
-            extract_geneCount_matrix(gene_count_files, output_dir)
-
-        # Reporting...
-        report_info = {'name': None, 'ref': None}
-
-        #run qualimap
-        qualimap_report = self.qualimap.run_bamqc({'input_ref': result_obj_ref})
-        qc_result_zip_info = qualimap_report['qc_result_zip_info']
-        qc_result = [{'shock_id': qc_result_zip_info['shock_id'],
-                      'name': qc_result_zip_info['index_html_file_name'],
-                      'label': qc_result_zip_info['name']}]
-
-        # create the report
-        report_text = 'Ran on SampleSet or ReadsSet.\n\n'
-        report_text += 'Created ReadsAlignmentSet: ' + str(output_alignmentset_name) + '\n\n'
-        report_text += 'Total ReadsLibraries = ' + str(n_jobs) + '\n'
-        report_text += '        Successful runs = ' + str(n_success) + '\n'
-        report_text += '            Failed runs = ' + str(n_error) + '\n'
-        report_text += '       Ran on main node = ' + str(ran_locally) + '\n'
-        report_text += '   Ran on remote worker = ' + str(ran_njsw) + '\n\n'
-
-        print('Uploading completed alignment set...')
-        alignment_set_data = {
-            'description': 'Alignments using STAR, v.{}'.format(self.STAR_VERSION),
-            'items': alignment_items
-        }
-        set_info = self.set_api_client.save_reads_alignment_set_v1({
-            'workspace': params['output_workspace'],
-            'output_object_name': alignmentset_name,
-            'data': alignment_set_data
-        })
-        #pprint(set_info)
-
-        return set_info
 
 
     def determine_input_info(self, validated_params):
@@ -713,23 +590,6 @@ class STARUtils:
         for i in range(len(info["infos"])):
             name_map[ref_list[i]] = info["infos"][i][1]
         return name_map
-
-    def get_version_from_subactions(self, module_name, subactions):
-        # go through each sub action looking for
-        if not subactions:
-            return 'dev' #'release'  # default to release if we can't find anything
-        for sa in subactions:
-            if 'name' in sa:
-                if sa['name'] == module_name:
-                    # local-docker-image implies that we are running in kb-test, so return 'dev'
-                    if sa['commit'] == 'local-docker-image':
-                        return 'dev'
-                    # to check that it is a valid hash, make sure it is the right
-                    # length and made up of valid hash characters
-                    if re.match('[a-fA-F0-9]{40}$', sa['commit']):
-                        return sa['commit']
-        # again, default to setting this to release
-        return 'dev' #'release'
 
 
     def _mkdir_p(self, dir):
@@ -946,7 +806,7 @@ class STARUtils:
                          'html_window_height': 366,
                          'report_object_name': 'kb_STAR_report_' + str(uuid.uuid4())}
 
-        kbase_report_client = KBaseReport(self.callback_url, token=self.token)
+        kbase_report_client = KBaseReport(self.callback_url)
         report_output = kbase_report_client.create_extended_report(report_params)
 
         return report_output
