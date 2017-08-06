@@ -208,13 +208,13 @@ class STAR_Aligner(object):
             rds_names.append(r['alignment_output_name'].replace(single_input_params['alignment_suffix'], ''))
 
         # 2. Process all the results after mapping is done
-        (batch_result, report_info) =self._batch_sequential_post_processing(
+        (set_result, report_info) =self._batch_sequential_post_processing(
                                         alignment_items, rds_names, input_params)
 
-        batch_result['output_directory'] = self.star_out_dir
+        set_result['output_directory'] = self.star_out_dir
 
-        result = {'alignmentset_ref': result_obj_ref,
-                'output_info': batch_result,
+        result = {'alignmentset_ref': set_result['set_ref'],
+                'output_info': set_result,
                 'alignment_objs': alignment_objs,
                 'report_name': report_info['name'],
                 'report_ref': report_info['ref']
