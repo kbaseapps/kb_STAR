@@ -739,7 +739,7 @@ class STARUtils:
         html_report.append({'path': result_file_path,
                             'name': os.path.basename(result_file_path),
                             'label': os.path.basename(result_file_path),
-                            'description': 'HTML summary report for StringTie App'})
+                            'description': 'HTML summary report for STAR'})
         return html_report
 
     def _fill_html_trs(self, col_caption, obj_data):
