@@ -241,6 +241,7 @@ class STAR_Aligner(object):
         result_obj_ref = save_result['set_ref']
 
         # 2. Extract the ReadsPerGene counts if necessary
+        index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
         if params.get(STARUtils.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             prefix = params[STARUtils.PARAM_IN_OUTFILE_PREFIX]
@@ -275,6 +276,7 @@ class STAR_Aligner(object):
                         report_text,
                         qc_result,
                         params['output_workspace'],
+                        index_dir,
                         output_dir)
 
         return (save_result, report_info)
@@ -364,6 +366,7 @@ class STAR_Aligner(object):
 
         result_obj_ref = save_result['set_ref']
 
+        index_dir = os.path.join(self.working_dir, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.working_dir, STARUtils.STAR_OUT_DIR)
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             prefix = params[self.PARAM_IN_OUTFILE_PREFIX]
@@ -404,6 +407,7 @@ class STAR_Aligner(object):
                         report_text,
                         qc_result,
                         params['output_workspace'],
+                        index_dir,
                         output_dir)
 
         result = {'alignmentset_ref': result_obj_ref,
