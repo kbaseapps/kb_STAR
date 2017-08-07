@@ -42,14 +42,14 @@
         "optional" : false,
         "advanced" : true,
         "allow_multiple" : false,
-        "default_values" : [ "_alignment" ],
+        "default_values" : [ "_star_alignment" ],
         "field_type" : "text"
     }, {
         "id" : "alignmentset_suffix",
         "optional" : true,
         "advanced" : true,
         "allow_multiple" : false,
-        "default_values" : [ "_alignment_set" ],
+        "default_values" : [ "_star_alignment_set" ],
         "field_type" : "text"
     }, {
         "id": "reads_condition",
