@@ -649,8 +649,23 @@ class STARUtils:
         star_index = os.path.join(output_directory, 'star_index.zip')
         star_output = os.path.join(output_directory, 'star_output.zip')
 
-        self.zip_folder(idx_dir, star_index)
-        self.zip_folder(out_dir, star_output)
+        with zipfile.ZipFile(star_index, 'w',
+                             zipfile.ZIP_DEFLATED,
+                             allowZip64=True) as star_index_ziph:
+            for root, dirs, files in os.walk(idx_dir):
+                for f in files:
+                    star_index_ziph.write(os.path.join(root, f),
+                                        os.path.join(os.path.basename(root), f))
+
+        with zipfile.ZipFile(star_output, 'w',
+                             zipfile.ZIP_DEFLATED,
+                             allowZip64=True) as star_output_ziph:
+            for root, dirs, files in os.walk(out_dir):
+                for f in files:
+                    star_output_ziph.write(os.path.join(root, f),
+                                        os.path.join(os.path.basename(root), f))
+        #self.zip_folder(idx_dir, star_index)
+        #self.zip_folder(out_dir, star_output)
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -681,15 +696,15 @@ class STARUtils:
                     absolute_path = os.path.join(root, folder_name)
                     relative_path = absolute_path.replace(parent_folder + '\\',
                                                           '')
-                    print "Adding '%s' to archive." % absolute_path
+                    print "Adding {} to archive.".format(absolute_path)
                     zip_file.write(absolute_path, relative_path)
                 for file_name in files:
                     absolute_path = os.path.join(root, file_name)
                     relative_path = absolute_path.replace(parent_folder + '\\',
                                                           '')
-                    print "Adding '%s' to archive." % absolute_path
+                    print "Adding {} to archive.".format(absolute_path)
                     zip_file.write(absolute_path, relative_path)
-            print "'%s' created successfully." % output_path
+            print "{} created successfully.".format(output_path)
         except IOError, message:
             print message
             sys.exit(1)
