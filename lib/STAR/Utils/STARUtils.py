@@ -683,7 +683,7 @@ class STARUtils:
                     ziph.write(absolute_path, relative_path)
                 for f in files:
                     absolute_path = os.path.join(root, f)
-                    relative_path = os.path.join(os.path.basename(root), f))
+                    relative_path = os.path.join(os.path.basename(root), f)
                     print "Adding {} to archive.".format(absolute_path)
                     ziph.write(absolute_path, relative_path)
 
