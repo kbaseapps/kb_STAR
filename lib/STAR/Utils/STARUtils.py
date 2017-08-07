@@ -541,6 +541,7 @@ class STARUtils:
         params_mp['readFilesIn'] = rds_files
 	params_mp[self.STAR_IDX_DIR] = idx_dir
         params_mp['align_output'] = aligndir
+        params_mp[self.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
 
         return params_mp
 
@@ -649,23 +650,8 @@ class STARUtils:
         star_index = os.path.join(output_directory, 'star_index.zip')
         star_output = os.path.join(output_directory, 'star_output.zip')
 
-        with zipfile.ZipFile(star_index, 'w',
-                             zipfile.ZIP_DEFLATED,
-                             allowZip64=True) as star_index_ziph:
-            for root, dirs, files in os.walk(idx_dir):
-                for f in files:
-                    star_index_ziph.write(os.path.join(root, f),
-                                        os.path.join(os.path.basename(root), f))
-
-        with zipfile.ZipFile(star_output, 'w',
-                             zipfile.ZIP_DEFLATED,
-                             allowZip64=True) as star_output_ziph:
-            for root, dirs, files in os.walk(out_dir):
-                for f in files:
-                    star_output_ziph.write(os.path.join(root, f),
-                                        os.path.join(os.path.basename(root), f))
-        #self.zip_folder(idx_dir, star_index)
-        #self.zip_folder(out_dir, star_output)
+        self.zip_folder(idx_dir, star_index)
+        self.zip_folder(out_dir, star_output)
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -685,37 +671,23 @@ class STARUtils:
         in the archive). Empty subfolders will be included in the archive
         as well.
         """
-        parent_folder = os.path.dirname(folder_path)
-        # Retrieve the paths of the folder contents.
-        contents = os.walk(folder_path)
-        try:
-            zip_file = zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED)
-            for root, folders, files in contents:
+        with zipfile.ZipFile(output_path, 'w',
+                             zipfile.ZIP_DEFLATED,
+                             allowZip64=True) as ziph:
+            for root, folders, files in os.walk(folder_path):
                 # Include all subfolders, including empty ones.
                 for folder_name in folders:
                     absolute_path = os.path.join(root, folder_name)
-                    relative_path = absolute_path.replace(parent_folder + '\\',
-                                                          '')
+                    relative_path = os.path.join(os.path.basename(root), folder_name)
                     print "Adding {} to archive.".format(absolute_path)
-                    zip_file.write(absolute_path, relative_path)
-                for file_name in files:
-                    absolute_path = os.path.join(root, file_name)
-                    relative_path = absolute_path.replace(parent_folder + '\\',
-                                                          '')
+                    ziph.write(absolute_path, relative_path)
+                for f in files:
+                    absolute_path = os.path.join(root, f)
+                    relative_path = os.path.join(os.path.basename(root), f))
                     print "Adding {} to archive.".format(absolute_path)
-                    zip_file.write(absolute_path, relative_path)
-            print "{} created successfully.".format(output_path)
-        except IOError, message:
-            print message
-            sys.exit(1)
-        except OSError, message:
-            print message
-            sys.exit(1)
-        except zipfile.BadZipfile, message:
-            print message
-            sys.exit(1)
-        finally:
-            zip_file.close()
+                    ziph.write(absolute_path, relative_path)
+
+        print "{} created successfully.".format(output_path)
 
 
     def _generate_html_report(self, out_dir, obj_ref):
