@@ -541,7 +541,6 @@ class STARUtils:
         params_mp['readFilesIn'] = rds_files
 	params_mp[self.STAR_IDX_DIR] = idx_dir
         params_mp['align_output'] = aligndir
-        params_mp[self.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
 
         return params_mp
 
