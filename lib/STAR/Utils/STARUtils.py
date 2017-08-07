@@ -759,7 +759,7 @@ class STARUtils:
 
         return tr_html_str
 
-    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name, index_dir, output_dire):
+    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name, index_dir, output_dir):
         """
         _generate_star_report: generate summary report
         """
