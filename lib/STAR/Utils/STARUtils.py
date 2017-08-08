@@ -675,11 +675,11 @@ class STARUtils:
                              allowZip64=True) as ziph:
             for root, folders, files in os.walk(folder_path):
                 # Include all subfolders, including empty ones.
-                for folder_name in folders:
-                    absolute_path = os.path.join(root, folder_name)
-                    relative_path = os.path.join(os.path.basename(root), folder_name)
-                    print "Adding {} to archive.".format(absolute_path)
-                    ziph.write(absolute_path, relative_path)
+                #for folder_name in folders:
+                #    absolute_path = os.path.join(root, folder_name)
+                #    relative_path = os.path.join(os.path.basename(root), folder_name)
+                #    print "Adding {} to archive.".format(absolute_path)
+                #    ziph.write(absolute_path, relative_path)
                 for f in files:
                     absolute_path = os.path.join(root, f)
                     relative_path = os.path.join(os.path.basename(root), f)
