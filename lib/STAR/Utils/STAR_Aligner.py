@@ -110,17 +110,15 @@ class STAR_Aligner(object):
             if reads_info.get('file_rev', None) is not None:
                 rds_files.append(reads_info['file_rev'])
 
-        prefix = rds_name + '_'
-        input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = prefix
+        input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
         # 2. After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
         if star_mp_ret.get('star_output', None) is not None:
             bam_sort = ''
-            prefix = ''
             if input_params.get('outSAMtype', None) == 'BAM':
                 bam_sort = 'sortedByCoord'
-            output_bam_file = '{}Aligned.{}.out.bam'.format(prefix, bam_sort)
+            output_bam_file = '{}_Aligned.{}.out.bam'.format(rds_name, bam_sort)
             output_bam_file = os.path.join(star_mp_ret['star_output'], output_bam_file)
 
             # Upload the alignment
@@ -241,17 +239,13 @@ class STAR_Aligner(object):
         # 2. Extract the ReadsPerGene counts if necessary
         index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
-        if params.get(STARUtils.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            prefix = params[STARUtils.PARAM_IN_OUTFILE_PREFIX]
-        else:
-            prefix = ''
 
         gene_count_files = []
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
             for reads_name in rds_names:
-                gene_count_files.append('{0}/{1}ReadsPerGene.out.tab'.format(reads_name, prefix))
+                gene_count_files.append('{0}/{1}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
 
             extract_geneCount_matrix(gene_count_files, output_dir)
 
@@ -366,10 +360,6 @@ class STAR_Aligner(object):
 
         index_dir = os.path.join(self.working_dir, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.working_dir, STARUtils.STAR_OUT_DIR)
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            prefix = params[self.PARAM_IN_OUTFILE_PREFIX]
-        else:
-            prefix = ''
 
         # Extract the ReadsPerGene counts if necessary
         gene_count_files = []
@@ -377,7 +367,7 @@ class STAR_Aligner(object):
                     and (params['quantMode'] == 'Both'
                             or 'GeneCounts' in params['quantMode'])):
             for reads_name in rds_names:
-                gene_count_files.append('{}/{}ReadsPerGene.out.tab'.format(reads_name, prefix))
+                gene_count_files.append('{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
 
             extract_geneCount_matrix(gene_count_files, output_dir)
 
