@@ -137,6 +137,7 @@ class STAR_Aligner(object):
                 'AlignmentObj': alignment_obj
             })
 
+            singlerun_output_info['index_dir'] = self.star_idx_dir
             singlerun_output_info['output_dir'] = star_mp_ret['star_output']
             singlerun_output_info['output_bam_file'] = output_bam_file
             singlerun_output_info['upload_results'] = upload_results

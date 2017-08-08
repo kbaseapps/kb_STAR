@@ -400,6 +400,10 @@ class STARUtils:
 
     def generate_report_for_single_run(self, run_output_info, params):
         input_ref = run_output_info['upload_results']['obj_ref']
+        index_dir = run_output_info['index_dir']
+        output_dir = run_output_info['output_dir']
+        output_files = self._generate_output_file_list(index_dir, output_dir)
+
         # first run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
@@ -411,13 +415,15 @@ class STARUtils:
         report_text += '                        ' + input_ref + '\n'
         kbr = KBaseReport(self.callback_url)
         report_info = kbr.create_extended_report({'message': report_text,
+                                                  'file_links': output_files,
                                                   'objects_created': [{'ref': input_ref,
                                                                        'description': 'ReadsAlignment'}],
-                                                  'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
+                                                  'report_object_name': 'kb_STAR_report_' + str(uuid.uuid4()),
                                                   'direct_html_link_index': 0,
                                                   'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
                                                                   'name': qc_result_zip_info['index_html_file_name'],
                                                                   'label': qc_result_zip_info['name']}],
+                                                  'html_window_height': 366,
                                                   'workspace_name': params['output_workspace']
                                                   })
         return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
