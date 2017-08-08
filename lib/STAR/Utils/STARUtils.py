@@ -688,6 +688,11 @@ class STARUtils:
 
         print "{} created successfully.".format(output_path)
 
+        with zipfile.ZipFile(output_path, "r") as f:
+            print 'Checking the zipped file......\n'
+            for info in f.infolist():
+                print info.filename, info.date_time, info.file_size, info.compress_size
+
 
     def _generate_html_report(self, out_dir, obj_ref):
         """
