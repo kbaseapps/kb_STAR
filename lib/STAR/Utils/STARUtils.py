@@ -678,16 +678,16 @@ class STARUtils:
         """
         output_path = self.dfu.pack_file(
                 {'file_path': folder_path + '/' + output_name,
-                 'pack': 'zip'})[0]['file_path']
+                 'pack': 'zip'})['file_path']
 
         print "{} created successfully.".format(output_path)
 
         with zipfile.ZipFile(output_path, "r") as f:
             print 'Checking the zipped file......\n'
-            for info in f.infolist():
-                print info.filename, info.date_time, info.file_size, info.compress_size
-            #for fn in f.namelist():
-            #    print fn
+            #for info in f.infolist():
+                #    print info.filename, info.date_time, info.file_size, info.compress_size
+            for fn in f.namelist():
+                print fn
 
         return output_path
 
