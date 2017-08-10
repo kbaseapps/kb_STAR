@@ -652,11 +652,13 @@ class STARUtils:
 
         output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
         self._mkdir_p(output_directory)
-        star_index = 'star_index.zip' #os.path.join(output_directory, 'star_index.zip')
-        star_output = 'star_output.zip' #os.path.join(output_directory, 'star_output.zip')
+        star_index = os.path.join(output_directory, 'star_index.zip')
+        star_output = os.path.join(output_directory, 'star_output.zip')
+        self.zip_folder(idx_dir, star_index)
+        self.zip_folder(out_dir, star_output)
 
-        index_zip = self.zip_folder_withDFU(idx_dir, star_index)
-        output_zip = self.zip_folder_withDFU(out_dir, star_output)
+        #index_zip = self.zip_folder_withDFU(idx_dir, 'star_index')
+        #output_zip = self.zip_folder_withDFU(out_dir, 'star_output')
 
         output_files.append({'path': index_zip,
                              'name': os.path.basename(star_index),
