@@ -654,11 +654,11 @@ class STARUtils:
         self._mkdir_p(output_directory)
         star_index = os.path.join(output_directory, 'star_index.zip')
         star_output = os.path.join(output_directory, 'star_output.zip')
-        self.zip_folder(idx_dir, star_index)
-        self.zip_folder(out_dir, star_output)
+        #self.zip_folder(idx_dir, star_index)
+        #self.zip_folder(out_dir, star_output)
 
-        #star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
-        #star_output = self.zip_folder_withDFU(out_dir, 'star_output')
+        star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
+        star_output = self.zip_folder_withDFU(out_dir, 'star_output')
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -678,9 +678,14 @@ class STARUtils:
         in the archive). Empty subfolders will be included in the archive
         as well.
         """
-        output_path = self.dfu.pack_file(
-                {'file_path': folder_path + '/' + output_name,
-                 'pack': 'zip'})['file_path']
+        #output_path = self.dfu.pack_file(
+        #        {'file_path': folder_path + '/' + output_name,
+        #         'pack': 'zip'})['file_path']
+
+        dfu_ret = self.dfu.file_to_shock(
+                {'file_path': folder_path,
+                 'pack': 'zip'})
+        output_path = dfu_ret['node_file_name']
 
         print "{} created successfully.".format(output_path)
 
