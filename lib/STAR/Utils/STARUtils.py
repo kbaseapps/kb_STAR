@@ -652,8 +652,8 @@ class STARUtils:
 
         output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
         self._mkdir_p(output_directory)
-        star_index = 'star_index' #os.path.join(output_directory, 'star_index.zip')
-        star_output = 'star_output' #os.path.join(output_directory, 'star_output.zip')
+        star_index = 'star_index.zip' #os.path.join(output_directory, 'star_index.zip')
+        star_output = 'star_output.zip' #os.path.join(output_directory, 'star_output.zip')
 
         index_zip = self.zip_folder_withDFU(idx_dir, star_index)
         output_zip = self.zip_folder_withDFU(out_dir, star_output)
