@@ -684,12 +684,12 @@ class STARUtils:
 
         print "{} created successfully.".format(output_path)
 
-        with zipfile.ZipFile(output_path, "r") as f:
-            print 'Checking the zipped file......\n'
+        #with zipfile.ZipFile(output_path, "r") as f:
+            #print 'Checking the zipped file......\n'
             #for info in f.infolist():
                 #    print info.filename, info.date_time, info.file_size, info.compress_size
-            for fn in f.namelist():
-                print fn
+            #for fn in f.namelist():
+                #print fn
 
         return output_path
 
@@ -711,15 +711,15 @@ class STARUtils:
                 for f in files:
                     absolute_path = os.path.join(root, f)
                     relative_path = os.path.join(os.path.basename(root), f)
-                    print "Adding {} to archive.".format(absolute_path)
+                    #print "Adding {} to archive.".format(absolute_path)
                     ziph.write(absolute_path, relative_path)
 
         print "{} created successfully.".format(output_path)
 
-        with zipfile.ZipFile(output_path, "r") as f:
-            print 'Checking the zipped file......\n'
-            for info in f.infolist():
-                print info.filename, info.date_time, info.file_size, info.compress_size
+        #with zipfile.ZipFile(output_path, "r") as f:
+        #    print 'Checking the zipped file......\n'
+        #    for info in f.infolist():
+        #        print info.filename, info.date_time, info.file_size, info.compress_size
 
 
     def _generate_html_report(self, out_dir, obj_ref):
