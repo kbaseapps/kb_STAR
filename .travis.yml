@@ -4,7 +4,14 @@ sudo: required
 
 services:
   - docker
-
+  
+notifications:
+  email:
+    recipients:
+    - qzhang@anl.gov
+    on_success: never
+    on_failure: always
+    
 branches:
   only:
     - master
