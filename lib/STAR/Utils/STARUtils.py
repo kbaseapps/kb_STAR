@@ -60,7 +60,7 @@ class STARUtils:
         self.callback_url = callback_url
         self.srv_wiz_url = srv_wiz_url
         self.au = AssemblyUtil(self.callback_url)
-        self.dfu = DataFileUtil(self.callback_url)
+        self.dfu = DataFileUtil(self.callback_url, service_ver='beta')
         self.scratch = scratch_dir
         self.working_dir = scratch_dir
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
@@ -70,7 +70,7 @@ class STARUtils:
         self.parallel_runner = KBParallel(self.callback_url)
         self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
-        self.eu = ExpressionUtils(self.callback_url, service_ver='dev')
+        self.eu = ExpressionUtils(self.callback_url, service_ver='beta')
 
     def process_params(self, params):
         """
@@ -391,7 +391,7 @@ class STARUtils:
 
         pprint(align_upload_params)
 
-        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver='dev')
+        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver='beta')
         rau_upload_ret = ra_util.upload_alignment(align_upload_params)
         alignment_ref = rau_upload_ret["obj_ref"]
         print("STAR alignment uploaded as object {}".format(alignment_ref))
