@@ -29,7 +29,7 @@ suggestions:
 parameters :
     sampleset_ref :
         ui-name : |
-            RNA-seq reads or ReadsSet, or RNA-seq sample set
+            RNA-seq Sample or Sample Set
         short-hint : |
             Select the RNA-seq read set associated with the RNA-seq experiment. Alternatively, if you have only one sample of RNA-seq reads, select the corresponding object.
         long-hint : |
