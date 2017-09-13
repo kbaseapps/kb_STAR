@@ -71,6 +71,8 @@ class STARUtils:
         self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
         self.eu = ExpressionUtils(self.callback_url, service_ver='beta')
+	self.tool_used = "STAR"
+        self.tool_version = self.STAR_VERSION #os.environ['VERSION']
 
     def process_params(self, params):
         """
@@ -881,3 +883,223 @@ class STARUtils:
         })
         return set_info
 
+    ##generating expression matrix##
+	
+    def parse_FPKMtracking_calc_TPM(self, filename):
+        """
+        Generates TPM from FPKM
+        :return:
+        """
+        fpkm_dict = {}
+        tpm_dict = {}
+        gene_col = 0
+        fpkm_col = 9
+        sum_fpkm = 0.0
+        with open(filename) as f:
+            next(f)
+            for line in f:
+                larr = line.split("\t")
+                gene_id = larr[gene_col]
+                if gene_id != "":
+                    fpkm = float(larr[fpkm_col])
+                    sum_fpkm = sum_fpkm + fpkm
+                    fpkm_dict[gene_id] = math.log(fpkm + 1, 2)
+                    tpm_dict[gene_id] = fpkm
+
+        if sum_fpkm == 0.0:
+            log("Warning: Unable to calculate TPM values as sum of FPKM values is 0")
+        else:
+            for g in tpm_dict:
+                tpm_dict[g] = math.log((tpm_dict[g] / sum_fpkm) * 1e6 + 1, 2)
+
+        return fpkm_dict, tpm_dict
+
+    def _save_gff_annotation(self, genome_id, gtf_file, workspace_name):
+        """
+        _save_gff_annotation: save GFFAnnotation object to workspace
+        """
+        log('start saving GffAnnotation object')
+
+        if isinstance(workspace_name, int) or workspace_name.isdigit():
+            workspace_id = workspace_name
+        else:
+            workspace_id = self.dfu.ws_name_to_id(workspace_name)
+
+        genome_data = self.ws.get_objects2({'objects':
+                                            [{'ref': genome_id}]})['data'][0]['data']
+        genome_name = genome_data.get('id')
+        genome_scientific_name = genome_data.get('scientific_name')
+        gff_annotation_name = genome_name + "_GTF_Annotation"
+        file_to_shock_result = self.dfu.file_to_shock({'file_path': gtf_file,
+                                                       'make_handle': True})
+        gff_annotation_data = {'handle': file_to_shock_result['handle'],
+                               'size': file_to_shock_result['size'],
+                               'genome_id': genome_id,
+                               'genome_scientific_name': genome_scientific_name}
+
+        object_type = 'KBaseRNASeq.GFFAnnotation'
+
+        save_object_params = {
+            'id': workspace_id,
+            'objects': [{
+                'type': object_type,
+                'data': gff_annotation_data,
+                'name': gff_annotation_name
+            }]
+        }
+
+        dfu_oi = self.dfu.save_objects(save_object_params)[0]
+        gff_annotation_obj_ref = str(dfu_oi[6]) + '/' + str(dfu_oi[0]) + '/' + str(dfu_oi[4])
+
+        return gff_annotation_obj_ref
+
+    def _save_rnaseq_expression(self, result_directory, alignment_ref, workspace_name, genome_ref, gtf_file, expression_suffix):
+        """
+        _save_rnaseq_expression: save Expression object to workspace using ExpressionUtils, returns a ref to the expression object
+        """
+        log('start saving Expression object')
+        alignment_object_name = self.ws.get_object_info([{"ref": alignment_ref}],
+                                                        includeMetadata=None)[0][1]
+
+        # set expression name
+        if re.match('.*_[Aa]lignment$', alignment_object_name):
+            expression_name = re.sub('_[Aa]lignment$',
+                                     expression_suffix,
+                                     alignment_object_name)
+        else:  # assume user specified suffix
+            expression_name = alignment_object_name + expression_suffix
+
+        gff_annotation_obj_ref = self._save_gff_annotation(genome_ref, gtf_file, workspace_name)
+
+        expression_ref = self.eu.upload_expression({
+            'destination_ref': workspace_name + '/' + expression_name,
+            'source_dir': result_directory,
+            'alignment_ref': alignment_ref,
+            'tool_used': self.tool_used,
+            'tool_version': self.tool_version,
+            'annotation_ref': gff_annotation_obj_ref,
+        })['obj_ref']
+
+        return expression_ref
+
+    def _save_kbasesets_expression(self, result_directory, alignment_ref, workspace_name, genome_ref, gtf_file, expression_suffix):
+        """
+        _save_kbasesets_expression: save Expression object to workspace using ExpressionUtils, returns a ref to the expression object
+        and SetAPI
+        """
+        log('start saving Expression object')
+
+        alignment_object_name = self.ws.get_object_info([{"ref": alignment_ref}],
+                                                 includeMetadata=None)[0][1]
+        # set expression name
+        if re.match('.*_[Aa]lignment$', alignment_object_name):
+            expression_name = re.sub('_[Aa]lignment$',
+                                               expression_suffix,
+                                               alignment_object_name)
+        else:  # assume user specified suffix
+            expression_name = alignment_object_name + expression_suffix
+
+        gff_annotation_obj_ref = self._save_gff_annotation(genome_ref, gtf_file, workspace_name)
+
+        expression_ref = self.eu.upload_expression({
+            'destination_ref': workspace_name+'/'+expression_name,
+            'source_dir': result_directory,
+            'alignment_ref': alignment_ref,
+            'tool_used': self.tool_used,
+            'tool_version': self.tool_version,
+            'annotation_ref': gff_annotation_obj_ref,
+        })['obj_ref']
+
+        return expression_ref
+
+    def _generate_expression_data(self, result_directory, alignment_ref,
+                                  gtf_file, workspace_name, expression_suffix):
+        """
+        _generate_expression_data: generate Expression object from STAR output files
+        """
+        alignment_data_object = self.ws.get_objects2({'objects':
+                                                      [{'ref': alignment_ref}]})['data'][0]
+
+        # set expression name
+        alignment_object_name = alignment_data_object['info'][1]
+        if re.match('.*_[Aa]lignment$', alignment_object_name):
+            expression_name = re.sub('_[Aa]lignment$',
+                                               expression_suffix,
+                                               alignment_object_name)
+        else:  # assume user specified suffix
+            expression_name = alignment_object_name + expression_suffix
+
+        expression_data = {
+            'id': expression_name,
+            'type': 'RNA-Seq',
+            'numerical_interpretation': 'FPKM',
+            'processing_comments': 'log2 Normalized',
+            'tool_used': self.tool_used,
+            'tool_version': self.tool_version
+        }
+        alignment_data = alignment_data_object['data']
+
+        condition = alignment_data.get('condition')
+        expression_data.update({'condition': condition})
+
+        genome_id = alignment_data.get('genome_id')
+        expression_data.update({'genome_id': genome_id})
+
+        gff_annotation_obj_ref = self._save_gff_annotation(genome_id, gtf_file, workspace_name)
+        expression_data.update({'annotation_id': gff_annotation_obj_ref})
+
+        read_sample_id = alignment_data.get('read_sample_id')
+        expression_data.update({'mapped_rnaseq_alignment': {read_sample_id: alignment_ref}})
+
+        exp_dict, tpm_exp_dict = self.parse_FPKMtracking_calc_TPM(
+            os.path.join(result_directory, 'genes.fpkm_tracking'))
+
+        expression_data.update({'expression_levels': exp_dict})
+
+        expression_data.update({'tpm_expression_levels': tpm_exp_dict})
+
+        handle = self.dfu.file_to_shock({'file_path': result_directory,
+                                         'pack': 'zip',
+                                         'make_handle': True})['handle']
+        expression_data.update({'file': handle})
+
+        return expression_data
+
+    def _generate_expression_set_data(self, alignment_expression_map, alignment_set_ref, expression_set_name):
+        """
+        _generate_expression_set_data: generate ExpressionSet object from STAR output files
+        """
+        alignment_set_data_object = self.ws.get_objects2({'objects':
+                                                          [{'ref': alignment_set_ref}]})['data'][0]
+
+        alignment_set_data = alignment_set_data_object['data']
+
+        expression_set_data = {
+            'tool_used': self.tool_used,
+            'tool_version': self.tool_version,
+            'id': expression_set_name,
+            'alignmentSet_id': alignment_set_ref,
+            'genome_id': alignment_set_data.get('genome_id'),
+            'sampleset_id': alignment_set_data.get('sampleset_id')
+        }
+
+        sample_expression_ids = []
+        mapped_expression_objects = []
+        mapped_expression_ids = []
+
+        for alignment_expression in alignment_expression_map:
+            alignment_ref = alignment_expression.get('alignment_ref')
+            expression_ref = alignment_expression.get('expression_obj_ref')
+            sample_expression_ids.append(expression_ref)
+            mapped_expression_ids.append({alignment_ref: expression_ref})
+            alignment_name = self.ws.get_object_info([{"ref": alignment_ref}],
+                                                     includeMetadata=None)[0][1]
+            expression_name = self.ws.get_object_info([{"ref": expression_ref}],
+                                                      includeMetadata=None)[0][1]
+            mapped_expression_objects.append({alignment_name: expression_name})
+
+        expression_set_data['sample_expression_ids'] = sample_expression_ids
+        expression_set_data['mapped_expression_objects'] = mapped_expression_objects
+        expression_set_data['mapped_expression_ids'] = mapped_expression_ids
+
+        return expression_set_data
