@@ -57,7 +57,7 @@ class STAR_Aligner(object):
         validated_params = self.star_utils.process_params(params)
         input_obj_info = self.star_utils.determine_input_info(validated_params)
 
-	# 2. convert the inpddut parameters (from refs to file paths, especially)
+	# 2. convert the input parameters (from refs to file paths, especially)
         input_params = self.star_utils.convert_params(validated_params)
 
         returnVal = {
