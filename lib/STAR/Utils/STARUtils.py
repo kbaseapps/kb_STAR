@@ -1065,6 +1065,62 @@ class STARUtils:
 
         return expression_data
 
+    def _save_rnaseq_expression_set(self, alignment_expression_map, alignment_set_ref, workspace_name, expression_set_name):
+        """
+        _save_rnaseq_expression_set: save ExpressionSet object to workspace
+        """
+        log('start saving ExpressionSet object')
+        if isinstance(workspace_name, int) or workspace_name.isdigit():
+            workspace_id = workspace_name
+        else:
+            workspace_id = self.dfu.ws_name_to_id(workspace_name)
+
+        expression_set_data = self._generate_expression_set_data(alignment_expression_map,
+                                                                 alignment_set_ref, expression_set_name)
+
+        object_type = 'KBaseRNASeq.RNASeqExpressionSet'
+        save_object_params = {
+            'id': workspace_id,
+            'objects': [{
+                'type': object_type,
+                'data': expression_set_data,
+                'name': expression_set_name
+            }]
+        }
+
+        dfu_oi = self.dfu.save_objects(save_object_params)[0]
+        expression_set_ref = str(dfu_oi[6]) + '/' + str(dfu_oi[0]) + '/' + str(dfu_oi[4])
+
+        return expression_set_ref
+
+    def _save_kbasesets_expression_set(self, alignment_expression_map, alignment_set_ref, workspace_name, expression_set_name):
+        """
+        _save_kbasesets_expression_set: save ExpressionSet object to workspace
+        """
+        log('start saving ExpressionSet object')
+        if isinstance(workspace_name, int) or workspace_name.isdigit():
+            workspace_id = workspace_name
+        else:
+            workspace_id = self.dfu.ws_name_to_id(workspace_name)
+
+        expression_set_data = self._generate_expression_set_data(alignment_expression_map,
+                                                                 alignment_set_ref, expression_set_name)
+
+        object_type = 'KBaseRNASeq.RNASeqExpressionSet'
+        save_object_params = {
+            'id': workspace_id,
+            'objects': [{
+                'type': object_type,
+                'data': expression_set_data,
+                'name': expression_set_name
+            }]
+        }
+
+        dfu_oi = self.dfu.save_objects(save_object_params)[0]
+        expression_set_ref = str(dfu_oi[6]) + '/' + str(dfu_oi[0]) + '/' + str(dfu_oi[4])
+
+        return expression_set_ref
+
     def _generate_expression_set_data(self, alignment_expression_map, alignment_set_ref, expression_set_name):
         """
         _generate_expression_set_data: generate ExpressionSet object from STAR output files
@@ -1103,3 +1159,185 @@ class STARUtils:
         expression_set_data['mapped_expression_ids'] = mapped_expression_ids
 
         return expression_set_data
+
+    def _process_rnaseq_alignment_set_object(self, params):
+        """
+        _process_alignment_set_object: process KBaseRNASeq.RNASeqAlignmentSet type input object
+        """
+        log('start processing KBaseRNASeq.RNASeqAlignmentSet object\nparams:\n{}'.format(
+            json.dumps(params, indent=1)))
+
+        alignment_set_ref = params.get('alignment_set_ref')
+
+        params['gtf_file'] = self._get_gtf_file(alignment_set_ref)
+
+        alignment_set_data = self.ws.get_objects2({'objects':
+                                                   [{'ref': alignment_set_ref}]})['data'][0]['data']
+
+        mapped_alignment_ids = alignment_set_data['mapped_alignments_ids']
+        mul_processor_params = []
+        for i in mapped_alignment_ids:
+            for sample_name, alignment_id in i.items():
+                aliment_upload_params = params.copy()
+                aliment_upload_params['alignment_ref'] = alignment_id
+                mul_processor_params.append(aliment_upload_params)
+
+        cpus = min(params.get('num_threads'), multiprocessing.cpu_count())
+        pool = Pool(ncpus=cpus)
+        log('running _process_alignment_object with {} cpus'.format(cpus))
+        alignment_expression_map = pool.map(self._process_rnaseq_alignment_object, mul_processor_params)
+
+        result_directory = os.path.join(self.scratch, str(uuid.uuid4()))
+        self._mkdir_p(result_directory)
+
+        for proc_alignment_return in alignment_expression_map:
+            expression_obj_ref = proc_alignment_return.get('expression_obj_ref')
+            expression_name = self.ws.get_object_info([{"ref": expression_obj_ref}],
+                                                      includeMetadata=None)[0][1]
+            self._run_command('cp -R {} {}'.format(proc_alignment_return.get('result_directory'),
+                                                   os.path.join(result_directory, expression_name)))
+
+        expression_obj_ref = self._save_rnaseq_expression_set(alignment_expression_map,
+                                                       alignment_set_ref,
+                                                       params.get('workspace_name'),
+                                                       params.get('expression_set_name'))
+
+        returnVal = {'result_directory': result_directory,
+                     'expression_obj_ref': expression_obj_ref}
+
+        expression_set_name = self.ws.get_object_info([{"ref": expression_obj_ref}],
+                                                      includeMetadata=None)[0][1]
+
+        widget_params = {"output": expression_set_name, "workspace": params.get('workspace_name')}
+        returnVal.update(widget_params)
+
+        return returnVal
+
+
+    def _process_kbasesets_alignment_set_object(self, params):
+        """
+        _process_alignment_set_object: process KBaseSets.ReadsAlignmentSet type input object
+        """
+        log('start processing KBaseSets.ReadsAlignmentSet object\nparams:\n{}'.format(
+            json.dumps(params, indent=1)))
+
+        alignment_set_ref = params.get('alignment_set_ref')
+
+        if not '/' in params['genome_ref']:
+            params['genome_ref'] = params['workspace_name']+'/'+params['genome_ref']
+
+        params['gtf_file'] = self._get_gtf_file_from_genome_ref(params['genome_ref'])
+
+        alignment_set_data = self.ws.get_objects2({'objects':
+                                                   [{'ref': alignment_set_ref}]})['data'][0]['data']
+
+        alignment_items = alignment_set_data['items']
+        mul_processor_params = []
+        for item in alignment_items:
+            alignment_upload_params = params.copy()
+            alignment_upload_params['alignment_ref'] = item['ref']
+            mul_processor_params.append(alignment_upload_params)
+
+        cpus = min(params.get('num_threads'), multiprocessing.cpu_count())
+        pool = Pool(ncpus=cpus)
+        log('running _process_alignment_object with {} cpus'.format(cpus))
+        alignment_expression_map = pool.map(self._process_kbasesets_alignment_object, mul_processor_params)
+
+        result_directory = os.path.join(self.scratch, str(uuid.uuid4()))
+        self._mkdir_p(result_directory)
+
+        expression_items = list()
+        for proc_alignment_return in alignment_expression_map:
+            expression_obj_ref = proc_alignment_return.get('expression_obj_ref')
+            alignment_ref = proc_alignment_return.get('alignment_ref')
+            condition = self.ws.get_object_info([{"ref": alignment_ref}],includeMetadata=1)[0][10]['condition']
+            expression_items.append({
+                "ref": expression_obj_ref,
+                "label": condition,
+            })
+            expression_name = self.ws.get_object_info([{"ref": expression_obj_ref}],
+                                                      includeMetadata=None)[0][1]
+            self._run_command('cp -R {} {}'.format(proc_alignment_return.get('result_directory'),
+                                                   os.path.join(result_directory, expression_name)))
+
+        expression_set = {
+            "description": "generated by kb_cufflinks",
+            "items": expression_items
+        }
+
+        expression_set_info = self.set_api.save_expression_set_v1({
+            "workspace": params['workspace_name'],
+            "output_object_name": params['expression_set_name'],
+            "data": expression_set
+        })
+
+        returnVal = {'result_directory': result_directory,
+                     'expression_obj_ref': expression_set_info['set_ref']}
+
+        widget_params = {"output": params.get('expression_set_name'), "workspace": params.get('workspace_name')}
+        returnVal.update(widget_params)
+
+        return returnVal
+
+    def _generate_output_object_name(self, params, alignment_object_type, alignment_object_name):
+        """
+        Generates the output object name based on input object type and name and stores it in 
+        params with key equal to 'expression' or 'expression_set' based on whether the input
+        object is an alignment or alignment_set. 
+        
+        :param params: module input params
+        :param alignment_object_type: input alignment object type
+        :param alignment_object_name: input alignment object name
+        :param alignment_object_data: input alignment object data
+        """
+        expression_set_suffix = params['expression_set_suffix']
+        expression_suffix = params['expression_suffix']
+
+        if re.match('^KBaseRNASeq.RNASeqAlignment-\d*', alignment_object_type):
+            if re.match('.*_[Aa]lignment$', alignment_object_name):
+                params['expression_name'] = re.sub('_[Aa]lignment$',
+                                                   expression_suffix,
+                                                   alignment_object_name)
+            else:  # assume user specified suffix
+                params['expression_name'] = alignment_object_name+expression_suffix
+        if re.match('^KBaseRNASeq.RNASeqAlignmentSet-\d*', alignment_object_type):
+            if re.match('.*_[Aa]lignment_[Ss]et$', alignment_object_name):
+                # set expression set name
+                params['expression_set_name'] = re.sub('_[Aa]lignment_[Ss]et$',
+                                                       expression_set_suffix,
+                                                       alignment_object_name)
+            else:  # assume user specified suffix
+                params['expression_set_name'] = alignment_object_name + expression_set_suffix
+        if re.match('^KBaseSets.ReadsAlignmentSet-\d*', alignment_object_type):
+            if re.match('.*_[Aa]lignment_[Ss]et$', alignment_object_name):
+
+                # set expression set name
+                params['expression_set_name'] = re.sub('_[Aa]lignment_[Ss]et$',
+                                                       expression_set_suffix,
+                                                       alignment_object_name)
+            else:  # assume user specified suffix
+                params['expression_set_name'] = alignment_object_name + expression_set_suffix
+
+
+
+    def _save_expression_matrix(self, expressionset_ref, workspace_name):
+        """
+        _save_expression_matrix: save FPKM and TPM ExpressionMatrix
+        """
+
+        log('start saving ExpressionMatrix object')
+
+        expression_set_name = self.ws.get_object_info([{"ref": expressionset_ref}],
+                                                      includeMetadata=None)[0][1]
+
+        output_obj_name_prefix = re.sub('_*[Ee]xpression_*[Ss]et',
+                                        '',
+                                        expression_set_name)
+
+        upload_expression_matrix_params = {'expressionset_ref': expressionset_ref,
+                                           'output_obj_name': output_obj_name_prefix,
+                                           'workspace_name': workspace_name}
+
+        expression_matrix_refs = self.eu.get_expressionMatrix(upload_expression_matrix_params)
+
+        return expression_matrix_refs
