@@ -232,14 +232,14 @@ class STAR_Aligner(object):
                         alignment_items,
                         output_alignmentset_name,
                         params['output_workspace'])
+	
+	index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
+        output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
+	save_result['output_directory'] = output_dir
 
         result_obj_ref = save_result['set_ref']
 
         # 2. Extract the ReadsPerGene counts if necessary
-        index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
-        output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
-	set_result['output_directory'] = output_dir
-	
         gene_count_files = []
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
