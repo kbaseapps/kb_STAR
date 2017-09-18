@@ -167,7 +167,7 @@ class STAR_Aligner(object):
 	    expr_params = copy(input_params)
 	    expr_params['alignment_object_ref'] = alignment_ref
 	    expr_params['result_directory'] = star_mp_ret.get('star_output', None)
-	    self.star_utils.generate_expression_from_alignment(expr_params)
+	    #self.star_utils.generate_expression_from_alignment(expr_params)
 		
         if ret_fwd is not None:
             os.remove(ret_fwd)
