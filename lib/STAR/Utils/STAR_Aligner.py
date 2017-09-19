@@ -208,13 +208,15 @@ class STAR_Aligner(object):
         (set_result, report_info) =self._batch_sequential_post_processing(
                                         alignment_items, rds_names, input_params)
 
+        set_result['output_directory'] = self.star_out_dir
+
         result = {'alignmentset_ref': set_result['set_ref'],
                 'output_info': set_result,
-		'output_directory':  set_result['output_directory'],
                 'alignment_objs': alignment_objs,
                 'report_name': report_info['name'],
                 'report_ref': report_info['ref']
         }
+
         return result
 
 
@@ -238,8 +240,7 @@ class STAR_Aligner(object):
         # 2. Extract the ReadsPerGene counts if necessary
         index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
-	set_result['output_directory'] = output_dir
-	
+
         gene_count_files = []
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
