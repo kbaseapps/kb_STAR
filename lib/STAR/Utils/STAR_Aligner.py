@@ -111,7 +111,6 @@ class STAR_Aligner(object):
                 rds_files.append(reads_info['file_rev'])
 
         input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
-	
         # 2. After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
@@ -161,14 +160,7 @@ class STAR_Aligner(object):
                     'report_name': None,
                     'report_ref': None
             }
-	
-	# 3. Generate Expression Matrix
-	if star_mp_ret.get('star_output', None) is not None:
-	    expr_params = copy(input_params)
-	    expr_params['alignment_object_ref'] = alignment_ref
-	    expr_params['result_directory'] = star_mp_ret.get('star_output', None)
-	    self.star_utils.generate_expression_from_alignment(expr_params)
-		
+
         if ret_fwd is not None:
             os.remove(ret_fwd)
             if reads_info.get('file_rev', None) is not None:
@@ -247,7 +239,7 @@ class STAR_Aligner(object):
 
         result_obj_ref = save_result['set_ref']
 
-        # 2.1 Extract the ReadsPerGene counts if necessary
+        # 2. Extract the ReadsPerGene counts if necessary
         gene_count_files = []
         if (params.get('quantMode', None) is not None
                     and (params['quantMode'] == 'Both'
@@ -256,13 +248,7 @@ class STAR_Aligner(object):
                 gene_count_files.append('{0}/{1}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
 
             extract_geneCount_matrix(gene_count_files, output_dir)
-	
-	# 2.2 Generate Expression Matrix
-	expr_params = copy(params)
-	expr_params['alignment_set_ref'] = save_result['set_ref']
-	expr_params['result_directory'] = output_dir
-	self.star_utils.generate_expression_from_alignment(expr_params)
-		
+
         # 3. Reporting...
         report_info = {'name': None, 'ref': None}
 
