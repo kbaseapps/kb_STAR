@@ -10,6 +10,7 @@ from STAR.Utils.file_util import (
 )
 from pprint import pprint, pformat
 
+from STAR.Utils.STARUtils import STARUtils
 from STAR.Utils.STAR_Aligner import STAR_Aligner
 #END_HEADER
 
