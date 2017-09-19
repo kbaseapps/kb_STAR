@@ -237,18 +237,11 @@ class STAR_Aligner(object):
 
         result_obj_ref = save_result['set_ref']
 
-        # 2. Extract the ReadsPerGene counts if necessary
         index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
         output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
 
-        gene_count_files = []
-        if (params.get('quantMode', None) is not None
-                    and (params['quantMode'] == 'Both'
-                            or 'GeneCounts' in params['quantMode'])):
-            for reads_name in rds_names:
-                gene_count_files.append('{0}/{1}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
-
-            extract_geneCount_matrix(gene_count_files, output_dir)
+        # 2. Extract the ReadsPerGene counts if necessary
+        self._extract_readsPerGene(params, rds_names, output_dir)
 
         # 3. Reporting...
         report_info = {'name': None, 'ref': None}
@@ -283,6 +276,7 @@ class STAR_Aligner(object):
                 'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         reads_refs = input_params[STARUtils.SET_READS]
+
         # build task list and send it to KBParallel
         tasks = []
         for r in reads_refs:
@@ -304,7 +298,7 @@ class STAR_Aligner(object):
         print('Batch run results=')
         pprint(results)
 
-        batch_result = self.star_utils.process_batch_result(results, input_params, reads_refs)
+        batch_result = self.process_batch_result(results, input_params, reads_refs)
         batch_result['output_directory'] = self.star_out_dir
 
         return batch_result
@@ -317,8 +311,8 @@ class STAR_Aligner(object):
         ran_locally = 0
         ran_njsw = 0
 
-        set_name_map = self.star_utils.get_object_names([params[self.PARAM_IN_READS]])
-        set_name = set_name_map[params[self.PARAM_IN_READS]]
+        set_name_map = self.star_utils.get_object_names([params[STARUtils.PARAM_IN_READS]])
+        set_name = set_name_map[params[STARUtils.PARAM_IN_READS]]
 
         # reads alignment set items
         alignment_items = []
@@ -359,18 +353,11 @@ class STAR_Aligner(object):
 
         result_obj_ref = save_result['set_ref']
 
-        index_dir = os.path.join(self.working_dir, STARUtils.STAR_IDX_DIR)
-        output_dir = os.path.join(self.working_dir, STARUtils.STAR_OUT_DIR)
+        index_dir = os.path.join(self.scratch, STARUtils.STAR_IDX_DIR)
+        output_dir = os.path.join(self.scratch, STARUtils.STAR_OUT_DIR)
 
         # Extract the ReadsPerGene counts if necessary
-        gene_count_files = []
-        if (params.get('quantMode', None) is not None
-                    and (params['quantMode'] == 'Both'
-                            or 'GeneCounts' in params['quantMode'])):
-            for reads_name in rds_names:
-                gene_count_files.append('{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
-
-            extract_geneCount_matrix(gene_count_files, output_dir)
+        self._extract_readsPerGene(params, rds_names, output_dir)
 
         # Reporting...
         report_info = {'name': None, 'ref': None}
@@ -408,10 +395,21 @@ class STAR_Aligner(object):
 
         return result
 
+    def _extract_readsPerGene(self, params, rds_names, output_dir): 
+        # Extract the ReadsPerGene counts if 'quantMode' was set during the STAR run
+        gene_count_files = []
+        if (params.get('quantMode', None) is not None
+                    and (params['quantMode'] == 'Both'
+                            or 'GeneCounts' in params['quantMode'])):
+            for reads_name in rds_names:
+                gene_count_files.append('{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
+
+            extract_geneCount_matrix(gene_count_files, output_dir)
+
     def build_single_execution_task(self, rds_ref, params):
         task_params = copy.deepcopy(params)
 
-        task_params[self.PARAM_IN_READS] = rds_ref
+        task_params[STARUtils.PARAM_IN_READS] = rds_ref
         task_params['create_report'] = 0
 
         if 'condition' in rds_ref:
