@@ -43,7 +43,8 @@ def fetch_fasta_from_genome(genome_ref, ws_url, callback_url):
     if len(assembly_ref) == 1:
         return fetch_fasta_from_assembly(assembly_ref[0], ws_url, callback_url)
     else:
-        raise ValueError("Multiple assemblies found associated with the given genome ref {}! Unable to continue.".format(genome_ref))
+        raise ValueError("Multiple assemblies found associated with the given genome ref {}! "
+                         "Unable to continue.")
 
 
 def fetch_fasta_from_assembly(assembly_ref, ws_url, callback_url):
