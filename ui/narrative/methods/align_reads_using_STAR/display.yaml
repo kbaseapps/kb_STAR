@@ -11,17 +11,14 @@ icon: null
 #
 # define a set of similar methods that might be useful to the user
 #
-suggestions:
-    apps:
-        related:
-            []
-        next:
-            []
-    methods:
-        related:
-            []
-        next:
-            []
+#
+# Define the set of other narrative methods that should be suggested to the user.
+#
+method-suggestions :
+    related :
+        []
+    next :
+        [kb_cufflinks/assemble_transcripts_using_cufflinks]
 
 #
 # Configure the display and description of the parameters
