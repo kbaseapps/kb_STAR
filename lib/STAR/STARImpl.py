@@ -57,9 +57,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         # Any configuration parameters that are important should be parsed and
         # saved in the constructor.
         self.config = config
-        self.scratch_dir = os.path.abspath(config['scratch'])
-        self.workspace_url = config['workspace-url']
-        self.srv_wiz_url = config['srv-wiz-url']
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
         pass
