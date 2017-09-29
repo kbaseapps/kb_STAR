@@ -80,13 +80,6 @@ class STARUtils:
         # check for required parameters
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-        if (params.get(self.PARAM_IN_READS, None) is None or
-                not valid_string(params[self.PARAM_IN_READS], is_ref=True)):
-            raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
-                      "not {}".format(params.get(self.PARAM_IN_READS, None)))
-        if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
-            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
-                      "not {}".format(params.get("alignment_suffix", None)))
 
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
@@ -99,12 +92,19 @@ class STARUtils:
             if params.get(self.PARAM_IN_READS, None) is None:
 		raise ValueError(self.PARAM_IN_READS +
 				' parameter is required for reads mapping')
+		if not valid_string(params[self.PARAM_IN_READS], is_ref=True):
+			raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
+					 "not {}".format(params.get(self.PARAM_IN_READS, None)))
 
         if params.get(self.PARAM_IN_THREADN, None) is not None:
             if not isinstance(params[self.PARAM_IN_THREADN], int):
                 raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
 	else:
              params[self.PARAM_IN_THREADN] = 2
+
+	if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
+            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
+                      "not {}".format(params.get("alignment_suffix", None)))
 
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
