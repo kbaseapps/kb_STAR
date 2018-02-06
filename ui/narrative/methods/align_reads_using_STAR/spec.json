@@ -1,9 +1,9 @@
 {
-    "ver": "0.0.1",
+    "ver": "0.0.2",
     "authors": [
         "qzhang"
     ],
-    "contact": "help@kbase.us",
+    "contact": "http://kbase.us/contact-us/",
     "visible" : true,
     "categories": ["active","expression","sequence"],
     "widgets": {

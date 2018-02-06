@@ -36,8 +36,8 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.1"
-    GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
+    VERSION = "0.0.2"
+    GIT_URL = "https://github.com/kbaseapps/kb_STAR"
     GIT_COMMIT_HASH = "61d936924fdbc60cca5e7ff42e7226a76e933d3d"
 
     #BEGIN_CLASS_HEADER
