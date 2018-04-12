@@ -95,7 +95,7 @@ parameters :
             Set the condition associated with the input reads object. This is required for a single sample, but ignored for sets of samples, since that is included in the set.
     
 description : |
-    <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
+    <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome using the STAR alignment program, written by Alexander Dobin (https://www.ncbi.nlm.nih.gov/pubmed/23104886).</p> 
     <p>Basic STAR work flow consists of 2 steps:</p>
     <p>1. Generating genome indexes files: In this step user supplied the reference genome sequences (FASTA files) and annotations (GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination.
     </p>
