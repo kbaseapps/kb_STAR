@@ -1,27 +1,24 @@
 #
 # define display information
 #
-name: Align Reads Using STAR 2.5.3a
+name: Align Reads Using STAR - v2.5.3a
 tooltip: |
         Spliced Transcripts Alignment to a Reference
 screenshots: []
 
-icon: null
+icon: star-cyan.png
 
 #
 # define a set of similar methods that might be useful to the user
 #
-suggestions:
-    apps:
-        related:
-            []
-        next:
-            []
-    methods:
-        related:
-            []
-        next:
-            []
+#
+# Define the set of other narrative methods that should be suggested to the user.
+#
+method-suggestions :
+    related :
+        []
+    next :
+        [kb_cufflinks/assemble_transcripts_using_cufflinks]
 
 #
 # Configure the display and description of the parameters
@@ -29,7 +26,7 @@ suggestions:
 parameters :
     sampleset_ref :
         ui-name : |
-            RNA-seq reads or ReadsSet, or RNA-seq sample set
+            RNA-seq Sample or Sample Set
         short-hint : |
             Select the RNA-seq read set associated with the RNA-seq experiment. Alternatively, if you have only one sample of RNA-seq reads, select the corresponding object.
         long-hint : |
@@ -98,7 +95,7 @@ parameters :
             Set the condition associated with the input reads object. This is required for a single sample, but ignored for sets of samples, since that is included in the set.
     
 description : |
-    <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome.</p> 
+    <p>The STAR app aligns the sequencing reads for a single or a set of two (paired end) reads to long reference sequences of a prokaryotic genome using the STAR alignment program, written by Alexander Dobin (https://www.ncbi.nlm.nih.gov/pubmed/23104886).</p> 
     <p>Basic STAR work flow consists of 2 steps:</p>
     <p>1. Generating genome indexes files: In this step user supplied the reference genome sequences (FASTA files) and annotations (GTF file), from which STAR generate genome indexes that are utilized in the 2nd (mapping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination.
     </p>

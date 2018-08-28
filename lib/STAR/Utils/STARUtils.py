@@ -60,7 +60,7 @@ class STARUtils:
         self.callback_url = callback_url
         self.srv_wiz_url = srv_wiz_url
         self.au = AssemblyUtil(self.callback_url)
-        self.dfu = DataFileUtil(self.callback_url)
+        self.dfu = DataFileUtil(self.callback_url, service_ver='beta')
         self.scratch = scratch_dir
         self.working_dir = scratch_dir
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
@@ -70,7 +70,7 @@ class STARUtils:
         self.parallel_runner = KBParallel(self.callback_url)
         self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
-        self.eu = ExpressionUtils(self.callback_url, service_ver='dev')
+        self.eu = ExpressionUtils(self.callback_url, service_ver='beta')
 
     def process_params(self, params):
         """
@@ -80,13 +80,6 @@ class STARUtils:
         # check for required parameters
         if params.get(self.PARAM_IN_WS, None) is None:
             raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-        if (params.get(self.PARAM_IN_READS, None) is None or
-                not valid_string(params[self.PARAM_IN_READS], is_ref=True)):
-            raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
-                      "not {}".format(params.get(self.PARAM_IN_READS, None)))
-        if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
-            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
-                      "not {}".format(params.get("alignment_suffix", None)))
 
         if params.get(self.PARAM_IN_STARMODE, None) is None:
             params[self.PARAM_IN_STARMODE] = 'alignReads'
@@ -99,12 +92,19 @@ class STARUtils:
             if params.get(self.PARAM_IN_READS, None) is None:
 		raise ValueError(self.PARAM_IN_READS +
 				' parameter is required for reads mapping')
+		if not valid_string(params[self.PARAM_IN_READS], is_ref=True):
+			raise ValueError("Parameter readsset_ref must be a valid Workspace object reference, "
+					 "not {}".format(params.get(self.PARAM_IN_READS, None)))
 
         if params.get(self.PARAM_IN_THREADN, None) is not None:
             if not isinstance(params[self.PARAM_IN_THREADN], int):
                 raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
 	else:
              params[self.PARAM_IN_THREADN] = 2
+
+	if "alignment_suffix" not in params or not valid_string(params["alignment_suffix"]):
+            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
+                      "not {}".format(params.get("alignment_suffix", None)))
 
         if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
             if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
@@ -391,7 +391,7 @@ class STARUtils:
 
         pprint(align_upload_params)
 
-        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver='dev')
+        ra_util = ReadsAlignmentUtils(self.callback_url, service_ver='beta')
         rau_upload_ret = ra_util.upload_alignment(align_upload_params)
         alignment_ref = rau_upload_ret["obj_ref"]
         print("STAR alignment uploaded as object {}".format(alignment_ref))
@@ -400,6 +400,10 @@ class STARUtils:
 
     def generate_report_for_single_run(self, run_output_info, params):
         input_ref = run_output_info['upload_results']['obj_ref']
+        index_dir = run_output_info['index_dir']
+        output_dir = run_output_info['output_dir']
+        output_files = self._generate_output_file_list(index_dir, output_dir)
+
         # first run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': input_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
@@ -411,13 +415,15 @@ class STARUtils:
         report_text += '                        ' + input_ref + '\n'
         kbr = KBaseReport(self.callback_url)
         report_info = kbr.create_extended_report({'message': report_text,
+                                                  'file_links': output_files,
                                                   'objects_created': [{'ref': input_ref,
                                                                        'description': 'ReadsAlignment'}],
-                                                  'report_object_name': 'kb_STAR_' + str(uuid.uuid4()),
+                                                  'report_object_name': 'kb_STAR_report_' + str(uuid.uuid4()),
                                                   'direct_html_link_index': 0,
                                                   'html_links': [{'shock_id': qc_result_zip_info['shock_id'],
                                                                   'name': qc_result_zip_info['index_html_file_name'],
                                                                   'label': qc_result_zip_info['name']}],
+                                                  'html_window_height': 366,
                                                   'workspace_name': params['output_workspace']
                                                   })
         return report_info #{'report_name': report_info['name'], 'report_ref': report_info['ref']}
@@ -648,9 +654,11 @@ class STARUtils:
         self._mkdir_p(output_directory)
         star_index = os.path.join(output_directory, 'star_index.zip')
         star_output = os.path.join(output_directory, 'star_output.zip')
-
         self.zip_folder(idx_dir, star_index)
         self.zip_folder(out_dir, star_output)
+
+        #star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
+        #star_output = self.zip_folder_withDFU(out_dir, 'star_output')
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -665,33 +673,53 @@ class STARUtils:
         return output_files
 
 
-    def zip_folder(self, folder_path, output_path):
+    def zip_folder_withDFU(self, folder_path, output_name):
         """Zip the contents of an entire folder (with that folder included
         in the archive). Empty subfolders will be included in the archive
         as well.
+        """
+        output_path = self.dfu.pack_file(
+                {'file_path': folder_path + '/' + output_name,
+                 'pack': 'zip'})['file_path']
+
+        print "{} created successfully.".format(output_path)
+
+        #with zipfile.ZipFile(output_path, "r") as f:
+            #print 'Checking the zipped file......\n'
+            #for info in f.infolist():
+                #    print info.filename, info.date_time, info.file_size, info.compress_size
+            #for fn in f.namelist():
+                #print fn
+
+        return output_path
+
+
+    def zip_folder(self, folder_path, output_path):
+        """Zip the contents of an entire folder (with that folder included in the archive). 
+        Empty subfolders could be included in the archive as well if the commented portion is used.
         """
         with zipfile.ZipFile(output_path, 'w',
                              zipfile.ZIP_DEFLATED,
                              allowZip64=True) as ziph:
             for root, folders, files in os.walk(folder_path):
                 # Include all subfolders, including empty ones.
-                for folder_name in folders:
-                    absolute_path = os.path.join(root, folder_name)
-                    relative_path = os.path.join(os.path.basename(root), folder_name)
-                    print "Adding {} to archive.".format(absolute_path)
-                    ziph.write(absolute_path, relative_path)
+                #for folder_name in folders:
+                #    absolute_path = os.path.join(root, folder_name)
+                #    relative_path = os.path.join(os.path.basename(root), folder_name)
+                #    print "Adding {} to archive.".format(absolute_path)
+                #    ziph.write(absolute_path, relative_path)
                 for f in files:
                     absolute_path = os.path.join(root, f)
                     relative_path = os.path.join(os.path.basename(root), f)
-                    print "Adding {} to archive.".format(absolute_path)
+                    #print "Adding {} to archive.".format(absolute_path)
                     ziph.write(absolute_path, relative_path)
 
         print "{} created successfully.".format(output_path)
 
-        with zipfile.ZipFile(output_path, "r") as f:
-            print 'Checking the zipped file......\n'
-            for info in f.infolist():
-                print info.filename, info.date_time, info.file_size, info.compress_size
+        #with zipfile.ZipFile(output_path, "r") as f:
+        #    print 'Checking the zipped file......\n'
+        #    for info in f.infolist():
+        #        print info.filename, info.date_time, info.file_size, info.compress_size
 
 
     def _generate_html_report(self, out_dir, obj_ref):
