@@ -120,10 +120,10 @@ class STARTest(unittest.TestCase):
             return self.__class__.pairedEndLibInfo
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        forward_data_file = '../work/testReads/small.forward.fq'
+        forward_data_file = './testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = '../work/testReads/small.reverse.fq'
+        reverse_data_file = './testReads/small.reverse.fq'
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
@@ -145,9 +145,9 @@ class STARTest(unittest.TestCase):
     def loadAssembly(self):
         if hasattr(self.__class__, 'assembly_ref'):
             return self.__class__.assembly_ref
-        fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        #shutil.copy(os.path.join('../work/testReads', 'test_reference.fa'), fasta_path)
-        shutil.copy(os.path.join('../work/testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        fasta_path = os.path.join(self.scratch, 'star_ref_assembly.fa')
+        shutil.copy(os.path.join('./testReads', 'test_reference.fa'), fasta_path)
+        # shutil.copy(os.path.join('./testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -175,10 +175,10 @@ class STARTest(unittest.TestCase):
 
 
     def loadSEReads(self, reads_file_path):
-        #if hasattr(self.__class__, 'reads_ref'):
-            #return self.__class__.reads_ref
+        # if hasattr(self.__class__, 'reads_ref'):
+        #    return self.__class__.reads_ref
         se_reads_name = os.path.basename(reads_file_path)
-        fq_path = os.path.join(self.scratch, se_reads_name) #'star_test_reads.fastq')
+        fq_path = os.path.join(self.scratch, se_reads_name)
         shutil.copy(reads_file_path, fq_path)
 
         ru = ReadsUtils(self.callback_url)
@@ -186,17 +186,17 @@ class STARTest(unittest.TestCase):
                                         'wsname': self.getWsName(),
                                         'name': se_reads_name.split('.')[0],
                                         'sequencing_tech': 'rnaseq reads'})['obj_ref']
-        #self.__class__.reads_ref = reads_ref
+        # self.__class__.reads_ref = reads_ref
         return reads_ref
 
 
     def loadReadsSet(self):
-        #if hasattr(self.__class__, 'reads_set_ref'):
-            #return self.__class__.reads_set_ref
-        #se_lib_ref1 = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
-        se_lib_ref1 = self.loadSEReads(os.path.join('../work/testReads', 'testreads.fastq'))
-        se_lib_ref2 = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
-        #pe_reads_ref = self.loadPairedEndReads()
+        # if hasattr(self.__class__, 'reads_set_ref'):
+        #    return self.__class__.reads_set_ref
+        # se_lib_ref1 = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
+        se_lib_ref1 = self.loadSEReads(os.path.join('./testReads', 'testreads.fastq'))
+        se_lib_ref2 = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
+        # pe_reads_ref = self.loadPairedEndReads()
         reads_set_name = 'TestSampleSet'
         reads_set_data = {'Library_type': 'PairedEnd',
                            'domain': "Prokaryotes",
@@ -213,12 +213,10 @@ class STARTest(unittest.TestCase):
         ss_obj = self.getWsClient().save_objects({'workspace': self.getWsName(),
                                                   'objects': [{'type': 'KBaseRNASeq.RNASeqSampleSet',
                                                                'data': reads_set_data,
-                                                               'name': reads_set_name}]#,
-                                                               #'provenance': [{"input_ws_objects": [pe_reads_ref, pe_reads_ref, pe_reads_ref]}]}]
-                                                  })
+                                                               'name': reads_set_name}]})
         ss_ref = "{}/{}/{}".format(ss_obj[0][6], ss_obj[0][0], ss_obj[0][4])
         print('Loaded ReadsSet: ' + ss_ref)
-        #self.__class__.reads_set_ref = ss_ref
+        # self.__class__.reads_set_ref = ss_ref
         return ss_ref
 
 
@@ -227,10 +225,10 @@ class STARTest(unittest.TestCase):
     @unittest.skip("skipped test_run_star_single")
     def test_run_star_single(self):
         # get the test data
-        genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
-        se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'small.forward.fq'))
-        #se_lib_ref = self.loadSEReads(os.path.join('../work/testReads', 'Ath_Hy5_R1.fastq'))
-        #pe_reads_ref = self.loadPairedEndReads()
+        genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+        se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
+        # se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
+        # pe_reads_ref = self.loadPairedEndReads()
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -247,8 +245,8 @@ class STARTest(unittest.TestCase):
                   'concurrent_local_tasks': 1,
                   'outSAMtype': 'BAM',
                   'create_report': 1
-                  #'genomeFastaFile_refs': [self.loadAssembly()],
-                  #'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
+                  # 'genomeFastaFile_refs': [self.loadAssembly()],
+                  # 'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
         }
         pprint(params)
         res = self.getImpl().run_star(self.getContext(), params)[0]
@@ -258,16 +256,16 @@ class STARTest(unittest.TestCase):
         self.assertIn('alignment_objs', res)
 
     # Uncomment to skip this test
-    #@unittest.skip("skipped test_run_star_batch")
+    # @unittest.skip("skipped test_run_star_batch")
     def test_run_star_batch(self):
         # get the test data
-        genome_ref = self.loadGenome('../work/testReads/ecoli_genomic.gbff')
+        genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
         ss_ref = self.loadReadsSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
-                  'quantMode': 'Both', #'GeneCounts',
+                  'quantMode': 'Both', # 'GeneCounts',
                   'alignmentset_suffix': '_alignment_set',
                   'alignment_suffix': '_alignment',
                   'expression_suffix': '_expression',
@@ -293,17 +291,17 @@ class STARTest(unittest.TestCase):
 
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = '../testReads/test_long.fa'
+        genome_fasta_file = './testReads/test_long.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
-        genome_fasta_file2 = '../testReads/test_reference.fa'
+        genome_fasta_file2 = './testReads/test_reference.fa'
         genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
         shutil.copy(genome_fasta_file2, genome_file2)
 
-        forward_data_file = '../testReads/small.forward.fq'
+        forward_data_file = './testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = '../testReads/small.reverse.fq'
+        reverse_data_file = './testReads/small.reverse.fq'
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
         # STAR indexing input parameters
@@ -352,17 +350,17 @@ class STARTest(unittest.TestCase):
     def test_exec_star_pipeline(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = '../testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
+        genome_fasta_file = './testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
-        rnaseq_data_file = '../testReads/Ath_Hy5_R1.fastq.gz' #'../testReads/test_long.fa' #'Ath_Hy5_R1.fastq'
+        rnaseq_data_file = './testReads/test_long.fa' # 'Ath_Hy5_R1.fastq'
         rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
         shutil.copy(rnaseq_data_file, rnaseq_file)
 
-        forward_data_file = '../testReads/small.forward.fq'
+        forward_data_file = './testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = '../testReads/small.reverse.fq'
+        reverse_data_file = './testReads/small.reverse.fq'
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
@@ -372,7 +370,7 @@ class STARTest(unittest.TestCase):
                 'runMode': 'genomeGenerate',
 		'runThreadN': 4,
                 'genomeFastaFiles': [genome_file],
-                'readFilesIn': [rnaseq_file],#[forward_file, reverse_file],
+                'readFilesIn': [rnaseq_file],# [forward_file, reverse_file],
 		'outFileNamePrefix': 'STAR_'
 	}
         # 3) test running star directly from files (not KBase refs)
