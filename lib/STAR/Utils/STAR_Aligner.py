@@ -15,9 +15,11 @@ from file_util import (
     extract_geneCount_matrix
 )
 
+
 def log(message, prefix_newline=False):
     """Logging function, provides a hook to suppress or redirect log messages."""
     print(('\n' if prefix_newline else '') + '{0:.2f}'.format(time.time()) + ': ' + str(message))
+
 
 class STAR_Aligner(object):
 
@@ -30,9 +32,9 @@ class STAR_Aligner(object):
         self.parallel_runner = KBParallel(self.callback_url)
         self.provenance = provenance
         self.star_utils = STARUtils(self.scratch,
-                        self.workspace_url,
-                        self.callback_url,
-                        self.srv_wiz_url, provenance)
+                                    self.workspace_url,
+                                    self.callback_url,
+                                    self.srv_wiz_url, provenance)
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
         self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
         self.star_idx_dir = None
@@ -45,7 +47,6 @@ class STAR_Aligner(object):
                 self.my_version = self.get_version_from_subactions('kb_STAR', provenance[0]['subactions'])
         print('Running kb_STAR version = ' + self.my_version)
 
-
     def run_align(self, params):
         # 0. create the star folders
         if self.star_idx_dir is None:
@@ -57,7 +58,7 @@ class STAR_Aligner(object):
         validated_params = self.star_utils.process_params(params)
         input_obj_info = self.star_utils.determine_input_info(validated_params)
 
-	# 2. convert the input parameters (from refs to file paths, especially)
+        # 2. convert the input parameters (from refs to file paths, especially)
         input_params = self.star_utils.convert_params(validated_params)
 
         returnVal = {
@@ -68,11 +69,10 @@ class STAR_Aligner(object):
             returnVal = self.star_run_single(input_params)
 
         if input_obj_info['run_mode'] == 'sample_set':
-            #returnVal = self.star_run_batch_parallel(input_params)
+            # returnVal = self.star_run_batch_parallel(input_params)
             returnVal = self.star_run_batch_sequential(input_params)
 
         return returnVal
-
 
     def star_run_single(self, input_params):
         """
@@ -80,7 +80,7 @@ class STAR_Aligner(object):
         is taken from the params dict - see the spec for details.
         """
         log('--->\nrunning STAR_Aligner.star_run_single\n' +
-                'params:\n{}'.format(json.dumps(input_params, indent=1)))
+            'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         # 0. get index
         self.get_index(input_params)
@@ -111,6 +111,7 @@ class STAR_Aligner(object):
                 rds_files.append(reads_info['file_rev'])
 
         input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
+
         # 2. After all is set, do the alignment and upload the output.
         star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
 
@@ -143,23 +144,22 @@ class STAR_Aligner(object):
             singlerun_output_info['upload_results'] = upload_results
 
             if input_params.get("create_report", 0) == 1:
-                report_info = self.star_utils.generate_report_for_single_run(singlerun_output_info, input_params)
+                report_info = self.star_utils.generate_report_for_single_run(
+                    singlerun_output_info, input_params)
 
-            ret_val = {'alignmentset_ref': None,
-                    'output_directory': singlerun_output_info['output_dir'],
-                    'output_info': singlerun_output_info,
-                    'alignment_objs': alignment_objs,
-                    'report_name': report_info['name'],
-                    'report_ref': report_info['ref']
-            }
-        else:
-            ret_val = {'alignmentset_ref': None,
-                    'output_directory': None,
-                    'output_info': None,
-                    'alignment_objs': None,
-                    'report_name': None,
-                    'report_ref': None
-            }
+                ret_val = {'alignmentset_ref': None,
+                           'output_directory': singlerun_output_info['output_dir'],
+                           'output_info': singlerun_output_info,
+                           'alignment_objs': alignment_objs,
+                           'report_name': report_info['name'],
+                           'report_ref': report_info['ref']}
+            else:
+                ret_val = {'alignmentset_ref': None,
+                           'output_directory': None,
+                           'output_info': None,
+                           'alignment_objs': None,
+                           'report_name': None,
+                           'report_ref': None}
 
         if ret_fwd is not None:
             os.remove(ret_fwd)
@@ -168,13 +168,12 @@ class STAR_Aligner(object):
 
         return ret_val
 
-
     def star_run_batch_sequential(self, input_params):
         """
         star_run_batch_sequential: running the STAR align by looping
         """
         log('--->\nrunning STAR_Aligner.star_run_batch_sequential\n' +
-                'params:\n{}'.format(json.dumps(input_params, indent=1)))
+            'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         self.get_index(input_params)
 
@@ -193,32 +192,30 @@ class STAR_Aligner(object):
 
             item = single_ret['alignment_objs'][0]
             a_obj = item['AlignmentObj']
-            r_ref = item['reads_ref']
             alignment_objs.append(item)
             alignment_items.append({
                     'ref': a_obj['ref'],
                     'label': r.get(
                             'condition',
-                            single_input_params.get('condition','unspecified'))
+                            single_input_params.get('condition', 'unspecified'))
             })
 
-            rds_names.append(r['alignment_output_name'].replace(single_input_params['alignment_suffix'], ''))
+            rds_names.append(
+                r['alignment_output_name'].replace(single_input_params['alignment_suffix'], ''))
 
         # 2. Process all the results after mapping is done
-        (set_result, report_info) =self._batch_sequential_post_processing(
+        (set_result, report_info) = self._batch_sequential_post_processing(
                                         alignment_items, rds_names, input_params)
 
         set_result['output_directory'] = self.star_out_dir
 
         result = {'alignmentset_ref': set_result['set_ref'],
-                'output_info': set_result,
-                'alignment_objs': alignment_objs,
-                'report_name': report_info['name'],
-                'report_ref': report_info['ref']
-        }
+                  'output_info': set_result,
+                  'alignment_objs': alignment_objs,
+                  'report_name': report_info['name'],
+                  'report_ref': report_info['ref']}
 
         return result
-
 
     def _batch_sequential_post_processing(self, alignment_items, rds_names, params):
         '''
@@ -246,7 +243,7 @@ class STAR_Aligner(object):
         # 3. Reporting...
         report_info = {'name': None, 'ref': None}
 
-        #run qualimap
+        # run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': result_obj_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
         qc_result = [{'shock_id': qc_result_zip_info['shock_id'],
@@ -267,13 +264,12 @@ class STAR_Aligner(object):
 
         return (save_result, report_info)
 
-
     def star_run_batch_parallel(self, input_params):
         """
         star_run_batch_parallel: running the STAR align in batch parallelly
         """
         log('--->\nrunning STAR_Aligner.star_run_batch_parallel\n' +
-                'params:\n{}'.format(json.dumps(input_params, indent=1)))
+            'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         reads_refs = input_params[STARUtils.SET_READS]
 
@@ -302,7 +298,6 @@ class STAR_Aligner(object):
         batch_result['output_directory'] = self.star_out_dir
 
         return batch_result
-
 
     def process_batch_result(self, batch_result, params, reads_refs):
         n_jobs = len(batch_result['results'])
@@ -362,7 +357,7 @@ class STAR_Aligner(object):
         # Reporting...
         report_info = {'name': None, 'ref': None}
 
-        #run qualimap
+        # run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': result_obj_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
         qc_result = [{'shock_id': qc_result_zip_info['shock_id'],
@@ -387,22 +382,22 @@ class STAR_Aligner(object):
                         output_dir)
 
         result = {'alignmentset_ref': result_obj_ref,
-                'output_info': batch_result,
-                'alignment_objs': alignment_objs,
-                'report_name': report_info['name'],
-                'report_ref': report_info['ref']
-        }
+                  'output_info': batch_result,
+                  'alignment_objs': alignment_objs,
+                  'report_name': report_info['name'],
+                  'report_ref': report_info['ref']}
 
         return result
 
-    def _extract_readsPerGene(self, params, rds_names, output_dir): 
+    def _extract_readsPerGene(self, params, rds_names, output_dir):
         # Extract the ReadsPerGene counts if 'quantMode' was set during the STAR run
         gene_count_files = []
         if (params.get('quantMode', None) is not None
-                    and (params['quantMode'] == 'Both'
-                            or 'GeneCounts' in params['quantMode'])):
+            and (params['quantMode'] == 'Both'
+                 or 'GeneCounts' in params['quantMode'])):
             for reads_name in rds_names:
-                gene_count_files.append('{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
+                gene_count_files.append(
+                    '{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
 
             extract_geneCount_matrix(gene_count_files, output_dir)
 
@@ -420,13 +415,13 @@ class STAR_Aligner(object):
         return {'module_name': 'STAR',
                 'function_name': 'run_star',
                 'version': self.my_version,
-                #'version': 'dev',
+                # 'version': 'dev',
                 'parameters': task_params}
 
     def get_version_from_subactions(self, module_name, subactions):
         # go through each sub action looking for
         if not subactions:
-            return 'dev' #'release'  # default to release if we can't find anything
+            return 'dev'  # 'release'  # default to release if we can't find anything
         for sa in subactions:
             if 'name' in sa:
                 if sa['name'] == module_name:
@@ -438,8 +433,7 @@ class STAR_Aligner(object):
                     if re.match('[a-fA-F0-9]{40}$', sa['commit']):
                         return sa['commit']
         # again, default to setting this to release
-        return 'dev' #'release'
-
+        return 'dev'  # 'release'
 
     def run_star_indexing(self, input_params):
         """
@@ -458,8 +452,8 @@ class STAR_Aligner(object):
             if ret_params[STARUtils.PARAM_IN_STARMODE]=='genomeGenerate':
                 ret = self.star_utils._exec_indexing(params_idx)
             else:
-		ret = 0
-            while( ret != 0 ):
+                ret = 0
+            while(ret != 0):
                 time.sleep(1)
         except ValueError as eidx:
             log('STAR genome indexing raised error:\n')
@@ -469,27 +463,25 @@ class STAR_Aligner(object):
 
         return (ret, params_idx[STARUtils.STAR_IDX_DIR])
 
-
     def run_star_mapping(self, params, rds_files, rds_name):
         """
-        Runs STAR in alignReads mode for STAR mapping.
-        It creates a directory as defined by self.star_out_dir with a subfolder named after the reads
+        Runs STAR in alignReads mode for STAR mapping. It creates a directory as defined by
+        self.star_out_dir with a subfolder named after the reads.
         """
         params_mp = self.star_utils._get_mapping_params(
-                        params, rds_files, rds_name, self.star_idx_dir, self.star_out_dir
-                )
+                        params, rds_files, rds_name, self.star_idx_dir, self.star_out_dir)
 
         retVal = {}
         params_mp[STARUtils.PARAM_IN_STARMODE] = 'alignReads'
         try:
             ret = self.star_utils._exec_mapping(params_mp)
-            while( ret != 0 ):
+            while(ret != 0):
                 time.sleep(1)
         except ValueError as emp:
             log('STAR mapping raised error:\n')
             pprint(emp)
             retVal = {'star_idx': self.star_idx_dir, 'star_output': None}
-        else:#no exception raised by STAR mapping and STAR returns 0, then move to saving and reporting  
+        else:  # no exception raised by STAR mapping and returns 0, move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 
         return retVal
@@ -499,14 +491,14 @@ class STAR_Aligner(object):
         get_index: generate the index if not yet existing
         '''
         gnm_ref = input_params[STARUtils.PARAM_IN_GENOME]
-	if input_params.get('sjdbGTFfile', None) is None:
+        if input_params.get('sjdbGTFfile', None) is None:
             input_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
-                                        gnm_ref,
-                                        self.star_idx_dir)
+                                            gnm_ref, self.star_idx_dir)
 
         if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
             # fetch genome fasta and GTF from refs to file location(s)
-            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(gnm_ref)
+            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
+                                                                    gnm_ref)
 
             # generate the indices
             (idx_ret, idx_dir) = self.run_star_indexing(input_params)
