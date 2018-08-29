@@ -2,13 +2,8 @@
 #BEGIN_HEADER
 # The header block is where all import statments should live
 import os
-import json
 import time
-from STAR.Utils.file_util import (
-    fetch_reads_from_reference,
-    fetch_reads_refs_from_sampleset
-)
-from pprint import pprint, pformat
+from pprint import pformat
 
 from STAR.Utils.STAR_Aligner import STAR_Aligner
 #END_HEADER
@@ -22,12 +17,12 @@ class STAR:
     Module Description:
     Name of module: STAR
 
-This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
-STAR-2.5.3a
+    This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
+    STAR-2.5.3a
 
-References:
-https://github.com/alexdobin/STAR/
-https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+    References:
+    https://github.com/alexdobin/STAR/
+    https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     '''
 
     ######## WARNING FOR GEVENT USERS ####### noqa
@@ -45,7 +40,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
 
     def log(self, message, prefix_newline=False):
             print(('\n' if prefix_newline else '') +
-                str(time.time()) + ': ' + str(message))
+                  str(time.time()) + ': ' + str(message))
 
     #END_CLASS_HEADER
 
@@ -59,8 +54,6 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
         self.config = config
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
-        pass
-
 
     def run_star(self, ctx, params):
         """
@@ -159,6 +152,7 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                              'returnVal is not type dict as required.')
         # return the results
         return [returnVal]
+
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
@@ -168,3 +162,4 @@ https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
                      'git_commit_hash': self.GIT_COMMIT_HASH}
         #END_STATUS
         return [returnVal]
+

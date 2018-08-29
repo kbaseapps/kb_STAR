@@ -28,8 +28,8 @@ RUN VERSION=2.5.3a && \
 # This directory has to be created (with mkdir) before STAR run
 # and needs to have writing permissions. 
 # The file system needs to have at least 100GB of disk space available for a typical mammalian genome. 
-#RUN mkdir -p /kb/module/STAR_Genome_index
-#RUN chmod -R a+rw /kb/module/STAR_Genome_index
+# RUN mkdir -p /kb/module/STAR_Genome_index
+# RUN chmod -R a+rw /kb/module/STAR_Genome_index
 
 # -----------------------------------------
 COPY ./ /kb/module
