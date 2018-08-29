@@ -327,6 +327,7 @@ class STARUtils:
         # build the parameters
         params_idx = self._get_indexing_params(params, idx_dir)
         params_mp = self._get_mapping_params(params, rds_files, rds_name, idx_dir, out_dir)
+	ret = {'star_idx': idx_dir, 'star_output': out_dir}
 
         # execute indexing and then mapping
         try:

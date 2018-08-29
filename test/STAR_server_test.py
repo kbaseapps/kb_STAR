@@ -377,9 +377,9 @@ class STARTest(unittest.TestCase):
             'readFilesIn': [forward_file, reverse_file], # [rnaseq_file]
             'outFileNamePrefix': 'STAR_'}
 
-        # 4) test running star directly from files (not KBase refs)
-	print("Reads file name: {}".format(rnaseq_file))
-        result = star_util._exec_star_pipeline(params, [rnaseq_file],
+        # 4) test running star directly from files (w/o sjdbGTFfile parameter)
+	print("Align reads file: {} without sjdbGTFfile...".format(rnaseq_file))
+        result1 = star_util._exec_star_pipeline(params, [rnaseq_file],
                                                'testreads', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
@@ -396,5 +396,33 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
-        pprint(result)
+        pprint(result1)
+
+        # 5) test running star directly from files (with sjdbGTFfile parameter)
+	print("Align reads file: {} with sjdbGTFfile...".format(rnaseq_file))
+        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
+        rds_data_file = './testReads/rhodobacter_artq50SEreads.fastq'
+        rds_file = os.path.join(shared_dir, os.path.basename(rds_data_file))
+        shutil.copy(rds_data_file, rds_file)
+ 	params['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
+ 	params['readFilesIn'] = [rds_file]
+
+	result2 = star_util._exec_star_pipeline(params, [rnaseq_file],
+                                               'testreads', idx_dir, out_dir)
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+
+        pprint(result2)
 
