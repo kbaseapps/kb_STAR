@@ -13,6 +13,7 @@ from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from Workspace.WorkspaceClient import Workspace
 
+
 def fetch_fasta_from_genome(genome_ref, ws_url, callback_url):
     """
     Returns an assembly or contigset as FASTA.
@@ -137,7 +138,7 @@ def fetch_reads_refs_from_sampleset(ref, ws_url, callback_url, params):
 
     name_ext = '_alignment'
     if ('alignment_suffix' in params
-        and params['alignment_suffix'] is not None):
+            and params['alignment_suffix'] is not None):
         ext = params['alignment_suffix'].replace(' ', '')
         if ext:
             name_ext = ext
@@ -199,11 +200,13 @@ def fetch_reads_from_reference(ref, callback_url):
         print("Unable to fetch a file from expected reads object {}".format(ref))
         raise
 
+
 def valid_string(s, is_ref=False):
     is_valid = isinstance(s, basestring) and len(s.strip()) > 0
     if is_valid and is_ref:
         is_valid = check_reference(s)
     return is_valid
+
 
 def check_reference(ref):
     """
@@ -239,6 +242,7 @@ def check_ref_type(ref, allowed_types, ws_url):
             return True
     return False
 
+
 def get_object_type(ref, ws_url):
     """
     Fetches and returns the typed object name of ref from the given workspace url.
@@ -252,6 +256,7 @@ def get_object_type(ref, ws_url):
         raise RuntimeError("An error occurred while fetching type info from the Workspace. "
                            "No information returned for reference {}".format(ref))
     return obj_info[2]
+
 
 def extract_geneCount_matrix(geneCount_filenames, output_dir):
     """
@@ -293,11 +298,12 @@ def extract_geneCount_matrix(geneCount_filenames, output_dir):
 
     output_filename = os.path.join(output_dir, 'ReadsPerGene_matrix.tsv')
     fout = open(output_filename, 'w')
-    #print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
-    fout.write ("feature_ids\t" + "\t".join([os.path.dirname(fn) for fn in geneCount_filenames]) + "\n")
+    # print "feature_ids\t", "\t".join([os.path.dirname(fn) for fn in geneCount_filenames])
+    fout.write("feature_ids\t" + "\t".join(
+                            [os.path.dirname(fn) for fn in geneCount_filenames]) + "\n")
     for fid in sorted(counts.iterkeys()):
         counts2 = [counts[fid][filename] for filename in gene_count_file_paths]
-        #print fid, "\t", "\t".join(counts2)
+        # print fid, "\t", "\t".join(counts2)
         fout.write(str(fid) + "\t" + "\t".join(counts2) + "\n")
 
     fout.close()
