@@ -33,7 +33,7 @@ def log(message, prefix_newline=False):
 
 
 class STARUtils:
-    STAR_VERSION = 'STAR 2.5.3a'
+    STAR_VERSION = 'STAR 2.6.1a'
     STAR_BIN = '/kb/deployment/bin/STAR'
     STAR_IDX_DIR = 'STAR_Genome_index'
     STAR_OUT_DIR = 'STAR_Output'
@@ -112,6 +112,8 @@ class STARUtils:
         """set default for this group of parameters
         """
         params = copy.deepcopy(params_in)
+        if params.get('outSAMunmapped', None) is None:
+            params['outSAMunmapped'] = 'Within'
         if params.get('outFilterType', None) is None:
             params['outFilterType'] = "\"BySJout\""
         if params.get('outFilterMultimapNmax', None) is None:
@@ -215,6 +217,9 @@ class STARUtils:
             mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
             mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
+        if params.get('outSAMunmapped', None) is not None:
+            mp_cmd.append('--outSAMunmapped')
+            mp_cmd.append(str(params['outSAMunmapped']))
         if params.get('sjdbGTFfile', None) is not None:
             mp_cmd.append('--sjdbGTFfile')
             mp_cmd.append(params['sjdbGTFfile'])
@@ -266,6 +271,12 @@ class STARUtils:
                 mp_cmd.append("GeneCounts")
             else:
                 mp_cmd.append(params['quantMode'])
+            # Count genes option requires the annotations GTF file used
+            if ((params['quantMode'] == 'Both' or
+                params['quantMode'] == 'GeneCounts') and
+                    '--sjdbGTFfile' not in mp_cmd):
+                mp_cmd.append('--sjdbGTFfile')
+                mp_cmd.append(params['sjdbGTFfile'])
 
         if (params.get('alignSJoverhangMin', None) is not None
                 and isinstance(params['alignSJoverhangMin'], int)
@@ -324,10 +335,11 @@ class STARUtils:
         return exitCode
 
     def _exec_star_pipeline(self, params, rds_files, rds_name, idx_dir, out_dir):
+        params = self.convert_params(self.process_params(params))
         # build the parameters
         params_idx = self._get_indexing_params(params, idx_dir)
         params_mp = self._get_mapping_params(params, rds_files, rds_name, idx_dir, out_dir)
-	ret = {'star_idx': idx_dir, 'star_output': out_dir}
+        ret = {'star_idx': idx_dir, 'star_output': out_dir}
 
         # execute indexing and then mapping
         try:
@@ -455,8 +467,10 @@ class STARUtils:
         if gnm_ref is not None:
             try:
                 print("Fetching FASTA file from object {}".format(gnm_ref))
-                genome_fasta_file = fetch_fasta_from_object(gnm_ref, self.workspace_url, self.callback_url)
-                print("Done fetching FASTA file! Path = {}".format(genome_fasta_file.get("path", None)))
+                genome_fasta_file = fetch_fasta_from_object(
+                    gnm_ref, self.workspace_url, self.callback_url)
+                print("Done fetching FASTA file! Path = {}".format(
+                    genome_fasta_file.get("path", None)))
             except ValueError:
                 print("Incorrect object type for fetching a FASTA file!")
                 raise
@@ -476,33 +490,18 @@ class STARUtils:
         params = copy.deepcopy(validated_params)
         params['runMode'] = 'genomeGenerate'
 
-        if validated_params.get('create_report', None) is not None:
-                params['create_report'] = validated_params['create_report']
-        if validated_params.get('concurrent_local_tasks', None) is not None:
-                params['concurrent_local_tasks'] = validated_params['concurrent_local_tasks']
-        if validated_params.get('concurrent_njsw_tasks', None) is not None:
-                params['concurrent_njsw_tasks'] = validated_params['concurrent_njsw_tasks']
-        if validated_params.get('alignmentset_suffix', None) is not None:
-                params['alignmentset_suffix'] = validated_params['alignmentset_suffix']
-
-        # Add advanced options from validated_params to params
-        sjdbGTFfile = validated_params.get("sjdbGTFfile", None)
-        if sjdbGTFfile is not None:
-            params['sjdbGTFfile'] = sjdbGTFfile
-        else:
+        # Basic options for generating indices
+        if params.get("sjdbGTFfile", None) is None:
             params['sjdbGTFfile'] = self._get_genome_gtf_file(
                                         params[self.PARAM_IN_GENOME],
                                         os.path.join(self.scratch, self.STAR_IDX_DIR))
-        if validated_params.get('sjdbOverhang', None) is not None :
-            params['sjdbOverhang'] = validated_params['sjdbOverhang']
-        else:
+        if params.get('sjdbOverhang', None) is None:
             params['sjdbOverhang'] = 100
 
+        # Add advanced options from validated_params to params
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (validated_params.get('quantMode', None) is not None
-                and validated_params.get('quantMode', None) in quant_modes):
-            params['quantMode'] = validated_params['quantMode']
-        else:
+        if (params.get('quantMode', None) is None or
+                params.get('quantMode', None) not in quant_modes):
             params['quantMode'] = 'Both'
 
         return params
@@ -514,9 +513,10 @@ class STARUtils:
                 self.STAR_IDX_DIR: star_idx_dir,
                 'genomeFastaFiles': params[self.PARAM_IN_FASTA_FILES]
         }
+
         if params.get('sjdbGTFfile', None) is not None:
             params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
-        if params.get('sjdbOverhang', None) is not None :
+        if params.get('sjdbOverhang', None) is not None:
             params_idx['sjdbOverhang'] = params['sjdbOverhang']
 
         return params_idx
@@ -535,6 +535,9 @@ class STARUtils:
             aligndir = os.path.join(out_dir, rds_name)
             self._mkdir_p(aligndir)
             # print '**********STAR output directory created:{}'.format(aligndir)
+
+        if params_mp.get('outSAMunmapped', None) is None:
+            params_mp['outSAMunmapped'] = 'Within'
 
         params_mp['runMode'] = 'alignReads'
         params_mp[self.STAR_IDX_DIR] = idx_dir

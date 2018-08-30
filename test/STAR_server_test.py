@@ -219,7 +219,7 @@ class STARTest(unittest.TestCase):
                   'output_name': 'readsAlignment1',
                   'output_workspace': self.getWsName(),
                   'runMode': 'genomeGenerate',
-                  'quantMode': 'GeneCounts',
+                  'quantMode': 'Both',
                   'alignmentset_suffix': '_alignment_set',
                   'alignment_suffix': '_alignment',
                   'expression_suffix': '_expression',
@@ -303,7 +303,7 @@ class STARTest(unittest.TestCase):
             'workspace_name': self.getWsName(),
             'runMode': 'generateGenome',
             'runThreadN': 4,
-	    STARUtils.STAR_IDX_DIR: idx_dir,
+            STARUtils.STAR_IDX_DIR: idx_dir,
             'genomeFastaFiles': [genome_file, genome_file2]}
 
         result1 = star_util._exec_indexing(params_idx)
@@ -321,7 +321,7 @@ class STARTest(unittest.TestCase):
         params_mp = {
             'workspace_name': self.getWsName(),
             'runThreadN': 4,
-	    STARUtils.STAR_IDX_DIR: idx_dir,
+            STARUtils.STAR_IDX_DIR: idx_dir,
             'align_output': out_dir,
             'outFileNamePrefix': 'STAR_',
             'readFilesIn': [forward_file, reverse_file]
@@ -376,7 +376,7 @@ class STARTest(unittest.TestCase):
             'outFileNamePrefix': 'STAR_'}
 
         # 4) test running star directly from files (w/o sjdbGTFfile parameter)
-	print("Align reads file: {} without sjdbGTFfile...".format(rnaseq_file))
+        print("Align reads file: {} without sjdbGTFfile...".format(rnaseq_file))
         result1 = star_util._exec_star_pipeline(params, [rnaseq_file],
                                                'testreads', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
@@ -433,10 +433,10 @@ class STARTest(unittest.TestCase):
             'outFileNamePrefix': 'STAR_'}
 
         # 4) test running star directly from files (without sjdbGTFfile parameter)
-	# Note: Segmentation fault may occur if you run in an environment with not enough space/mem
-	print("Align reads file: {} without sjdbGTFfile...".format(rds_file))
-	result2 = star_util._exec_star_pipeline(params, [rds_file],
-                                               'rhodobacter', idx_dir, out_dir)
+        # # Note: Segmentation fault may occur if you run in an environment with not enough space/mem
+        print("Align reads file: {} without sjdbGTFfile...".format(rds_file))
+        result2 = star_util._exec_star_pipeline(params, [rds_file],
+                                                'rhodobacter', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -455,13 +455,13 @@ class STARTest(unittest.TestCase):
         pprint(result2)
 
         # 5) test running star directly from files (with sjdbGTFfile parameter)
-	# Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
-	print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
+        # # Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
+        print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
         gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
- 	params['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
+        params['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
 
-	result3 = star_util._exec_star_pipeline(params, [rds_file],
-                                               'rhodobacter', idx_dir, out_dir)
+        result3 = star_util._exec_star_pipeline(params, [rds_file],
+                                                'rhodobacter', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
