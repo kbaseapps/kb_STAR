@@ -2,7 +2,7 @@
    Name of module: STAR
 
    This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
-   STAR-2.5.3a
+   STAR-2.6.1a
 
    References:
    https://github.com/alexdobin/STAR/
@@ -54,48 +54,47 @@ module STAR {
 	int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
         create_report = 1 if we build a report, 0 otherwise. (default 1) (shouldn not be user set - mainly used for subtasks)
 
-        @optional alignmentset_suffix	
+        @optional alignmentset_suffix
+        @optional alignIntronMin
+        @optional alignIntronMax
+        @optional alignMatesGapMax
+        @optional alignSJoverhangMin
+        @optional alignSJDBoverhangMin
+        @optional quantMode
         @optional outFilterType
         @optional outFilterMultimapNmax
         @optional outSAMtype
         @optional outSAMattrIHstart
         @optional outSAMstrandField
-	@optional quantMode
-	@optional alignSJoverhangMin
-	@optional alignSJDBoverhangMin
-	@optional outFilterMismatchNmax	
-	@optional alignIntronMin
-	@optional alignIntronMax
-	@optional alignMatesGapMax
-	@optional outFileNamePrefix
+        @optional outFilterMismatchNmax
+        @optional outFileNamePrefix
     */
     typedef structure {
         obj_ref readsset_ref;
         obj_ref genome_ref;
         string output_workspace;
-	string output_name;
+        string output_name;
         string alignment_suffix;
-        string alignmentset_suffix;
+        string condition;
+        int concurrent_njsw_tasks;
+        int concurrent_local_tasks;
+        string outSAMunmapped;
+        bool create_report;
 
-        int runThreadN;
-        string condition; 
+        string alignmentset_suffix;
+        int alignIntronMin;
+        int alignIntronMax;
+        int alignMatesGapMax;
+        int alignSJoverhangMin;
+        int alignSJDBoverhangMin;
+        string quantMode;
         string outFilterType;
+        int outFilterMultimapNmax;
         string outSAMtype;
         int outSAMattrIHstart;
         string outSAMstrandField;
-	string quantMode;
-	int outFilterMultimapNmax;
-	int alignSJoverhangMin;
-	int alignSJDBoverhangMin;
-	int outFilterMismatchNmax;
-	int alignIntronMin;
-	int alignIntronMax;
-	int alignMatesGapMax;
-	string outFileNamePrefix;
-                
-        int concurrent_njsw_tasks;
-        int concurrent_local_tasks;
-        bool create_report;
+        int outFilterMismatchNmax;
+        string outFileNamePrefix;
     } AlignReadsParams;
 
     /*

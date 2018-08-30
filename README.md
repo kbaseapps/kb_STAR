@@ -18,7 +18,7 @@ For more help on how to modify, register and deploy the example to KBase, see th
 [Reference website](https://github.com/alexdobin/STAR)
 [Reference manual](https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf)
 
-<h3>STAR 2.5.3a</h3>
+<h3>STAR 2.6.1a</h3>
 <h4>Basic STAR workflow consists of 2 steps</h4>
 <p>
   -  1. Generating genome indexes files
