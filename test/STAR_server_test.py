@@ -271,7 +271,7 @@ class STARTest(unittest.TestCase):
         self.assertNotEqual(res['output_info'], None)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_index_map")
+    # @unittest.skip("skipped test_index_map")
     def test_index_map(self):
 
         # 1) upload files to shock
@@ -290,15 +290,15 @@ class STARTest(unittest.TestCase):
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
-        # STAR indexing input parameters
+        # The STAR index and output directories have to be created first!
         star_util = STARUtils(self.scratch,
                               self.wsURL,
                               self.callback_url,
                               self.srv_wiz_url,
                               self.getContext().provenance())
-        # The STAR index and output directories have to be created first!
         (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
 
+        # STAR indexing input parameters
         params_idx = {
             'workspace_name': self.getWsName(),
             'runMode': 'generateGenome',
@@ -337,12 +337,10 @@ class STARTest(unittest.TestCase):
         pprint(result2)
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_exec_star_pipeline")
+    @unittest.skip("skipped test_exec_star_pipeline")
     def test_exec_star_pipeline(self):
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        # genome_fasta_file = './testReads/Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'
-        # genome_fasta_file = './testReads/ecoli_genomic.gbff'
         genome_fasta_file = './testReads/test_long.fa'
         genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
         shutil.copy(genome_fasta_file, genome_file)
@@ -374,7 +372,7 @@ class STARTest(unittest.TestCase):
             'runThreadN': 4,
             'genomeFastaFiles': [genome_file, genome_file2],
             'align_output': out_dir,
-            'readFilesIn': [forward_file, reverse_file], # [rnaseq_file]
+            'readFilesIn': [forward_file, reverse_file],
             'outFileNamePrefix': 'STAR_'}
 
         # 4) test running star directly from files (w/o sjdbGTFfile parameter)
@@ -398,17 +396,47 @@ class STARTest(unittest.TestCase):
 
         pprint(result1)
 
-        # 5) test running star directly from files (with sjdbGTFfile parameter)
-	print("Align reads file: {} with sjdbGTFfile...".format(rnaseq_file))
-        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
+    # Uncomment to skip this test
+    @unittest.skip("skipped test_exec_star_pipeline_2")
+    def test_exec_star_pipeline_2(self):
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        genome_fasta_file = './testReads/test_long.fa'
+        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
+        shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file2 = './testReads/test_reference.fa'
+        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
+        shutil.copy(genome_fasta_file2, genome_file2)
         rds_data_file = './testReads/rhodobacter_artq50SEreads.fastq'
         rds_file = os.path.join(shared_dir, os.path.basename(rds_data_file))
         shutil.copy(rds_data_file, rds_file)
- 	params['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
- 	params['readFilesIn'] = [rds_file]
+        rnaseq_data_file = './testReads/testreads.fastq'
+        rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
+        shutil.copy(rnaseq_data_file, rnaseq_file)
 
-	result2 = star_util._exec_star_pipeline(params, [rnaseq_file],
-                                               'testreads', idx_dir, out_dir)
+        # 2) The STAR index and output directories have to be created first!
+        star_util = STARUtils(self.scratch,
+                              self.wsURL,
+                              self.callback_url,
+                              self.srv_wiz_url,
+                              self.getContext().provenance())
+        (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
+
+        # 3) compose the input parameters
+        params = { 
+            'workspace_name': self.getWsName(),
+            'runMode': 'genomeGenerate',
+            'runThreadN': 4,
+            'genomeFastaFiles': [genome_file, genome_file2],
+            'align_output': out_dir,
+            'readFilesIn': [rnaseq_file],
+            'outFileNamePrefix': 'STAR_'}
+
+        # 4) test running star directly from files (without sjdbGTFfile parameter)
+	# Note: Segmentation fault may occur if you run in an environment with not enough space/mem
+	print("Align reads file: {} without sjdbGTFfile...".format(rds_file))
+	result2 = star_util._exec_star_pipeline(params, [rds_file],
+                                               'rhodobacter', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -425,4 +453,29 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
         pprint(result2)
+
+        # 5) test running star directly from files (with sjdbGTFfile parameter)
+	# Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
+	print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
+        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
+ 	params['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
+
+	result3 = star_util._exec_star_pipeline(params, [rds_file],
+                                               'rhodobacter', idx_dir, out_dir)
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+
+        pprint(result3)
 

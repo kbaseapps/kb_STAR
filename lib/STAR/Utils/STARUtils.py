@@ -525,7 +525,7 @@ class STARUtils:
         ''' build the mapping parameters'''
         params_mp = copy.deepcopy(params)
         if not isinstance(rds_files, list):
-            if not isinstance(rds_files, str) and rds_files != '':
+            if isinstance(rds_files, str) and rds_files != '':
                 params_mp['readFilesIn'] = [rds_files]
         else:
             params_mp['readFilesIn'] = rds_files
