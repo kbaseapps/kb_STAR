@@ -2,7 +2,7 @@
    Name of module: STAR
 
    This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
-   STAR-2.5.3a
+   STAR-2.6.1a
 
    References:
    https://github.com/alexdobin/STAR/
@@ -77,6 +77,7 @@ module STAR {
         string condition;
         int concurrent_njsw_tasks;
         int concurrent_local_tasks;
+        string outSAMunmapped;
         bool create_report;
 
         string alignmentset_suffix;

@@ -1,7 +1,7 @@
 #
 # define display information
 #
-name: Align Reads Using STAR - v2.5.3a
+name: Align Reads Using STAR - v2.6.1a
 tooltip: |
         Spliced Transcripts Alignment to a Reference
 screenshots: []

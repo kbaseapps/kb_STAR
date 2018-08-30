@@ -1,9 +1,9 @@
+
 import json
 import os
 import re
 import time
 import copy
-import sys
 from pprint import pprint
 
 from KBParallel.KBParallelClient import KBParallel
@@ -44,7 +44,8 @@ class STAR_Aligner(object):
         self.my_version = 'release'
         if len(provenance) > 0:
             if 'subactions' in provenance[0]:
-                self.my_version = self.get_version_from_subactions('kb_STAR', provenance[0]['subactions'])
+                self.my_version = self.get_version_from_subactions(
+                                    'kb_STAR', provenance[0]['subactions'])
         print('Running kb_STAR version = ' + self.my_version)
 
     def run_align(self, params):
@@ -200,8 +201,8 @@ class STAR_Aligner(object):
                             single_input_params.get('condition', 'unspecified'))
             })
 
-            rds_names.append(
-                r['alignment_output_name'].replace(single_input_params['alignment_suffix'], ''))
+            rds_names.append(r['alignment_output_name'].replace(
+                                    single_input_params['alignment_suffix'], ''))
 
         # 2. Process all the results after mapping is done
         (set_result, report_info) = self._batch_sequential_post_processing(
@@ -243,14 +244,14 @@ class STAR_Aligner(object):
         # 3. Reporting...
         report_info = {'name': None, 'ref': None}
 
-        # run qualimap
+        # 4. run qualimap
         qualimap_report = self.qualimap.run_bamqc({'input_ref': result_obj_ref})
         qc_result_zip_info = qualimap_report['qc_result_zip_info']
         qc_result = [{'shock_id': qc_result_zip_info['shock_id'],
                       'name': qc_result_zip_info['index_html_file_name'],
                       'label': qc_result_zip_info['name']}]
 
-        # create the report
+        # 5. create the report
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
         report_text += 'Created ReadsAlignmentSet: ' + str(output_alignmentset_name) + '\n\n'
 
@@ -316,7 +317,8 @@ class STAR_Aligner(object):
 
         for k in range(0, len(batch_result['results'])):
             reads_ref = reads_refs[k]
-            rds_names.append(reads_ref['alignment_output_name'].replace(params['alignment_suffix'], ''))
+            rds_names.append(reads_ref['alignment_output_name'].replace(
+                                            params['alignment_suffix'], ''))
 
             job = batch_result['results'][k]
             result_package = job['result_package']
@@ -330,7 +332,7 @@ class STAR_Aligner(object):
                         'ref': ra_ref,
                         'label': reads_ref.get(
                                 'condition',
-                                params.get('condition','unspecified'))
+                                params.get('condition', 'unspecified'))
                 })
                 alignment_objs.append({'ref': ra_ref})
 
@@ -392,9 +394,9 @@ class STAR_Aligner(object):
     def _extract_readsPerGene(self, params, rds_names, output_dir):
         # Extract the ReadsPerGene counts if 'quantMode' was set during the STAR run
         gene_count_files = []
-        if (params.get('quantMode', None) is not None
-            and (params['quantMode'] == 'Both'
-                 or 'GeneCounts' in params['quantMode'])):
+        if (params.get('quantMode', None) is not None and
+                (params['quantMode'] == 'Both'
+                    or 'GeneCounts' in params['quantMode'])):
             for reads_name in rds_names:
                 gene_count_files.append(
                     '{}/{}_ReadsPerGene.out.tab'.format(reads_name, reads_name))
@@ -405,23 +407,23 @@ class STAR_Aligner(object):
         task_params = copy.deepcopy(params)
 
         task_params[STARUtils.PARAM_IN_READS] = rds_ref
-        task_params['create_report'] = 0
+        task_params['create_report'] = 0 
 
         if 'condition' in rds_ref:
-                task_param['condition'] = rds_ref['condition']
+            task_params['condition'] = rds_ref['condition']
         else:
-                task_params['condition'] = 'unspecified'
+            task_params['condition'] = 'unspecified'
 
         return {'module_name': 'STAR',
                 'function_name': 'run_star',
                 'version': self.my_version,
-                # 'version': 'dev',
                 'parameters': task_params}
 
     def get_version_from_subactions(self, module_name, subactions):
         # go through each sub action looking for
         if not subactions:
-            return 'dev'  # 'release'  # default to release if we can't find anything
+            return 'release'  # default to release if we can't find anything
+
         for sa in subactions:
             if 'name' in sa:
                 if sa['name'] == module_name:
@@ -433,7 +435,7 @@ class STAR_Aligner(object):
                     if re.match('[a-fA-F0-9]{40}$', sa['commit']):
                         return sa['commit']
         # again, default to setting this to release
-        return 'dev'  # 'release'
+        return 'release'
 
     def run_star_indexing(self, input_params):
         """
@@ -449,7 +451,7 @@ class STAR_Aligner(object):
 
         ret = 1
         try:
-            if ret_params[STARUtils.PARAM_IN_STARMODE]=='genomeGenerate':
+            if ret_params[STARUtils.PARAM_IN_STARMODE] == 'genomeGenerate':
                 ret = self.star_utils._exec_indexing(params_idx)
             else:
                 ret = 0
@@ -481,7 +483,7 @@ class STAR_Aligner(object):
             log('STAR mapping raised error:\n')
             pprint(emp)
             retVal = {'star_idx': self.star_idx_dir, 'star_output': None}
-        else:  # no exception raised by STAR mapping and returns 0, move to saving and reporting
+        else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 
         return retVal
@@ -499,8 +501,8 @@ class STAR_Aligner(object):
             # fetch genome fasta and GTF from refs to file location(s)
             input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
                                                                     gnm_ref)
-
             # generate the indices
             (idx_ret, idx_dir) = self.run_star_indexing(input_params)
             if idx_ret != 0:
                 raise ValueError("Failed to generate genome indices, aborting...")
+

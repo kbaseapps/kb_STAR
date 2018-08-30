@@ -1,22 +1,15 @@
 import time
-import json
 import os
 import re
 import copy
 import uuid
-import subprocess
-import shutil
-import sys
 import zipfile
 from pprint import pprint, pformat
-from pathos.multiprocessing import ProcessingPool as Pool
-import multiprocessing
 
 from STAR.Utils.Program_Runner import Program_Runner
 from DataFileUtil.DataFileUtilClient import DataFileUtil
-from Workspace.WorkspaceClient import Workspace as Workspace
+from Workspace.WorkspaceClient import Workspace
 from KBaseReport.KBaseReportClient import KBaseReport
-from ReadsUtils.ReadsUtilsClient import ReadsUtils
 from AssemblyUtil.AssemblyUtilClient import AssemblyUtil
 from ReadsAlignmentUtils.ReadsAlignmentUtilsClient import ReadsAlignmentUtils
 from GenomeFileUtil.GenomeFileUtilClient import GenomeFileUtil
@@ -27,12 +20,10 @@ from ExpressionUtils. ExpressionUtilsClient import ExpressionUtils
 
 from file_util import (
     valid_string,
-    check_reference,
     get_unique_names,
     fetch_fasta_from_object,
     fetch_reads_refs_from_sampleset,
-    fetch_reads_from_reference,
-    extract_geneCount_matrix
+    fetch_reads_from_reference
 )
 
 
@@ -61,7 +52,7 @@ class STARUtils:
         self.callback_url = callback_url
         self.srv_wiz_url = srv_wiz_url
         self.au = AssemblyUtil(self.callback_url)
-        self.dfu = DataFileUtil(self.callback_url, service_ver='beta')
+        self.dfu = DataFileUtil(self.callback_url, service_ver='release')
         self.scratch = scratch_dir
         self.working_dir = scratch_dir
         self.prog_runner = Program_Runner(self.STAR_BIN, self.scratch)
@@ -69,9 +60,9 @@ class STARUtils:
         self.ws_client = Workspace(self.workspace_url)
 
         self.parallel_runner = KBParallel(self.callback_url)
-        self.qualimap = kb_QualiMap(self.callback_url, service_ver='dev')
-        self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='dev')
-        self.eu = ExpressionUtils(self.callback_url, service_ver='beta')
+        self.qualimap = kb_QualiMap(self.callback_url, service_ver='release')
+        self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='release')
+        self.eu = ExpressionUtils(self.callback_url, service_ver='release')
 
     def process_params(self, params):
         """
@@ -149,8 +140,7 @@ class STARUtils:
         try:
             gfu_ret = gfu.genome_to_gff({self.PARAM_IN_GENOME: gnm_ref,
                                          'is_gtf': 1,
-                                         'target_dir': gtf_file_dir
-                                      })
+                                         'target_dir': gtf_file_dir})
         except ValueError as egfu:
             log('GFU getting GTF file raised error:\n')
             pprint(egfu)
@@ -221,8 +211,9 @@ class STARUtils:
                     mp_cmd.append('-c')
 
         # STEP 3: appending the advanced optional inputs
-        mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
-        mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            mp_cmd.append('--' + self.PARAM_IN_OUTFILE_PREFIX)
+            mp_cmd.append(os.path.join(star_out_dir, params[self.PARAM_IN_OUTFILE_PREFIX]))
 
         if params.get('sjdbGTFfile', None) is not None:
             mp_cmd.append('--sjdbGTFfile')
@@ -336,11 +327,11 @@ class STARUtils:
         # build the parameters
         params_idx = self._get_indexing_params(params, idx_dir)
         params_mp = self._get_mapping_params(params, rds_files, rds_name, idx_dir, out_dir)
+	ret = {'star_idx': idx_dir, 'star_output': out_dir}
 
         # execute indexing and then mapping
-        retVal = {}
         try:
-            if params[self.PARAM_IN_STARMODE]=='genomeGenerate':
+            if params[self.PARAM_IN_STARMODE] == 'genomeGenerate':
                 ret = self._exec_indexing(params_idx)
             else:
                 ret = 0
@@ -359,7 +350,7 @@ class STARUtils:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:  # no exception raised by STAR mapping and returns 0, move to saving and reporting
-                ret = {'star_idx': star_idx, 'star_output': params_mp.get('align_output')}
+                ret = {'star_idx': idx_dir, 'star_output': params_mp.get('align_output')}
 
         return ret
 
@@ -532,15 +523,20 @@ class STARUtils:
 
     def _get_mapping_params(self, params, rds_files, rds_name, idx_dir, out_dir):
         ''' build the mapping parameters'''
+        params_mp = copy.deepcopy(params)
+        if not isinstance(rds_files, list):
+            if isinstance(rds_files, str) and rds_files != '':
+                params_mp['readFilesIn'] = [rds_files]
+        else:
+            params_mp['readFilesIn'] = rds_files
+
         aligndir = out_dir
         if rds_name:
             aligndir = os.path.join(out_dir, rds_name)
             self._mkdir_p(aligndir)
             # print '**********STAR output directory created:{}'.format(aligndir)
 
-        params_mp = copy.deepcopy(params)
         params_mp['runMode'] = 'alignReads'
-        params_mp['readFilesIn'] = rds_files
         params_mp[self.STAR_IDX_DIR] = idx_dir
         params_mp['align_output'] = aligndir
 
@@ -556,11 +552,14 @@ class STARUtils:
         obj_type = self.get_type_from_obj_info(info)
         if obj_type in ['KBaseAssembly.PairedEndLibrary', 'KBaseAssembly.SingleEndLibrary',
                         'KBaseFile.PairedEndLibrary', 'KBaseFile.SingleEndLibrary']:
-            return {'run_mode': 'single_library', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
+            return {'run_mode': 'single_library', 'info': info,
+                    'ref': validated_params[self.PARAM_IN_READS]}
         if obj_type == 'KBaseRNASeq.RNASeqSampleSet':
-            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
+            return {'run_mode': 'sample_set', 'info': info,
+                    'ref': validated_params[self.PARAM_IN_READS]}
         if obj_type == 'KBaseSets.ReadsSet':
-            return {'run_mode': 'sample_set', 'info': info, 'ref': validated_params[self.PARAM_IN_READS]}
+            return {'run_mode': 'sample_set', 'info': info, 
+                    'ref': validated_params[self.PARAM_IN_READS]}
 
         raise ValueError('Object type of readsset_ref is not valid, was: ' + str(obj_type))
 
@@ -626,8 +625,7 @@ class STARUtils:
                                     self.callback_url,
                                     params)
             # print(
-            #  "\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(readsSet_ref))
-            # pprint(reads_refs)
+            #   "\nDone fetching reads ref(s) from readsSet {}--\nDetails:\n".format(readsSet_ref))
         except ValueError:
             print("Incorrect object type for fetching reads ref(s)!")
             raise
@@ -650,8 +648,8 @@ class STARUtils:
         self.zip_folder(idx_dir, star_index)
         self.zip_folder(out_dir, star_output)
 
-        #star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
-        #star_output = self.zip_folder_withDFU(out_dir, 'star_output')
+        # star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
+        # star_output = self.zip_folder_withDFU(out_dir, 'star_output')
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -726,7 +724,7 @@ class STARUtils:
         result_file_path = os.path.join(output_directory, 'report.html')
 
         star_obj = self.ws_client.get_objects2({'objects':
-                                                 [{'ref': obj_ref}]})['data'][0]
+                                                [{'ref': obj_ref}]})['data'][0]
         star_obj_info = star_obj['info']
         star_obj_data = star_obj['data']
         star_obj_type = star_obj_info[2]
@@ -788,7 +786,7 @@ class STARUtils:
         tr_html_str = '<tr><th>{}</th><th>Condition</th></tr>'.format(col_caption)
 
         for item in obj_data['items']:
-            item_obj = self.ws_client.get_objects2({'objects':[{'ref': item['ref']}]})['data'][0]
+            item_obj = self.ws_client.get_objects2({'objects': [{'ref': item['ref']}]})['data'][0]
             item_obj_info = item_obj['info']
             item_obj_data = item_obj['data']
             obj_name = item_obj_info[1]
@@ -798,7 +796,8 @@ class STARUtils:
 
         return tr_html_str
 
-    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name, index_dir, output_dir):
+    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name,
+                              index_dir, output_dir):
         """
         _generate_star_report: generate summary report
         """
@@ -808,7 +807,7 @@ class STARUtils:
         output_html_files = self._generate_html_report(output_dir, obj_ref)
         output_html_files += html_links
 
-        star_obj = self.ws_client.get_objects2({'objects':[{'ref': obj_ref}]})['data'][0]
+        star_obj = self.ws_client.get_objects2({'objects': [{'ref': obj_ref}]})['data'][0]
         star_obj_info = star_obj['info']
         star_obj_data = star_obj['data']
 
