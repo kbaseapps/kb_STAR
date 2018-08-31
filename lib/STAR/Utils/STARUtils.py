@@ -495,8 +495,6 @@ class STARUtils:
             params['sjdbGTFfile'] = self._get_genome_gtf_file(
                                         params[self.PARAM_IN_GENOME],
                                         os.path.join(self.scratch, self.STAR_IDX_DIR))
-        if params.get('sjdbOverhang', None) is None:
-            params['sjdbOverhang'] = 100
 
         # Add advanced options from validated_params to params
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]

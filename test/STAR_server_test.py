@@ -271,7 +271,7 @@ class STARTest(unittest.TestCase):
         self.assertNotEqual(res['output_info'], None)
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_index_map")
+    @unittest.skip("skipped test_index_map")
     def test_index_map(self):
 
         # 1) upload files to shock
@@ -317,6 +317,8 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
 
+        pprint(result1)
+
         # STAR mapping input parameters
         params_mp = {
             'workspace_name': self.getWsName(),
@@ -326,6 +328,77 @@ class STARTest(unittest.TestCase):
             'outFileNamePrefix': 'STAR_',
             'readFilesIn': [forward_file, reverse_file]
         }
+        result2 = star_util._exec_mapping(params_mp)
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+
+        pprint(result2)
+
+    # Uncomment to skip this test
+    # @unittest.skip("skipped test_index_map_2")
+    def test_index_map_2(self):
+        '''Testing with Both quaniMode'''
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        genome_fasta_file = './testReads/test_long.fa'
+        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
+        shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file2 = './testReads/test_reference.fa'
+        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
+        shutil.copy(genome_fasta_file2, genome_file2)
+
+        forward_data_file = './testReads/small.forward.fq'
+        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
+        shutil.copy(forward_data_file, forward_file)
+        reverse_data_file = './testReads/small.reverse.fq'
+        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
+        shutil.copy(reverse_data_file, reverse_file)
+
+        # The STAR index and output directories have to be created first!
+        star_util = STARUtils(self.scratch,
+                              self.wsURL,
+                              self.callback_url,
+                              self.srv_wiz_url,
+                              self.getContext().provenance())
+        (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
+
+        # STAR indexing input parameters
+        params_idx = {
+            'workspace_name': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'genomeFastaFiles': [genome_file, genome_file2]}
+
+        result1 = star_util._exec_indexing(params_idx)
+
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
+
+        pprint(result1)
+
+        # STAR mapping input parameters
+        params_mp = {
+            'workspace_name': self.getWsName(),
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'align_output': out_dir,
+            'outFileNamePrefix': 'STAR_',
+            'quantMode': 'Both',
+            'readFilesIn': [forward_file, reverse_file]
+        }
+        gnm_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+        params_mp['sjdbGTFfile'] = star_util._get_genome_gtf_file(gnm_ref, idx_dir)
         result2 = star_util._exec_mapping(params_mp)
 
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
