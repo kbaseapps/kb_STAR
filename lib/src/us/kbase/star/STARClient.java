@@ -18,7 +18,7 @@ import us.kbase.common.service.UnauthorizedException;
  * <pre>
  * Name of module: STAR
  * This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
- * STAR-2.5.3a
+ * STAR-2.6.1a
  * References:
  * https://github.com/alexdobin/STAR/
  * https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
@@ -170,21 +170,17 @@ public class STARClient {
     /**
      * <p>Original spec-file function name: run_star</p>
      * <pre>
-     * The actual function is declared using 'funcdef' to specify the name
-     * and input/return arguments to the function.  For all typical KBase
-     * Apps that run in the Narrative, your function should have the 
-     * 'authentication required' modifier.
      * </pre>
      * @param   params   instance of type {@link us.kbase.star.AlignReadsParams AlignReadsParams}
-     * @return   parameter "output" of type {@link us.kbase.star.AlignReadsResults AlignReadsResults}
+     * @return   parameter "returnVal" of type {@link us.kbase.star.AlignReadsResult AlignReadsResult}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public AlignReadsResults runStar(AlignReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public AlignReadsResult runStar(AlignReadsParams params, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
         args.add(params);
-        TypeReference<List<AlignReadsResults>> retType = new TypeReference<List<AlignReadsResults>>() {};
-        List<AlignReadsResults> res = caller.jsonrpcCall("STAR.run_star", args, retType, true, true, jsonRpcContext, this.serviceVersion);
+        TypeReference<List<AlignReadsResult>> retType = new TypeReference<List<AlignReadsResult>>() {};
+        List<AlignReadsResult> res = caller.jsonrpcCall("STAR.run_star", args, retType, true, true, jsonRpcContext, this.serviceVersion);
         return res.get(0);
     }
 

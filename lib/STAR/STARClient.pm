@@ -29,7 +29,7 @@ STAR::STARClient
 Name of module: STAR
 
 This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
-STAR-2.5.3a
+STAR-2.6.1a
 
 References:
 https://github.com/alexdobin/STAR/
@@ -117,7 +117,7 @@ sub new
 
 =head2 run_star
 
-  $output = $obj->run_star($params)
+  $returnVal = $obj->run_star($params)
 
 =over 4
 
@@ -126,24 +126,44 @@ sub new
 =begin html
 
 <pre>
-$params is a STAR.STARParams
-$output is a STAR.STARResults
-STARParams is a reference to a hash where the following keys are defined:
-	reads_ref has a value which is a string
-	assembly_ref has a value which is a string
-	genome_ref has a value which is a string
-	workspace_name has a value which is a string
-	runMode has a value which is a string
-	runThreadN has a value which is an int
-	genomeFastaFiles has a value which is a reference to a list where each element is a string
-	sjdbGTFfile has a value which is a string
-	sjdbOverhang has a value which is an int
-	readFilesIn has a value which is a reference to a list where each element is a string
+$params is a STAR.AlignReadsParams
+$returnVal is a STAR.AlignReadsResult
+AlignReadsParams is a reference to a hash where the following keys are defined:
+	readsset_ref has a value which is a STAR.obj_ref
+	genome_ref has a value which is a STAR.obj_ref
+	output_workspace has a value which is a string
+	output_name has a value which is a string
+	alignment_suffix has a value which is a string
+	condition has a value which is a string
+	concurrent_njsw_tasks has a value which is an int
+	concurrent_local_tasks has a value which is an int
+	outSAMunmapped has a value which is a string
+	create_report has a value which is a STAR.bool
+	alignmentset_suffix has a value which is a string
+	alignIntronMin has a value which is an int
+	alignIntronMax has a value which is an int
+	alignMatesGapMax has a value which is an int
+	alignSJoverhangMin has a value which is an int
+	alignSJDBoverhangMin has a value which is an int
+	quantMode has a value which is a string
+	outFilterType has a value which is a string
+	outFilterMultimapNmax has a value which is an int
+	outSAMtype has a value which is a string
+	outSAMattrIHstart has a value which is an int
+	outSAMstrandField has a value which is a string
+	outFilterMismatchNmax has a value which is an int
 	outFileNamePrefix has a value which is a string
-STARResults is a reference to a hash where the following keys are defined:
-	reads_alignment_ref has a value which is a string
+obj_ref is a string
+bool is an int
+AlignReadsResult is a reference to a hash where the following keys are defined:
+	output_directory has a value which is a string
 	report_name has a value which is a string
-	report_ref has a value which is a string
+	report_ref has a value which is a STAR.obj_ref
+	alignmentset_ref has a value which is a STAR.obj_ref
+	alignment_objs has a value which is a reference to a hash where the key is a STAR.obj_ref and the value is a STAR.AlignmentObj
+AlignmentObj is a reference to a hash where the following keys are defined:
+	ref has a value which is a STAR.obj_ref
+	name has a value which is a string
 
 </pre>
 
@@ -151,34 +171,51 @@ STARResults is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$params is a STAR.STARParams
-$output is a STAR.STARResults
-STARParams is a reference to a hash where the following keys are defined:
-	reads_ref has a value which is a string
-	assembly_ref has a value which is a string
-	genome_ref has a value which is a string
-	workspace_name has a value which is a string
-	runMode has a value which is a string
-	runThreadN has a value which is an int
-	genomeFastaFiles has a value which is a reference to a list where each element is a string
-	sjdbGTFfile has a value which is a string
-	sjdbOverhang has a value which is an int
-	readFilesIn has a value which is a reference to a list where each element is a string
+$params is a STAR.AlignReadsParams
+$returnVal is a STAR.AlignReadsResult
+AlignReadsParams is a reference to a hash where the following keys are defined:
+	readsset_ref has a value which is a STAR.obj_ref
+	genome_ref has a value which is a STAR.obj_ref
+	output_workspace has a value which is a string
+	output_name has a value which is a string
+	alignment_suffix has a value which is a string
+	condition has a value which is a string
+	concurrent_njsw_tasks has a value which is an int
+	concurrent_local_tasks has a value which is an int
+	outSAMunmapped has a value which is a string
+	create_report has a value which is a STAR.bool
+	alignmentset_suffix has a value which is a string
+	alignIntronMin has a value which is an int
+	alignIntronMax has a value which is an int
+	alignMatesGapMax has a value which is an int
+	alignSJoverhangMin has a value which is an int
+	alignSJDBoverhangMin has a value which is an int
+	quantMode has a value which is a string
+	outFilterType has a value which is a string
+	outFilterMultimapNmax has a value which is an int
+	outSAMtype has a value which is a string
+	outSAMattrIHstart has a value which is an int
+	outSAMstrandField has a value which is a string
+	outFilterMismatchNmax has a value which is an int
 	outFileNamePrefix has a value which is a string
-STARResults is a reference to a hash where the following keys are defined:
-	reads_alignment_ref has a value which is a string
+obj_ref is a string
+bool is an int
+AlignReadsResult is a reference to a hash where the following keys are defined:
+	output_directory has a value which is a string
 	report_name has a value which is a string
-	report_ref has a value which is a string
+	report_ref has a value which is a STAR.obj_ref
+	alignmentset_ref has a value which is a STAR.obj_ref
+	alignment_objs has a value which is a reference to a hash where the key is a STAR.obj_ref and the value is a STAR.AlignmentObj
+AlignmentObj is a reference to a hash where the following keys are defined:
+	ref has a value which is a STAR.obj_ref
+	name has a value which is a string
 
 
 =end text
 
 =item Description
 
-The actual function is declared using 'funcdef' to specify the name
-and input/return arguments to the function.  For all typical KBase
-Apps that run in the Narrative, your function should have the 
-'authentication required' modifier.
+
 
 =back
 
@@ -354,7 +391,7 @@ a string
 
 
 
-=head2 boolean
+=head2 bool
 
 =over 4
 
@@ -386,7 +423,7 @@ an int
 
 
 
-=head2 STARParams
+=head2 obj_ref
 
 =over 4
 
@@ -394,32 +431,74 @@ an int
 
 =item Description
 
-Arguments for star_generate_indexes
+An X/Y/Z style reference
 
-string reads_ref, assembly_ref and genome_ref: KBase style variable references
-string runMode: default: alignReads
-        type of the run:
-        alignReads => map reads
-        genomeGenerate => generate genome files
-        inputAlignmentsFromBAM => input alignments from BAM. Presently only works with -outWigType
-                and -bamRemoveDuplicates.
-        liftOver => lift-over of GTF files (-sjdbGTFfile) between genome assemblies using
-                chain file(s) from -genomeChainFiles.
-int runThreadN: default: 1
-        number of threads to run STAR
-list<string> genomeFastaFiles: path(s) to the fasta files with genomic sequences for genome generation. 
-        Only used if runMode==genomeGenerate.These files should be plain text FASTA files, they *cannot* be zipped.
-list<string> readFilesIn: default: Read1 Read2
-        paths to files that contain input read1 (and, if needed, read2)
 
-string sjdbGTFfile: default: -; path to the file with annotated transcripts in the standard GTF format
-int sjdbOverhang: default: 100; int>0: length of the donor/acceptor sequence on each side of the junctions,
-        ideally = (ReadLength - 1)
-string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix.
-        By default, this parameter is ./, i.e. all output files are written in the current directory
+=item Definition
 
-@optional sjdbGTFfile
-@optional sjdbOverhang
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 AlignReadsParams
+
+=over 4
+
+
+
+=item Description
+
+Will align the input reads (or set of reads specified in a SampleSet) to the specified
+assembly or assembly for the specified Genome (accepts Assembly, ContigSet, or Genome types)
+and produces a ReadsAlignment object, or in the case of a SampleSet, a ReadsAlignmentSet object
+
+obj_ref genome_ref: KBase workspace reference Genome
+obj_ref readsset_ref: the workspace reference for the set of reads to align, referring to 
+                    either a SingleEnd/PairedEnd reads, or a ReadsSet input
+string output_workspace - name or id of the WS to save the results to, provided by the narrative for housing output in KBase
+string output_name - name of the output ReadsAlignment or ReadsAlignmentSet object
+int runThreadN - the number of threads for STAR to use (default to 2)
+string outFileNamePrefix: you can change the file prefixes using --outFileNamePrefix /path/to/output/dir/prefix
+                        By default, this parameter is ./, i.e. all output files are written in current directory without a prefix
+string quantMode: types of quantification requested--none/TranscriptomeSAM/GeneCounts
+int outFilterMultimapNmax: max number of multiple alignments allowed for a read: if exceeded,
+                        the read is considered unmapped, default to 20
+int alignSJoverhangMin: minimum overhang for unannotated junctions, default to 8
+int alignSJDBoverhangMin: minimum overhang for annotated junctions, default to 1
+int outFilterMismatchNmax: maximum number of mismatches per pair, large number switches off this filter, default to 999
+int alignIntronMin: minimum intron length, default to 20
+int alignIntronMax: maximum intron length, default to 1000000
+int alignMatesGapMax: maximum genomic distance between mates, default to 1000000
+int create_report: = 1 if we build a report, 0 otherwise. (default 1) (shouldn not be user set - mainly used for subtasks)
+
+@optional alignmentset_suffix
+@optional alignIntronMin
+@optional alignIntronMax
+@optional alignMatesGapMax
+@optional alignSJoverhangMin
+@optional alignSJDBoverhangMin
+@optional quantMode
+@optional outFilterType
+@optional outFilterMultimapNmax
+@optional outSAMtype
+@optional outSAMattrIHstart
+@optional outSAMstrandField
+@optional outFilterMismatchNmax
+@optional outFileNamePrefix
 
 
 =item Definition
@@ -428,16 +507,29 @@ string outFileNamePrefix: you can change the file prefixes using --outFileNamePr
 
 <pre>
 a reference to a hash where the following keys are defined:
-reads_ref has a value which is a string
-assembly_ref has a value which is a string
-genome_ref has a value which is a string
-workspace_name has a value which is a string
-runMode has a value which is a string
-runThreadN has a value which is an int
-genomeFastaFiles has a value which is a reference to a list where each element is a string
-sjdbGTFfile has a value which is a string
-sjdbOverhang has a value which is an int
-readFilesIn has a value which is a reference to a list where each element is a string
+readsset_ref has a value which is a STAR.obj_ref
+genome_ref has a value which is a STAR.obj_ref
+output_workspace has a value which is a string
+output_name has a value which is a string
+alignment_suffix has a value which is a string
+condition has a value which is a string
+concurrent_njsw_tasks has a value which is an int
+concurrent_local_tasks has a value which is an int
+outSAMunmapped has a value which is a string
+create_report has a value which is a STAR.bool
+alignmentset_suffix has a value which is a string
+alignIntronMin has a value which is an int
+alignIntronMax has a value which is an int
+alignMatesGapMax has a value which is an int
+alignSJoverhangMin has a value which is an int
+alignSJDBoverhangMin has a value which is an int
+quantMode has a value which is a string
+outFilterType has a value which is a string
+outFilterMultimapNmax has a value which is an int
+outSAMtype has a value which is a string
+outSAMattrIHstart has a value which is an int
+outSAMstrandField has a value which is a string
+outFilterMismatchNmax has a value which is an int
 outFileNamePrefix has a value which is a string
 
 </pre>
@@ -447,16 +539,29 @@ outFileNamePrefix has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-reads_ref has a value which is a string
-assembly_ref has a value which is a string
-genome_ref has a value which is a string
-workspace_name has a value which is a string
-runMode has a value which is a string
-runThreadN has a value which is an int
-genomeFastaFiles has a value which is a reference to a list where each element is a string
-sjdbGTFfile has a value which is a string
-sjdbOverhang has a value which is an int
-readFilesIn has a value which is a reference to a list where each element is a string
+readsset_ref has a value which is a STAR.obj_ref
+genome_ref has a value which is a STAR.obj_ref
+output_workspace has a value which is a string
+output_name has a value which is a string
+alignment_suffix has a value which is a string
+condition has a value which is a string
+concurrent_njsw_tasks has a value which is an int
+concurrent_local_tasks has a value which is an int
+outSAMunmapped has a value which is a string
+create_report has a value which is a STAR.bool
+alignmentset_suffix has a value which is a string
+alignIntronMin has a value which is an int
+alignIntronMax has a value which is an int
+alignMatesGapMax has a value which is an int
+alignSJoverhangMin has a value which is an int
+alignSJDBoverhangMin has a value which is an int
+quantMode has a value which is a string
+outFilterType has a value which is a string
+outFilterMultimapNmax has a value which is an int
+outSAMtype has a value which is a string
+outSAMattrIHstart has a value which is an int
+outSAMstrandField has a value which is a string
+outFilterMismatchNmax has a value which is an int
 outFileNamePrefix has a value which is a string
 
 
@@ -466,7 +571,46 @@ outFileNamePrefix has a value which is a string
 
 
 
-=head2 STARResults
+=head2 AlignmentObj
+
+=over 4
+
+
+
+=item Description
+
+Created alignment object returned.
+ref = the workspace reference of the new alignment object
+name = the name of the new object, for convenience.
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+ref has a value which is a STAR.obj_ref
+name has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+ref has a value which is a STAR.obj_ref
+name has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 AlignReadsResult
 
 =over 4
 
@@ -480,6 +624,13 @@ visualizations in the Narrative.  'report_name' and 'report_ref' are
 special output fields- if defined, the Narrative can automatically
 render your Report.
 
+output_directory: folder path that holds all output files generated by run_star
+alignmentset_ref: if an alignment set is created
+alignment_objs: for each individual alignment created. The keys are the references to the reads
+                object being aligned.
+report_name: report name generated by KBaseReport
+report_ref: report reference generated by KBaseReport
+
 
 =item Definition
 
@@ -487,9 +638,11 @@ render your Report.
 
 <pre>
 a reference to a hash where the following keys are defined:
-reads_alignment_ref has a value which is a string
+output_directory has a value which is a string
 report_name has a value which is a string
-report_ref has a value which is a string
+report_ref has a value which is a STAR.obj_ref
+alignmentset_ref has a value which is a STAR.obj_ref
+alignment_objs has a value which is a reference to a hash where the key is a STAR.obj_ref and the value is a STAR.AlignmentObj
 
 </pre>
 
@@ -498,9 +651,11 @@ report_ref has a value which is a string
 =begin text
 
 a reference to a hash where the following keys are defined:
-reads_alignment_ref has a value which is a string
+output_directory has a value which is a string
 report_name has a value which is a string
-report_ref has a value which is a string
+report_ref has a value which is a STAR.obj_ref
+alignmentset_ref has a value which is a STAR.obj_ref
+alignment_objs has a value which is a reference to a hash where the key is a STAR.obj_ref and the value is a STAR.AlignmentObj
 
 
 =end text

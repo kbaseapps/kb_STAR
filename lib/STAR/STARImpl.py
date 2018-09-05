@@ -17,12 +17,12 @@ class STAR:
     Module Description:
     Name of module: STAR
 
-    This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
-    STAR-2.5.3a
+This KBase module wraps the free open source software STAR: ultrafast universal RNA-seq aligner.
+STAR-2.6.1a
 
-    References:
-    https://github.com/alexdobin/STAR/
-    https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+References:
+https://github.com/alexdobin/STAR/
+https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
     '''
 
     ######## WARNING FOR GEVENT USERS ####### noqa
@@ -31,9 +31,9 @@ class STAR:
     # state. A method could easily clobber the state set by another while
     # the latter method is running.
     ######################################### noqa
-    VERSION = "0.0.2"
-    GIT_URL = "https://github.com/kbaseapps/kb_STAR"
-    GIT_COMMIT_HASH = "61d936924fdbc60cca5e7ff42e7226a76e933d3d"
+    VERSION = "0.1.0"
+    GIT_URL = "https://github.com/kbaseapps/kb_STAR.git"
+    GIT_COMMIT_HASH = "7c1524911d95ef57d241dc223e096949af892d06"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -54,6 +54,8 @@ class STAR:
         self.config = config
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         #END_CONSTRUCTOR
+        pass
+
 
     def run_star(self, ctx, params):
         """
@@ -85,33 +87,33 @@ class STAR:
            this filter, default to 999 int alignIntronMin: minimum intron
            length, default to 20 int alignIntronMax: maximum intron length,
            default to 1000000 int alignMatesGapMax: maximum genomic distance
-           between mates, default to 1000000 create_report = 1 if we build a
-           report, 0 otherwise. (default 1) (shouldn not be user set - mainly
-           used for subtasks) @optional alignmentset_suffix @optional
-           outFilterType @optional outFilterMultimapNmax @optional outSAMtype
-           @optional outSAMattrIHstart @optional outSAMstrandField @optional
-           quantMode @optional alignSJoverhangMin @optional
-           alignSJDBoverhangMin @optional outFilterMismatchNmax @optional
-           alignIntronMin @optional alignIntronMax @optional alignMatesGapMax
-           @optional outFileNamePrefix) -> structure: parameter
-           "readsset_ref" of type "obj_ref" (An X/Y/Z style reference),
-           parameter "genome_ref" of type "obj_ref" (An X/Y/Z style
-           reference), parameter "output_workspace" of String, parameter
-           "output_name" of String, parameter "alignment_suffix" of String,
-           parameter "alignmentset_suffix" of String, parameter "runThreadN"
-           of Long, parameter "condition" of String, parameter
-           "outFilterType" of String, parameter "outSAMtype" of String,
-           parameter "outSAMattrIHstart" of Long, parameter
-           "outSAMstrandField" of String, parameter "quantMode" of String,
-           parameter "outFilterMultimapNmax" of Long, parameter
-           "alignSJoverhangMin" of Long, parameter "alignSJDBoverhangMin" of
-           Long, parameter "outFilterMismatchNmax" of Long, parameter
-           "alignIntronMin" of Long, parameter "alignIntronMax" of Long,
-           parameter "alignMatesGapMax" of Long, parameter
-           "outFileNamePrefix" of String, parameter "concurrent_njsw_tasks"
-           of Long, parameter "concurrent_local_tasks" of Long, parameter
-           "create_report" of type "bool" (A boolean - 0 for false, 1 for
-           true. @range (0, 1))
+           between mates, default to 1000000 int create_report: = 1 if we
+           build a report, 0 otherwise. (default 1) (shouldn not be user set
+           - mainly used for subtasks) @optional alignmentset_suffix
+           @optional alignIntronMin @optional alignIntronMax @optional
+           alignMatesGapMax @optional alignSJoverhangMin @optional
+           alignSJDBoverhangMin @optional quantMode @optional outFilterType
+           @optional outFilterMultimapNmax @optional outSAMtype @optional
+           outSAMattrIHstart @optional outSAMstrandField @optional
+           outFilterMismatchNmax @optional outFileNamePrefix) -> structure:
+           parameter "readsset_ref" of type "obj_ref" (An X/Y/Z style
+           reference), parameter "genome_ref" of type "obj_ref" (An X/Y/Z
+           style reference), parameter "output_workspace" of String,
+           parameter "output_name" of String, parameter "alignment_suffix" of
+           String, parameter "condition" of String, parameter
+           "concurrent_njsw_tasks" of Long, parameter
+           "concurrent_local_tasks" of Long, parameter "outSAMunmapped" of
+           String, parameter "create_report" of type "bool" (A boolean - 0
+           for false, 1 for true. @range (0, 1)), parameter
+           "alignmentset_suffix" of String, parameter "alignIntronMin" of
+           Long, parameter "alignIntronMax" of Long, parameter
+           "alignMatesGapMax" of Long, parameter "alignSJoverhangMin" of
+           Long, parameter "alignSJDBoverhangMin" of Long, parameter
+           "quantMode" of String, parameter "outFilterType" of String,
+           parameter "outFilterMultimapNmax" of Long, parameter "outSAMtype"
+           of String, parameter "outSAMattrIHstart" of Long, parameter
+           "outSAMstrandField" of String, parameter "outFilterMismatchNmax"
+           of Long, parameter "outFileNamePrefix" of String
         :returns: instance of type "AlignReadsResult" (Here is the definition
            of the output of the function.  The output can be used by other
            SDK modules which call your code, or the output visualizations in
@@ -119,8 +121,8 @@ class STAR:
            fields- if defined, the Narrative can automatically render your
            Report. output_directory: folder path that holds all output files
            generated by run_star alignmentset_ref: if an alignment set is
-           created alignment_objs:  for each individual alignment created.
-           The keys are the references to the reads object being aligned.
+           created alignment_objs: for each individual alignment created. The
+           keys are the references to the reads object being aligned.
            report_name: report name generated by KBaseReport report_ref:
            report reference generated by KBaseReport) -> structure: parameter
            "output_directory" of String, parameter "report_name" of String,
@@ -152,7 +154,6 @@ class STAR:
                              'returnVal is not type dict as required.')
         # return the results
         return [returnVal]
-
     def status(self, ctx):
         #BEGIN_STATUS
         returnVal = {'state': "OK",
@@ -162,4 +163,3 @@ class STAR:
                      'git_commit_hash': self.GIT_COMMIT_HASH}
         #END_STATUS
         return [returnVal]
-
