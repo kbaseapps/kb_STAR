@@ -338,18 +338,6 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, ' STAR__STARgenome')))
 
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
-                                                    'small_Aligned.sortedByCoord.bam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
-                                                    'small_Aligned.toTranscriptome.out.bam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_ReadsPerGene.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_SJ.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARgenome')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARtmp')))
-
     # Uncomment to skip this test
     @unittest.skip("skipped test_index_map_2")
     def test_index_map_2(self):
@@ -396,7 +384,6 @@ class STARTest(unittest.TestCase):
             'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
             'genomeFastaFiles': [genome_file, genome_file2]}
 
-        params_idx['sjdbGTFfile'] = params['sjdbGTFfile']
         exit_code1 = star_util.exec_indexing(params_idx)
         print(exit_code1)
 
@@ -438,7 +425,6 @@ class STARTest(unittest.TestCase):
         Solution: check the formatting of the GTF file. Most likely cause is the difference in
         chromosome naming between GTF and FASTA file.'
         '''
-        params_mp['sjdbGTFfile'] = params['sjdbGTFfile']
         exit_code2 = star_util.exec_mapping(params_mp)
         print(exit_code2)
 
@@ -456,6 +442,18 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
+                                                    'small_Aligned.sortedByCoord.bam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
+                                                    'small_Aligned.toTranscriptome.out.bam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_ReadsPerGene.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_SJ.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARgenome')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARtmp')))
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_exec_star_pipeline")

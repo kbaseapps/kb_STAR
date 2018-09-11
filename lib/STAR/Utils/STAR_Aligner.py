@@ -462,7 +462,7 @@ class STAR_Aligner(object):
         retVal = {}
         params_mp[STARUtils.PARAM_IN_STARMODE] = 'alignReads'
         try:
-            ret = self.star_utils._exec_mapping(params_mp)
+            ret = self.star_utils.exec_mapping(params_mp)
             while(ret != 0):
                 time.sleep(1)
         except ValueError as emp:
