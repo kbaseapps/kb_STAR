@@ -67,6 +67,7 @@ module STAR {
         @optional outSAMstrandField
         @optional outFilterMismatchNmax
         @optional outFileNamePrefix
+        @optional runThreadN
     */
     typedef structure {
         obj_ref readsset_ref;
@@ -94,6 +95,7 @@ module STAR {
         string outSAMstrandField;
         int outFilterMismatchNmax;
         string outFileNamePrefix;
+        int runThreadN;
     } AlignReadsParams;
 
     /*

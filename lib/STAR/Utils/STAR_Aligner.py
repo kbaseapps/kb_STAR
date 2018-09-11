@@ -41,19 +41,17 @@ class STAR_Aligner(object):
         self.star_out_dir = None
 
         # from the provenance, extract out the version to run by exact hash if possible
-        self.my_version = 'release'
+        self.my_version = STARUtils.STAR_VERSION
         if len(provenance) > 0:
             if 'subactions' in provenance[0]:
                 self.my_version = self.get_version_from_subactions(
                                     'kb_STAR', provenance[0]['subactions'])
-        print('Running kb_STAR version = ' + self.my_version)
+        print('Running STAR version = ' + self.my_version)
 
     def run_align(self, params):
         # 0. create the star folders
         if self.star_idx_dir is None:
-            (idx_dir, out_dir) = self.star_utils.create_star_dirs(self.scratch)
-            self.star_idx_dir = idx_dir
-            self.star_out_dir = out_dir
+            (self.star_idx_dir, self.star_out_dir) = self.star_utils.create_star_dirs(self.scratch)
 
         # 1. validate & process the input parameters
         validated_params = self.star_utils.process_params(params)
@@ -66,12 +64,16 @@ class STAR_Aligner(object):
             "report_ref": None,
             "report_name": None
         }
-        if input_obj_info['run_mode'] == 'single_library':
-            returnVal = self.star_run_single(input_params)
+        try:
+            if input_obj_info['run_mode'] == 'single_library':
+                returnVal = self.star_run_single(input_params)
 
-        if input_obj_info['run_mode'] == 'sample_set':
-            # returnVal = self.star_run_batch_parallel(input_params)
-            returnVal = self.star_run_batch_sequential(input_params)
+            if input_obj_info['run_mode'] == 'sample_set':
+                # returnVal = self.star_run_batch_parallel(input_params)
+                returnVal = self.star_run_batch_sequential(input_params)
+        except RuntimeError as star_err:
+            log('STAR aligning raised error:\n')
+            pprint(star_err)
 
         return returnVal
 

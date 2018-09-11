@@ -153,6 +153,7 @@ AlignReadsParams is a reference to a hash where the following keys are defined:
 	outSAMstrandField has a value which is a string
 	outFilterMismatchNmax has a value which is an int
 	outFileNamePrefix has a value which is a string
+	runThreadN has a value which is an int
 obj_ref is a string
 bool is an int
 AlignReadsResult is a reference to a hash where the following keys are defined:
@@ -198,6 +199,7 @@ AlignReadsParams is a reference to a hash where the following keys are defined:
 	outSAMstrandField has a value which is a string
 	outFilterMismatchNmax has a value which is an int
 	outFileNamePrefix has a value which is a string
+	runThreadN has a value which is an int
 obj_ref is a string
 bool is an int
 AlignReadsResult is a reference to a hash where the following keys are defined:
@@ -499,6 +501,7 @@ int create_report: = 1 if we build a report, 0 otherwise. (default 1) (shouldn n
 @optional outSAMstrandField
 @optional outFilterMismatchNmax
 @optional outFileNamePrefix
+@optional runThreadN
 
 
 =item Definition
@@ -531,6 +534,7 @@ outSAMattrIHstart has a value which is an int
 outSAMstrandField has a value which is a string
 outFilterMismatchNmax has a value which is an int
 outFileNamePrefix has a value which is a string
+runThreadN has a value which is an int
 
 </pre>
 
@@ -563,6 +567,7 @@ outSAMattrIHstart has a value which is an int
 outSAMstrandField has a value which is a string
 outFilterMismatchNmax has a value which is an int
 outFileNamePrefix has a value which is a string
+runThreadN has a value which is an int
 
 
 =end text
