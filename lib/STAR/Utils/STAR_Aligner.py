@@ -456,7 +456,7 @@ class STAR_Aligner(object):
         _run_star_mapping: Runs STAR in alignReads mode for STAR mapping. It creates a directory
         as defined by self.star_out_dir with a subfolder named after the reads.
         """
-        params_mp = self.star_utils._get_mapping_params(
+        params_mp = self.star_utils.get_mapping_params(
                         params, rds_files, rds_name, self.star_idx_dir, self.star_out_dir)
 
         retVal = {}

@@ -339,7 +339,7 @@ class STARTest(unittest.TestCase):
         pprint(result2)
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_index_map_2")
+    @unittest.skip("skipped test_index_map_2")
     def test_index_map_2(self):
         '''Testing with Both quaniMode'''
         # 1) upload files to shock
@@ -398,6 +398,14 @@ class STARTest(unittest.TestCase):
             'readFilesIn': [forward_file, reverse_file]
         }
         gnm_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+        '''
+        By adding the sjdbGTFfile parameter, if the given gtf file is not a good match to the
+        reads file in terms of formatting, very likely an error will be thrown that says--
+        'Fatal INPUT FILE error, no valid exon lines in the GTF file:
+        /kb/module/work/tmp/STAR_Genome_index/ecoli_genomic.gtf
+        Solution: check the formatting of the GTF file. Most likely cause is the difference in
+        chromosome naming between GTF and FASTA file.'
+        '''
         params_mp['sjdbGTFfile'] = star_util.get_genome_gtf_file(gnm_ref, idx_dir)
         result2 = star_util.exec_mapping(params_mp)
 
