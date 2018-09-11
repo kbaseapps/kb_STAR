@@ -44,49 +44,20 @@ class STAR_Aligner(object):
         self.my_version = STARUtils.STAR_VERSION
         if len(provenance) > 0:
             if 'subactions' in provenance[0]:
-                self.my_version = self.get_version_from_subactions(
+                self.my_version = self._get_version_from_subactions(
                                     'kb_STAR', provenance[0]['subactions'])
         print('Running STAR version = ' + self.my_version)
 
-    def run_align(self, params):
-        # 0. create the star folders
-        if self.star_idx_dir is None:
-            (self.star_idx_dir, self.star_out_dir) = self.star_utils.create_star_dirs(self.scratch)
-
-        # 1. validate & process the input parameters
-        validated_params = self.star_utils.process_params(params)
-        input_obj_info = self.star_utils.determine_input_info(validated_params)
-
-        # 2. convert the input parameters (from refs to file paths, especially)
-        input_params = self.star_utils.convert_params(validated_params)
-
-        returnVal = {
-            "report_ref": None,
-            "report_name": None
-        }
-        try:
-            if input_obj_info['run_mode'] == 'single_library':
-                returnVal = self.star_run_single(input_params)
-
-            if input_obj_info['run_mode'] == 'sample_set':
-                # returnVal = self.star_run_batch_parallel(input_params)
-                returnVal = self.star_run_batch_sequential(input_params)
-        except RuntimeError as star_err:
-            log('STAR aligning raised error:\n')
-            pprint(star_err)
-
-        return returnVal
-
-    def star_run_single(self, input_params):
+    def _star_run_single(self, input_params):
         """
-        Performs a single run of STAR against a single reads reference. The rest of the info
-        is taken from the params dict - see the spec for details.
+        _star_run_single: Performs a single run of STAR against a single reads reference.
+         The rest of the info is taken from the params dict - see the spec for details.
         """
-        log('--->\nrunning STAR_Aligner.star_run_single\n' +
+        log('--->\nrunning STAR_Aligner._star_run_single\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
         # 0. get index
-        self.get_index(input_params)
+        self._get_index(input_params)
 
         # 1. Prepare for mapping
         rds = None
@@ -96,7 +67,7 @@ class STAR_Aligner(object):
                 rds = r
                 break
 
-        reads_info = self.star_utils._get_reads_info(rds, input_params[STARUtils.PARAM_IN_READS])
+        reads_info = self.star_utils.get_reads_info(rds, input_params[STARUtils.PARAM_IN_READS])
 
         rds_name = rds['alignment_output_name'].replace(input_params['alignment_suffix'], '')
 
@@ -116,7 +87,7 @@ class STAR_Aligner(object):
         input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
 
         # 2. After all is set, do the alignment and upload the output.
-        star_mp_ret = self.run_star_mapping(input_params, rds_files, rds_name)
+        star_mp_ret = self._run_star_mapping(input_params, rds_files, rds_name)
 
         if star_mp_ret.get('star_output', None) is not None:
             bam_sort = ''
@@ -171,14 +142,14 @@ class STAR_Aligner(object):
 
         return ret_val
 
-    def star_run_batch_sequential(self, input_params):
+    def _star_run_batch_sequential(self, input_params):
         """
-        star_run_batch_sequential: running the STAR align by looping
+        _star_run_batch_sequential: running the STAR align by looping
         """
-        log('--->\nrunning STAR_Aligner.star_run_batch_sequential\n' +
+        log('--->\nrunning STAR_Aligner._star_run_batch_sequential\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        self.get_index(input_params)
+        self._get_index(input_params)
 
         reads_refs = input_params[STARUtils.SET_READS]
 
@@ -191,7 +162,7 @@ class STAR_Aligner(object):
         for r in reads_refs:
             single_input_params[STARUtils.PARAM_IN_READS] = r['ref']
             single_input_params['create_report'] = 0
-            single_ret = self.star_run_single(single_input_params)
+            single_ret = self._star_run_single(single_input_params)
 
             item = single_ret['alignment_objs'][0]
             a_obj = item['AlignmentObj']
@@ -220,9 +191,45 @@ class STAR_Aligner(object):
 
         return result
 
+    def _star_run_batch_parallel(self, input_params):
+        """
+        _star_run_batch_parallel: running the STAR align in batch parallelly
+        """
+        log('--->\nrunning STAR_Aligner._star_run_batch_parallel\n' +
+            'params:\n{}'.format(json.dumps(input_params, indent=1)))
+
+        reads_refs = input_params[STARUtils.SET_READS]
+
+        # build task list and send it to KBParallel
+        tasks = []
+        for r in reads_refs:
+            tasks.append(
+                    self._build_single_execution_task(
+                        r['ref'], input_params)
+                    )
+
+        batch_run_params = {'tasks': tasks,
+                            'runner': 'parallel',
+                            'max_retries': 2}
+
+        if input_params.get('concurrent_local_tasks', None) is not None:
+                batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
+        if input_params.get('concurrent_njsw_tasks', None) is not None:
+                batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
+
+        results = self.parallel_runner.run_batch(batch_run_params)
+        print('Batch run results=')
+        pprint(results)
+
+        batch_result = self._process_batch_result(results, input_params, reads_refs)
+        batch_result['output_directory'] = self.star_out_dir
+
+        return batch_result
+
     def _batch_sequential_post_processing(self, alignment_items, rds_names, params):
         '''
-        process the mapping results of all the reads in the readsset_ref
+        _batch_sequential_post_processing: process the mapping results of all the reads
+        in the readsset_ref
         '''
         # 1. Save the alignment set
         set_name_map = self.star_utils.get_object_names([params[STARUtils.PARAM_IN_READS]])
@@ -257,7 +264,7 @@ class STAR_Aligner(object):
         report_text = 'Ran on SampleSet or ReadsSet.\n\n'
         report_text += 'Created ReadsAlignmentSet: ' + str(output_alignmentset_name) + '\n\n'
 
-        report_info = self.star_utils._generate_star_report(
+        report_info = self.star_utils.generate_star_report(
                         result_obj_ref,
                         report_text,
                         qc_result,
@@ -267,42 +274,13 @@ class STAR_Aligner(object):
 
         return (save_result, report_info)
 
-    def star_run_batch_parallel(self, input_params):
+    def _process_batch_result(self, batch_result, params, reads_refs):
         """
-        star_run_batch_parallel: running the STAR align in batch parallelly
+        _process_batch_result: with batch_result, build and save alignment objects,
+        generate ReadsPerGene counts and report
+        and 
         """
-        log('--->\nrunning STAR_Aligner.star_run_batch_parallel\n' +
-            'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        reads_refs = input_params[STARUtils.SET_READS]
-
-        # build task list and send it to KBParallel
-        tasks = []
-        for r in reads_refs:
-            tasks.append(
-                    self.build_single_execution_task(
-                        r['ref'], input_params)
-                    )
-
-        batch_run_params = {'tasks': tasks,
-                            'runner': 'parallel',
-                            'max_retries': 2}
-
-        if input_params.get('concurrent_local_tasks', None) is not None:
-                batch_run_params['concurrent_local_tasks'] = input_params['concurrent_local_tasks']
-        if input_params.get('concurrent_njsw_tasks', None) is not None:
-                batch_run_params['concurrent_njsw_tasks'] = input_params['concurrent_njsw_tasks']
-
-        results = self.parallel_runner.run_batch(batch_run_params)
-        print('Batch run results=')
-        pprint(results)
-
-        batch_result = self.process_batch_result(results, input_params, reads_refs)
-        batch_result['output_directory'] = self.star_out_dir
-
-        return batch_result
-
-    def process_batch_result(self, batch_result, params, reads_refs):
         n_jobs = len(batch_result['results'])
         n_success = 0
         n_error = 0
@@ -377,7 +355,7 @@ class STAR_Aligner(object):
         report_text += '       Ran on main node = ' + str(ran_locally) + '\n'
         report_text += '   Ran on remote worker = ' + str(ran_njsw) + '\n\n'
 
-        report_info = self.star_utils._generate_star_report(
+        report_info = self.star_utils.generate_star_report(
                         result_obj_ref,
                         report_text,
                         qc_result,
@@ -394,7 +372,10 @@ class STAR_Aligner(object):
         return result
 
     def _extract_readsPerGene(self, params, rds_names, output_dir):
-        # Extract the ReadsPerGene counts if 'quantMode' was set during the STAR run
+        """
+        _extract_readsPerGene: Extract the ReadsPerGene counts if 'quantMode' was set
+        during the STAR run.
+        """
         gene_count_files = []
         if (params.get('quantMode', None) is not None and
                 (params['quantMode'] == 'Both'
@@ -405,7 +386,10 @@ class STAR_Aligner(object):
 
             extract_geneCount_matrix(gene_count_files, output_dir)
 
-    def build_single_execution_task(self, rds_ref, params):
+    def _build_single_execution_task(self, rds_ref, params):
+        """
+        _build_single_execution_task: build the task for a given reads
+        """
         task_params = copy.deepcopy(params)
 
         task_params[STARUtils.PARAM_IN_READS] = rds_ref
@@ -421,7 +405,7 @@ class STAR_Aligner(object):
                 'version': self.my_version,
                 'parameters': task_params}
 
-    def get_version_from_subactions(self, module_name, subactions):
+    def _get_version_from_subactions(self, module_name, subactions):
         # go through each sub action looking for
         if not subactions:
             return 'release'  # default to release if we can't find anything
@@ -439,22 +423,22 @@ class STAR_Aligner(object):
         # again, default to setting this to release
         return 'release'
 
-    def run_star_indexing(self, input_params):
+    def _run_star_indexing(self, input_params):
         """
-        Runs STAR in genomeGenerate mode to build the index files and directory for STAR mapping.
-        It creates a directory as defined by self.star_idx_dir in the scratch area that houses
-        the index files.
+        _run_star_indexing: Runs STAR in genomeGenerate mode to build the index files and directory
+        for subsequent STAR mapping. It creates a directory as defined by self.star_idx_dir in the
+        scratch area that houses the index files.
         """
         ret_params = copy.deepcopy(input_params)
         ret_params[STARUtils.PARAM_IN_STARMODE] = 'genomeGenerate'
 
         # build the indexing parameters
-        params_idx = self.star_utils._get_indexing_params(ret_params, self.star_idx_dir)
+        params_idx = self.star_utils.get_indexing_params(ret_params, self.star_idx_dir)
 
         ret = 1
         try:
             if ret_params[STARUtils.PARAM_IN_STARMODE] == 'genomeGenerate':
-                ret = self.star_utils._exec_indexing(params_idx)
+                ret = self.star_utils.exec_indexing(params_idx)
             else:
                 ret = 0
             while(ret != 0):
@@ -467,10 +451,10 @@ class STAR_Aligner(object):
 
         return (ret, params_idx[STARUtils.STAR_IDX_DIR])
 
-    def run_star_mapping(self, params, rds_files, rds_name):
+    def _run_star_mapping(self, params, rds_files, rds_name):
         """
-        Runs STAR in alignReads mode for STAR mapping. It creates a directory as defined by
-        self.star_out_dir with a subfolder named after the reads.
+        _run_star_mapping: Runs STAR in alignReads mode for STAR mapping. It creates a directory
+        as defined by self.star_out_dir with a subfolder named after the reads.
         """
         params_mp = self.star_utils._get_mapping_params(
                         params, rds_files, rds_name, self.star_idx_dir, self.star_out_dir)
@@ -490,21 +474,51 @@ class STAR_Aligner(object):
 
         return retVal
 
-    def get_index(self, input_params):
+    def _get_index(self, input_params):
         '''
-        get_index: generate the index if not yet existing
+        _get_index: generate the index if not yet existing
         '''
         gnm_ref = input_params[STARUtils.PARAM_IN_GENOME]
         if input_params.get('sjdbGTFfile', None) is None:
-            input_params['sjdbGTFfile'] = self.star_utils._get_genome_gtf_file(
+            input_params['sjdbGTFfile'] = self.star_utils.get_genome_gtf_file(
                                             gnm_ref, self.star_idx_dir)
         # if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
         if not os.path.isfile(os.path.join(self.star_idx_dir, input_params['sjdbGTFfile'])):
             # fetch genome fasta and GTF from refs to file location(s)
-            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils._get_genome_fasta(
+            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
                                                                     gnm_ref)
             # generate the indices
-            (idx_ret, idx_dir) = self.run_star_indexing(input_params)
+            (idx_ret, idx_dir) = self._run_star_indexing(input_params)
             if idx_ret != 0:
                 raise ValueError("Failed to generate genome indices, aborting...")
+
+    def run_align(self, params):
+        # 0. create the star folders
+        if self.star_idx_dir is None:
+            (self.star_idx_dir, self.star_out_dir) = self.star_utils.create_star_dirs(self.scratch)
+
+        # 1. validate & process the input parameters
+        validated_params = self.star_utils.process_params(params)
+        input_obj_info = self.star_utils.determine_input_info(validated_params)
+
+        # 2. convert the input parameters (from refs to file paths, especially)
+        input_params = self.star_utils.convert_params(validated_params)
+
+        ret = {
+            "report_ref": None,
+            "report_name": None
+        }
+        try:
+            if input_obj_info['run_mode'] == 'single_library':
+                ret = self._star_run_single(input_params)
+
+            if input_obj_info['run_mode'] == 'sample_set':
+                # returnVal = self._star_run_batch_parallel(input_params)
+                ret = self._star_run_batch_sequential(input_params)
+        except RuntimeError as star_err:
+            log('STAR aligning raised error:\n')
+            pprint(star_err)
+
+        return ret
+
 

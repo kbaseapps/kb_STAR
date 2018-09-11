@@ -64,49 +64,17 @@ class STARUtils:
         self.set_api_client = SetAPI(self.srv_wiz_url, service_ver='release')
         self.eu = ExpressionUtils(self.callback_url, service_ver='release')
 
-    def process_params(self, params):
+    def _mkdir_p(self, dir):
         """
-        process_params: checks params passed to run_star method and set default values
+        _mkdir_p: make directory for given path
         """
-        log('Start validating run_star parameters')
-        # check for required parameters
-        if params.get(self.PARAM_IN_WS, None) is None:
-            raise ValueError(self.PARAM_IN_WS + ' parameter is required')
-
-        if params.get(self.PARAM_IN_STARMODE, None) is None:
-            params[self.PARAM_IN_STARMODE] = 'alignReads'
-        if params.get(self.PARAM_IN_GENOME, None) is None:
-            raise ValueError(self.PARAM_IN_GENOME +
-                             ' parameter is required for generating genome index')
-
-        if (params.get(self.PARAM_IN_STARMODE, None) is not None and
-                params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
-            if params.get(self.PARAM_IN_READS, None) is None:
-                raise ValueError(self.PARAM_IN_READS + ' parameter is required for reads mapping')
-            if not valid_string(params[self.PARAM_IN_READS], is_ref=True):
-                raise ValueError("Parameter readsset_ref must be a valid Workspace object " +
-                                 "reference, not {}".format(params.get(self.PARAM_IN_READS, None)))
-
-        if params.get(self.PARAM_IN_THREADN, None) is not None:
-            if not isinstance(params[self.PARAM_IN_THREADN], int):
-                raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
+        log('Creating a new dir: ' + dir)
+        if not dir:
+            return
+        if not os.path.exists(dir):
+            os.makedirs(dir)
         else:
-            params[self.PARAM_IN_THREADN] = 2
-
-        if ("alignment_suffix" not in params or not valid_string(params["alignment_suffix"])):
-            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
-                             "not {}".format(params.get("alignment_suffix", None)))
-
-        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
-            if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
-                raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
-        else:
-            params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
-
-        if params.get('create_report', None) is None:
-            params['create_report'] = 0
-
-        return self._setDefaultParameters(params)
+            log('{} has existed, so skip creating.'.format(dir))
 
     def _setDefaultParameters(self, params_in):
         """set default for this group of parameters
@@ -130,25 +98,6 @@ class STARUtils:
             params[self.SET_READS] = self._get_reads_refs_from_setref(params)
 
         return params
-
-    def _get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
-        """
-        Get data from genome object ref and return the GTF filename (with path)
-        for STAR indexing and mapping.
-        STAR uses the reference annotation to guide assembly and for creating alignment
-        """
-        log("Converting genome {0} to GFF file in folder {1}".format(gnm_ref, gtf_file_dir))
-        gfu = GenomeFileUtil(self.callback_url)
-        try:
-            gfu_ret = gfu.genome_to_gff({self.PARAM_IN_GENOME: gnm_ref,
-                                         'is_gtf': 1,
-                                         'target_dir': gtf_file_dir})
-        except ValueError as egfu:
-            log('GFU getting GTF file raised error:\n')
-            pprint(egfu)
-            return None
-        else:  # no exception raised
-            return gfu_ret.get('file_path')
 
     def _construct_indexing_cmd(self, params):
         # STEP 1: construct the command for running `STAR --runMode genomeGenerate...`
@@ -316,7 +265,7 @@ class STARUtils:
         # print ' '.join(mp_cmd)
         return mp_cmd
 
-    def _exec_indexing(self, params):
+    def exec_indexing(self, params):
         log('Running STAR index generating with params:\n' + pformat(params))
 
         idx_cmd = self._construct_indexing_cmd(params)
@@ -325,7 +274,7 @@ class STARUtils:
 
         return exitCode
 
-    def _exec_mapping(self, params):
+    def exec_mapping(self, params):
         log('Running STAR mapping with params:\n' + pformat(params))
 
         mp_cmd = self._construct_mapping_cmd(params)
@@ -337,14 +286,14 @@ class STARUtils:
     def _exec_star_pipeline(self, params, rds_files, rds_name, idx_dir, out_dir):
         params = self.convert_params(self.process_params(params))
         # build the parameters
-        params_idx = self._get_indexing_params(params, idx_dir)
-        params_mp = self._get_mapping_params(params, rds_files, rds_name, idx_dir, out_dir)
+        params_idx = self.get_indexing_params(params, idx_dir)
+        params_mp = self.get_mapping_params(params, rds_files, rds_name, idx_dir, out_dir)
         ret = {'star_idx': idx_dir, 'star_output': out_dir}
 
         # execute indexing and then mapping
         try:
             if params[self.PARAM_IN_STARMODE] == 'genomeGenerate':
-                ret = self._exec_indexing(params_idx)
+                ret = self.exec_indexing(params_idx)
             else:
                 ret = 0
             while(ret != 0):
@@ -355,7 +304,7 @@ class STARUtils:
         else:  # no exception raised by genome indexing and returns 0, then run mapping
             params_mp[self.PARAM_IN_STARMODE] = 'alignReads'
             try:
-                ret = self._exec_mapping(params_mp)
+                ret = self.exec_mapping(params_mp)
                 while(ret != 0):
                     time.sleep(1)
             except ValueError as emp:
@@ -429,9 +378,9 @@ class STARUtils:
 
         return report_info  # {'report_name': report_info['name'], 'report_ref': report_info['ref']}
 
-    def _get_reads_info(self, reads, readsSet_ref):
+    def get_reads_info(self, reads, readsSet_ref):
         '''
-        _get_reads_info:fetches the detailed info for each reads with ref in list reads_refs
+        get_reads_info:fetches the detailed info for each reads with ref in list readsSet_ref
         return an object of the following structure:
         {
             "style": "paired", "single", or "interleaved",
@@ -462,7 +411,7 @@ class STARUtils:
 
         return ret_reads_info
 
-    def _get_genome_fasta(self, gnm_ref):
+    def get_genome_fasta(self, gnm_ref):
         genome_fasta_files = list()
         if gnm_ref is not None:
             try:
@@ -482,29 +431,7 @@ class STARUtils:
 
         return genome_fasta_files
 
-    def convert_params(self, validated_params):
-        """
-        Convert input parameters with KBase ref format into STAR parameters,
-        and add the advanced options.
-        """
-        params = copy.deepcopy(validated_params)
-        params['runMode'] = 'genomeGenerate'
-
-        # Basic options for generating indices
-        if params.get("sjdbGTFfile", None) is None:
-            params['sjdbGTFfile'] = self._get_genome_gtf_file(
-                                        params[self.PARAM_IN_GENOME],
-                                        os.path.join(self.scratch, self.STAR_IDX_DIR))
-
-        # Add advanced options from validated_params to params
-        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
-        if (params.get('quantMode', None) is None or
-                params.get('quantMode', None) not in quant_modes):
-            params['quantMode'] = 'Both'
-
-        return params
-
-    def _get_indexing_params(self, params, star_idx_dir):
+    def get_indexing_params(self, params, star_idx_dir):
         params_idx = {
                 'runMode': 'genomeGenerate',
                 'runThreadN': params[self.PARAM_IN_THREADN],
@@ -519,7 +446,7 @@ class STARUtils:
 
         return params_idx
 
-    def _get_mapping_params(self, params, rds_files, rds_name, idx_dir, out_dir):
+    def get_mapping_params(self, params, rds_files, rds_name, idx_dir, out_dir):
         ''' build the mapping parameters'''
         params_mp = copy.deepcopy(params)
         if not isinstance(rds_files, list):
@@ -542,6 +469,72 @@ class STARUtils:
         params_mp['align_output'] = aligndir
 
         return params_mp
+
+    def process_params(self, params):
+        """
+        process_params: checks params passed to run_star method and set default values
+        """
+        log('Start validating run_star parameters')
+        # check for required parameters
+        if params.get(self.PARAM_IN_WS, None) is None:
+            raise ValueError(self.PARAM_IN_WS + ' parameter is required')
+
+        if params.get(self.PARAM_IN_STARMODE, None) is None:
+            params[self.PARAM_IN_STARMODE] = 'alignReads'
+        if params.get(self.PARAM_IN_GENOME, None) is None:
+            raise ValueError(self.PARAM_IN_GENOME +
+                             ' parameter is required for generating genome index')
+
+        if (params.get(self.PARAM_IN_STARMODE, None) is not None and
+                params[self.PARAM_IN_STARMODE] != "genomeGenerate"):
+            if params.get(self.PARAM_IN_READS, None) is None:
+                raise ValueError(self.PARAM_IN_READS + ' parameter is required for reads mapping')
+            if not valid_string(params[self.PARAM_IN_READS], is_ref=True):
+                raise ValueError("Parameter readsset_ref must be a valid Workspace object " +
+                                 "reference, not {}".format(params.get(self.PARAM_IN_READS, None)))
+
+        if params.get(self.PARAM_IN_THREADN, None) is not None:
+            if not isinstance(params[self.PARAM_IN_THREADN], int):
+                raise ValueError(self.PARAM_IN_HASH_THREADN + ' must be of type int')
+        else:
+            params[self.PARAM_IN_THREADN] = 2
+
+        if ("alignment_suffix" not in params or not valid_string(params["alignment_suffix"])):
+            raise ValueError("Parameter alignment_suffix must be a valid Workspace object string, "
+                             "not {}".format(params.get("alignment_suffix", None)))
+
+        if params.get(self.PARAM_IN_OUTFILE_PREFIX, None) is not None:
+            if params[self.PARAM_IN_OUTFILE_PREFIX].find('/') != -1:
+                raise ValueError(self.PARAM_IN_OUTFILE_PREFIX + ' cannot contain subfolder(s).')
+        else:
+            params[self.PARAM_IN_OUTFILE_PREFIX] = 'star_'
+
+        if params.get('create_report', None) is None:
+            params['create_report'] = 0
+
+        return self._setDefaultParameters(params)
+
+    def convert_params(self, validated_params):
+        """
+        Convert input parameters with KBase ref format into STAR parameters,
+        and add the advanced options.
+        """
+        params = copy.deepcopy(validated_params)
+        params['runMode'] = 'genomeGenerate'
+
+        # Basic options for generating indices
+        if params.get("sjdbGTFfile", None) is None:
+            params['sjdbGTFfile'] = self.get_genome_gtf_file(
+                                        params[self.PARAM_IN_GENOME],
+                                        os.path.join(self.scratch, self.STAR_IDX_DIR))
+
+        # Add advanced options from validated_params to params
+        quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]
+        if (params.get('quantMode', None) is None or
+                params.get('quantMode', None) not in quant_modes):
+            params['quantMode'] = 'Both'
+
+        return params
 
     def determine_input_info(self, validated_params):
         ''' get info on the readsset_ref object and determine if we run once or run on a set
@@ -592,28 +585,22 @@ class STARUtils:
             name_map[ref_list[i]] = info["infos"][i][1]
         return name_map
 
-    def _mkdir_p(self, dir):
-        """
-        _mkdir_p: make directory for given path
-        """
-        log('Creating a new dir: ' + dir)
-        if not dir:
-            return
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        else:
-            log('{} has existed, so skip creating.'.format(dir))
+    def _fill_html_trs(self, col_caption, obj_data):
+        '''
+        _fill_html_trs: simple creates an html string that has rows (tr) of td for a table
+        '''
+        tr_html_str = '<tr><th>{}</th><th>Condition</th></tr>'.format(col_caption)
 
-    def create_star_dirs(self, star_home):
-        '''creating the directories for STAR'''
-        # the index directory
-        idxdir = os.path.join(star_home, self.STAR_IDX_DIR)
-        self._mkdir_p(idxdir)
-        # the output directory
-        outdir = os.path.join(star_home, self.STAR_OUT_DIR)
-        self._mkdir_p(outdir)
+        for item in obj_data['items']:
+            item_obj = self.ws_client.get_objects2({'objects': [{'ref': item['ref']}]})['data'][0]
+            item_obj_info = item_obj['info']
+            item_obj_data = item_obj['data']
+            obj_name = item_obj_info[1]
 
-        return (idxdir, outdir)
+            tr_html_str += '<tr><td>{} ({})</td>'.format(obj_name, item['ref'])
+            tr_html_str += '<td>{}</td></tr>'.format(item_obj_data['condition'])
+
+        return tr_html_str
 
     def _get_reads_refs_from_setref(self, params):
         readsSet_ref = params[self.PARAM_IN_READS]
@@ -649,8 +636,8 @@ class STARUtils:
         self.zip_folder(idx_dir, star_index)
         self.zip_folder(out_dir, star_output)
 
-        # star_index = self.zip_folder_withDFU(idx_dir, 'star_index')
-        # star_output = self.zip_folder_withDFU(out_dir, 'star_output')
+        # star_index = self._zip_folder_withDFU(idx_dir, 'star_index')
+        # star_output = self._zip_folder_withDFU(out_dir, 'star_output')
 
         output_files.append({'path': star_index,
                              'name': os.path.basename(star_index),
@@ -664,9 +651,10 @@ class STARUtils:
 
         return output_files
 
-    def zip_folder_withDFU(self, folder_path, output_name):
-        """Zip the contents of an entire folder (with that folder included
-        in the archive). Empty subfolders will be included in the archive
+    def _zip_folder_withDFU(self, folder_path, output_name):
+        """
+        _zip_folder_withDFU: Zip the contents of an entire folder (with that folder
+        iincluded n the archive). Empty subfolders will be included in the archive
         as well.
         """
         output_path = self.dfu.pack_file(
@@ -685,9 +673,11 @@ class STARUtils:
         '''
         return output_path
 
-    def zip_folder(self, folder_path, output_path):
-        """Zip the contents of an entire folder (with that folder included in the archive). 
-        Empty subfolders could be included in the archive as well if the commented portion is used.
+    def _zip_folder(self, folder_path, output_path):
+        """
+        _zip_folder: Zip the contents of an entire folder (with that folder included in the
+         archive). Empty subfolders could be included in the archive as well if the commented
+         portion is used.
         """
         with zipfile.ZipFile(output_path, 'w',
                              zipfile.ZIP_DEFLATED,
@@ -780,27 +770,10 @@ class STARUtils:
                             'description': 'HTML summary report for STAR'})
         return html_report
 
-    def _fill_html_trs(self, col_caption, obj_data):
-        '''
-        _fill_html_trs: simple creates an html string that has rows (tr) of td for a table
-        '''
-        tr_html_str = '<tr><th>{}</th><th>Condition</th></tr>'.format(col_caption)
-
-        for item in obj_data['items']:
-            item_obj = self.ws_client.get_objects2({'objects': [{'ref': item['ref']}]})['data'][0]
-            item_obj_info = item_obj['info']
-            item_obj_data = item_obj['data']
-            obj_name = item_obj_info[1]
-
-            tr_html_str += '<tr><td>{} ({})</td>'.format(obj_name, item['ref'])
-            tr_html_str += '<td>{}</td></tr>'.format(item_obj_data['condition'])
-
-        return tr_html_str
-
-    def _generate_star_report(self, obj_ref, report_text, html_links, workspace_name,
-                              index_dir, output_dir):
+    def generate_star_report(self, obj_ref, report_text, html_links, workspace_name,
+                             index_dir, output_dir):
         """
-        _generate_star_report: generate summary report
+        generate_star_report: generate summary report
         """
         log('creating STAR report')
 
@@ -851,6 +824,17 @@ class STARUtils:
 
         return report_output
 
+    def create_star_dirs(self, star_home):
+        '''creating the directories for STAR'''
+        # the index directory
+        idxdir = os.path.join(star_home, self.STAR_IDX_DIR)
+        self._mkdir_p(idxdir)
+        # the output directory
+        outdir = os.path.join(star_home, self.STAR_OUT_DIR)
+        self._mkdir_p(outdir)
+
+        return (idxdir, outdir)
+
     def upload_alignment_set(self, alignment_items, alignmentset_name, ws_name):
         """
         Compiles and saves a set of alignment references (+ other stuff) into a
@@ -873,3 +857,21 @@ class STARUtils:
         })
         return set_info
 
+    def get_genome_gtf_file(self, gnm_ref, gtf_file_dir):
+        """
+        Get data from genome object ref and return the GTF filename (with path)
+        for STAR indexing and mapping.
+        STAR uses the reference annotation to guide assembly and for creating alignment
+        """
+        log("Converting genome {0} to GFF file in folder {1}".format(gnm_ref, gtf_file_dir))
+        gfu = GenomeFileUtil(self.callback_url)
+        try:
+            gfu_ret = gfu.genome_to_gff({self.PARAM_IN_GENOME: gnm_ref,
+                                         'is_gtf': 1,
+                                         'target_dir': gtf_file_dir})
+        except ValueError as egfu:
+            log('GFU getting GTF file raised error:\n')
+            pprint(egfu)
+            return None
+        else:  # no exception raised
+            return gfu_ret.get('file_path')
