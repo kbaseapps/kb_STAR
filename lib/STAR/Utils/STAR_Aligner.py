@@ -439,7 +439,7 @@ class STAR_Aligner(object):
         try:
             ret = self.star_utils.exec_indexing(params_idx)
             while(ret != 0 or not os.path.isfile(
-                    os.path.join(self.star_idx_dir, input_params['genomeParameters.txt']))):
+                    os.path.join(self.star_idx_dir, 'genomeParameters.txt'))):
                 time.sleep(1)
         except RuntimeError as eidx:
             log('STAR genome indexing raised error:\n')
