@@ -22,8 +22,8 @@ class Program_Runner:
             print('\n' + ' '.join(cmmd) + ' was executed successfully, exit code was: ' +
                   str(exitCode))
         else:
-            raise ValueError('Error running command: ' + ' '.join(cmmd) + '\n' +
-                             'Exit Code: ' + str(exitCode))
+            raise RuntimeError('Error running command: ' + ' '.join(cmmd) + '\n' +
+                               'Exit Code: ' + str(exitCode))
 
         return exitCode
 

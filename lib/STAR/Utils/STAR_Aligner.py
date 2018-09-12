@@ -437,13 +437,11 @@ class STAR_Aligner(object):
 
         ret = 1
         try:
-            if ret_params[STARUtils.PARAM_IN_STARMODE] == 'genomeGenerate':
-                ret = self.star_utils.exec_indexing(params_idx)
-            else:
-                ret = 0
-            while(ret != 0):
+            ret = self.star_utils.exec_indexing(params_idx)
+            while(ret != 0 or not os.path.isfile(
+                    os.path.join(self.star_idx_dir, input_params['genomeParameters.txt']))):
                 time.sleep(1)
-        except ValueError as eidx:
+        except RuntimeError as eidx:
             log('STAR genome indexing raised error:\n')
             pprint(eidx)
         else:
@@ -465,7 +463,7 @@ class STAR_Aligner(object):
             ret = self.star_utils.exec_mapping(params_mp)
             while(ret != 0):
                 time.sleep(1)
-        except ValueError as emp:
+        except RuntimeError as emp:
             log('STAR mapping raised error:\n')
             pprint(emp)
             retVal = {'star_idx': self.star_idx_dir, 'star_output': None}
@@ -480,11 +478,11 @@ class STAR_Aligner(object):
         '''
         gnm_ref = input_params[STARUtils.PARAM_IN_GENOME]
         if input_params.get('sjdbGTFfile', None) is None:
+            # fetch genome GTF from refs to file location(s)
             input_params['sjdbGTFfile'] = self.star_utils.get_genome_gtf_file(
                                             gnm_ref, self.star_idx_dir)
-        # if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
-        if not os.path.isfile(os.path.join(self.star_idx_dir, input_params['sjdbGTFfile'])):
-            # fetch genome fasta and GTF from refs to file location(s)
+        if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
+            # fetch genome fasta from refs to file location(s)
             input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
                                                                     gnm_ref)
             # generate the indices

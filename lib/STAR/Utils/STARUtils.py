@@ -425,7 +425,8 @@ class STARUtils:
                 raise
 
             if genome_fasta_file.get("path", None) is None:
-                raise RuntimeError("FASTA file fetched from object {} doesn't seem exist!".format(gnm_ref))
+                raise RuntimeError(
+                    "FASTA file fetched from object {} doesn't seem exist!".format(gnm_ref))
             else:
                 genome_fasta_files.append(genome_fasta_file["path"])
 
