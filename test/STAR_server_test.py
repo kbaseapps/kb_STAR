@@ -337,6 +337,7 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, ' STAR__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir, ' STAR__STARgenome')))
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_index_map_2")
