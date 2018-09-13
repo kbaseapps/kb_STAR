@@ -488,7 +488,7 @@ class STAR_Aligner(object):
             # generate the indices
             (idx_ret, idx_dir) = self._run_star_indexing(input_params)
             if idx_ret != 0:
-                raise ValueError("Failed to generate genome indices, aborting...")
+                raise RuntimeError("Failed to generate genome indices, exit code=" + idx_ret)
 
     def run_align(self, params):
         # 0. create the star folders
