@@ -331,13 +331,24 @@ class STARTest(unittest.TestCase):
         print(exit_code2)
 
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.toTranscriptome.out.bam')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, ' STAR__STARgenome')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir, ' STAR__STARgenome')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir, 'small')))
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
+                                                    'small_Aligned.sortedByCoord.bam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
+                                                    'small_Aligned.toTranscriptome.out.bam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_ReadsPerGene.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_SJ.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARgenome')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small__STARtmp')))
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_index_map_2")
@@ -429,11 +440,6 @@ class STARTest(unittest.TestCase):
         exit_code2 = star_util.exec_mapping(params_mp)
         print(exit_code2)
 
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'ecoli_genomic.gtf')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
@@ -444,6 +450,14 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
 
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR__STARgenome')))
+
+        self.assertTrue(os.path.isdir(os.path.join(out_dir, 'small')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
                                                     'small_Aligned.sortedByCoord.bam')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
