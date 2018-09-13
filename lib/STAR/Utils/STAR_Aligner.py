@@ -513,10 +513,11 @@ class STAR_Aligner(object):
             if input_obj_info['run_mode'] == 'sample_set':
                 # returnVal = self._star_run_batch_parallel(input_params)
                 ret = self._star_run_batch_sequential(input_params)
+            return ret
         except RuntimeError as star_err:
             log('STAR aligning raised error:\n')
             pprint(star_err)
+            return ret
 
-        return ret
 
 
