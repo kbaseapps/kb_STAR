@@ -634,8 +634,8 @@ class STARUtils:
         self._mkdir_p(output_directory)
         star_index = os.path.join(output_directory, 'star_index.zip')
         star_output = os.path.join(output_directory, 'star_output.zip')
-        self.zip_folder(idx_dir, star_index)
-        self.zip_folder(out_dir, star_output)
+        self._zip_folder(idx_dir, star_index)
+        self._zip_folder(out_dir, star_output)
 
         # star_index = self._zip_folder_withDFU(idx_dir, 'star_index')
         # star_output = self._zip_folder_withDFU(out_dir, 'star_output')
