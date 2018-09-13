@@ -365,6 +365,25 @@ class STARTest(unittest.TestCase):
         (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
 
         gnm_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+
+        # STAR indexing input parameters without 'sjdbGTFfile'
+        params_idx = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'genomeFastaFiles': [genome_file, genome_file2]}
+
+        exit_code0 = star_util.exec_indexing(params_idx)
+        print(exit_code0)
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
         '''
         By adding the sjdbGTFfile parameter, if the given gtf file is not a good match to the
         reads file in terms of formatting, very likely an error will be thrown that says--
@@ -373,7 +392,7 @@ class STARTest(unittest.TestCase):
         Solution: check the formatting of the GTF file. Most likely cause is the difference in
         chromosome naming between GTF and FASTA file.'
         '''
-        # STAR indexing input parameters
+        # STAR indexing input parameters with 'sjdbGTFfile'
         params_idx = {
             'output_workspace': self.getWsName(),
             'runMode': 'generateGenome',
