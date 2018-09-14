@@ -133,6 +133,8 @@ class STAR_Aligner(object):
                 os.remove(ret_fwd)
                 if reads_info.get('file_rev', None) is not None:
                     os.remove(reads_info["file_rev"])
+        else:
+            raise RuntimeError("Error from STAR_Aligner._star_run_single() call.")
 
         return ret_val
 
@@ -153,32 +155,43 @@ class STAR_Aligner(object):
         for r in reads_refs:
             single_input_params[STARUtils.PARAM_IN_READS] = r['ref']
             single_input_params['create_report'] = 0
-            single_ret = self._star_run_single(single_input_params)
-
-            item = single_ret['alignment_objs'][0]
-            a_obj = item['AlignmentObj']
-            alignment_objs.append(item)
-            alignment_items.append({
-                    'ref': a_obj['ref'],
-                    'label': r.get(
+            try:
+                single_ret = self._star_run_single(single_input_params)
+            except RuntimeError as rer:
+                log("Error from STAR_Aligner._star_run_single():")
+                pprint(rer)
+            else:
+                item = single_ret['alignment_objs'][0]
+                a_obj = item['AlignmentObj']
+                alignment_objs.append(item)
+                alignment_items.append({
+                        'ref': a_obj['ref'],
+                        'label': r.get(
                             'condition',
                             single_input_params.get('condition', 'unspecified'))
-            })
+                })
 
-            rds_names.append(r['alignment_output_name'].replace(
+                rds_names.append(r['alignment_output_name'].replace(
                                     single_input_params['alignment_suffix'], ''))
 
         # 2. Process all the results after mapping is done
-        (set_result, report_info) = self._batch_sequential_post_processing(
+        if len(alignment_items) > 0:
+            (set_result, report_info) = self._batch_sequential_post_processing(
                                         alignment_items, rds_names, input_params)
 
-        set_result['output_directory'] = self.star_out_dir
+            set_result['output_directory'] = self.star_out_dir
 
-        result = {'alignmentset_ref': set_result['set_ref'],
-                  'output_info': set_result,
-                  'alignment_objs': alignment_objs,
-                  'report_name': report_info['name'],
-                  'report_ref': report_info['ref']}
+            result = {'alignmentset_ref': set_result['set_ref'],
+                      'output_info': set_result,
+                      'alignment_objs': alignment_objs,
+                      'report_name': report_info['name'],
+                      'report_ref': report_info['ref']}
+        else:
+            result = {'alignmentset_ref': None,
+                      'output_info': None,
+                      'alignment_objs': None,
+                      'report_name': None,
+                      'report_ref': None}
 
         return result
 
