@@ -662,7 +662,7 @@ class STARUtils:
                 {'file_path': folder_path + '/' + output_name,
                  'pack': 'zip'})['file_path']
 
-        print("{} created successfully.".format(output_path))
+        log("{} created successfully.".format(output_path))
 
         '''
         with zipfile.ZipFile(output_path, "r") as f:
@@ -677,7 +677,8 @@ class STARUtils:
     def _zip_folder(self, folder_path, output_path):
         """
         _zip_folder: Zip the contents of an entire folder (with that folder included in the
-         archive). Empty subfolders could be included in the archive as well if the commented
+         archive). Empty subfolders could be included in the archive as well if the 'Included
+         all subfolders, including empty ones' portion.
          portion is used.
         """
         with zipfile.ZipFile(output_path, 'w',
@@ -685,18 +686,18 @@ class STARUtils:
                              allowZip64=True) as ziph:
             for root, folders, files in os.walk(folder_path):
                 # Include all subfolders, including empty ones.
-                # for folder_name in folders:
-                #    absolute_path = os.path.join(root, folder_name)
-                #    relative_path = os.path.join(os.path.basename(root), folder_name)
-                #    print "Adding {} to archive.".format(absolute_path)
-                #    ziph.write(absolute_path, relative_path)
+                for folder_name in folders:
+                    absolute_fpath = os.path.join(root, folder_name)
+                    relative_fpath = os.path.join(os.path.basename(root), folder_name)
+                    log("Adding {} to archive.".format(absolute_fpath))
+                    ziph.write(absolute_fpath, relative_fpath)
                 for f in files:
                     absolute_path = os.path.join(root, f)
                     relative_path = os.path.join(os.path.basename(root), f)
-                    # print "Adding {} to archive.".format(absolute_path)
+                    log("Adding {} to archive.".format(absolute_path))
                     ziph.write(absolute_path, relative_path)
 
-        print("{} created successfully.".format(output_path))
+        log("{} created successfully.".format(output_path))
 
         # with zipfile.ZipFile(output_path, "r") as f:
         #    print 'Checking the zipped file......\n'
