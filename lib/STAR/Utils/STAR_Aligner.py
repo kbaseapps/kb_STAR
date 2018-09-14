@@ -117,23 +117,19 @@ class STAR_Aligner(object):
             singlerun_output_info['output_bam_file'] = output_bam_file
             singlerun_output_info['upload_results'] = upload_results
 
+            ret_val = {'alignmentset_ref': None,
+                       'output_directory': singlerun_output_info['output_dir'],
+                       'output_info': singlerun_output_info,
+                       'alignment_objs': alignment_objs}
+
             if input_params.get("create_report", 0) == 1:
                 report_info = self.star_utils.generate_report_for_single_run(
                     singlerun_output_info, input_params)
-
-                ret_val = {'alignmentset_ref': None,
-                           'output_directory': singlerun_output_info['output_dir'],
-                           'output_info': singlerun_output_info,
-                           'alignment_objs': alignment_objs,
-                           'report_name': report_info['name'],
-                           'report_ref': report_info['ref']}
+                ret_val['report_name'] = report_info['name']
+                ret_val['report_ref'] = report_info['ref']
             else:
-                ret_val = {'alignmentset_ref': None,
-                           'output_directory': None,
-                           'output_info': None,
-                           'alignment_objs': None,
-                           'report_name': None,
-                           'report_ref': None}
+                ret_val['report_name'] = None
+                ret_val['report_ref'] = None
 
         if ret_fwd is not None:
             os.remove(ret_fwd)
@@ -508,16 +504,19 @@ class STAR_Aligner(object):
         }
         try:
             if input_obj_info['run_mode'] == 'single_library':
+                print("aligning a single_library...")
                 ret = self._star_run_single(input_params)
 
             if input_obj_info['run_mode'] == 'sample_set':
-                # returnVal = self._star_run_batch_parallel(input_params)
+                print("aligning a sample_set...")
+                # ret = self._star_run_batch_parallel(input_params)
                 ret = self._star_run_batch_sequential(input_params)
-            return ret
+
         except RuntimeError as star_err:
             log('STAR aligning raised error:\n')
             pprint(star_err)
-            return ret
+
+        return ret
 
 
 
