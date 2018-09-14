@@ -48,93 +48,91 @@ class STAR_Aligner(object):
                                     'kb_STAR', provenance[0]['subactions'])
         print('Running STAR version = ' + self.my_version)
 
-    def _star_run_single(self, input_params):
+    def _star_run_single(self, single_input_params):
         """
         _star_run_single: Performs a single run of STAR against a single reads reference.
          The rest of the info is taken from the params dict - see the spec for details.
         """
         log('--->\nrunning STAR_Aligner._star_run_single\n' +
-            'params:\n{}'.format(json.dumps(input_params, indent=1)))
+            'params:\n{}'.format(json.dumps(single_input_params, indent=1)))
 
-        # 0. get index
-        self._get_index(input_params)
-
-        # 1. Prepare for mapping
-        rds = None
-        reads_refs = input_params[STARUtils.SET_READS]
-        for r in reads_refs:
-            if r['ref'] == input_params[STARUtils.PARAM_IN_READS]:
-                rds = r
-                break
-
-        reads_info = self.star_utils.get_reads_info(rds, input_params[STARUtils.PARAM_IN_READS])
-
-        rds_name = rds['alignment_output_name'].replace(input_params['alignment_suffix'], '')
-
+        ret_val = {'report_name': None, 'report_ref': None}
         alignment_objs = list()
         alignment_ref = None
         singlerun_output_info = {}
-        report_info = {'name': None, 'ref': None}
-        ret_val = None
-
         rds_files = list()
-        ret_fwd = reads_info["file_fwd"]
-        if ret_fwd is not None:
-            rds_files.append(ret_fwd)
-            if reads_info.get('file_rev', None) is not None:
-                rds_files.append(reads_info['file_rev'])
+        reads_info = None
+        ret_fwd = None
 
-        input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
+        # 1. Prepare for mapping
+        rds = None
+        setreads_refs = single_input_params[STARUtils.SET_READS]
+        for r in setreads_refs:
+            if r['ref'] == single_input_params[STARUtils.PARAM_IN_READS]:
+                rds = r
+                reads_info = self.star_utils.get_reads_info(rds, rds['ref'])
+                rds_name = rds['alignment_output_name'].replace(
+                                single_input_params['alignment_suffix'], '')
 
-        # 2. After all is set, do the alignment and upload the output.
-        star_mp_ret = self._run_star_mapping(input_params, rds_files, rds_name)
+                ret_fwd = reads_info["file_fwd"]
+                if ret_fwd is not None:
+                    rds_files.append(ret_fwd)
+                    if reads_info.get('file_rev', None) is not None:
+                        rds_files.append(reads_info['file_rev'])
 
-        if star_mp_ret.get('star_output', None) is not None:
-            bam_sort = ''
-            if input_params.get('outSAMtype', None) == 'BAM':
-                bam_sort = 'sortedByCoord'
-            output_bam_file = '{}_Aligned.{}.out.bam'.format(rds_name, bam_sort)
-            output_bam_file = os.path.join(star_mp_ret['star_output'], output_bam_file)
+                single_input_params[STARUtils.PARAM_IN_OUTFILE_PREFIX] = rds_name + '_'
+                break
 
-            # Upload the alignment
-            upload_results = self.star_utils.upload_STARalignment(
-                                        input_params,
-                                        rds,
-                                        reads_info,
-                                        output_bam_file)
-            alignment_ref = upload_results['obj_ref']
-            alignment_obj = {
-                'ref': alignment_ref,
-                'name': rds['alignment_output_name']
-            }
-            alignment_objs.append({
-                'reads_ref': rds['ref'],
-                'AlignmentObj': alignment_obj
-            })
+        # 2. After all is set, perform the alignment and upload the output.
+        if reads_info:
+            star_mp_ret = self._run_star_mapping(
+                        single_input_params, rds_files, rds_name)
 
-            singlerun_output_info['index_dir'] = self.star_idx_dir
-            singlerun_output_info['output_dir'] = star_mp_ret['star_output']
-            singlerun_output_info['output_bam_file'] = output_bam_file
-            singlerun_output_info['upload_results'] = upload_results
+            if star_mp_ret.get('star_output', None) is not None:
+                bam_sort = ''
+                if single_input_params.get('outSAMtype', None) == 'BAM':
+                    bam_sort = 'sortedByCoord'
+                output_bam_file = '{}_Aligned.{}.out.bam'.format(rds_name, bam_sort)
+                output_bam_file = os.path.join(star_mp_ret['star_output'], output_bam_file)
 
-            ret_val = {'alignmentset_ref': None,
-                       'output_directory': singlerun_output_info['output_dir'],
-                       'output_info': singlerun_output_info,
-                       'alignment_objs': alignment_objs}
+                # Upload the alignment
+                upload_results = self.star_utils.upload_STARalignment(
+                                            single_input_params,
+                                            rds,
+                                            reads_info,
+                                            output_bam_file)
+                alignment_ref = upload_results['obj_ref']
+                alignment_obj = {
+                    'ref': alignment_ref,
+                    'name': rds['alignment_output_name']
+                }
+                alignment_objs.append({
+                    'reads_ref': rds['ref'],
+                    'AlignmentObj': alignment_obj
+                })
 
-            if input_params.get("create_report", 0) == 1:
-                report_info = self.star_utils.generate_report_for_single_run(
-                    singlerun_output_info, input_params)
-                ret_val['report_name'] = report_info['name']
-                ret_val['report_ref'] = report_info['ref']
-            else:
-                ret_val['report_name'] = None
-                ret_val['report_ref'] = None
+                singlerun_output_info['index_dir'] = self.star_idx_dir
+                singlerun_output_info['output_dir'] = star_mp_ret['star_output']
+                singlerun_output_info['output_bam_file'] = output_bam_file
+                singlerun_output_info['upload_results'] = upload_results
 
-        if ret_fwd is not None:
-            os.remove(ret_fwd)
-            if reads_info.get('file_rev', None) is not None:
-                os.remove(reads_info["file_rev"])
+                ret_val = {'alignmentset_ref': None,
+                           'output_directory': singlerun_output_info['output_dir'],
+                           'output_info': singlerun_output_info,
+                           'alignment_objs': alignment_objs}
+                print("Alignment objects count=".format(len(alignment_objs)))
+                pprint(alignment_objs)
+
+                if single_input_params.get("create_report", 0) == 1:
+                    report_info = self.star_utils.generate_report_for_single_run(
+                        singlerun_output_info, single_input_params)
+                    ret_val['report_name'] = report_info['name']
+                    ret_val['report_ref'] = report_info['ref']
+
+            if ret_fwd is not None:
+                os.remove(ret_fwd)
+                if reads_info.get('file_rev', None) is not None:
+                    os.remove(reads_info["file_rev"])
 
         return ret_val
 
@@ -145,10 +143,7 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner._star_run_batch_sequential\n' +
             'params:\n{}'.format(json.dumps(input_params, indent=1)))
 
-        self._get_index(input_params)
-
         reads_refs = input_params[STARUtils.SET_READS]
-
         single_input_params = copy.deepcopy(input_params)
 
         # 1. Run the mapping one by one
@@ -497,6 +492,9 @@ class STAR_Aligner(object):
 
         # 2. convert the input parameters (from refs to file paths, especially)
         input_params = self.star_utils.convert_params(validated_params)
+
+        # 3. generate index
+        self._get_index(input_params)
 
         ret = {
             "report_ref": None,

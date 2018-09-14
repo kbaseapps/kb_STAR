@@ -231,6 +231,8 @@ class STARTest(unittest.TestCase):
                   # 'genomeFastaFile_refs': [self.loadAssembly()],
                   # 'readFilesIn_refs':[self.loadFasta2Assembly('Arabidopsis_thaliana.TAIR10.dna.toplevel.fa')]
                   }
+
+        pprint('Running with a single reads')
         res = self.getImpl().run_star(self.getContext(), params)
         pprint(res)
         '''
