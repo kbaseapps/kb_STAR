@@ -499,7 +499,7 @@ class STAR_Aligner(object):
             # generate the indices
             try:
                 (idx_ret, idx_dir) = self._run_star_indexing(input_params)
-            except RuntimeError rerr:
+            except RuntimeError as rerr:
                 log("Failed to generate genome indices.")
                 raise
 
