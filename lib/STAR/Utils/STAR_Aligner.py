@@ -5,6 +5,7 @@ import re
 import time
 import copy
 from pprint import pprint
+import traceback
 
 from KBParallel.KBParallelClient import KBParallel
 from STAR.Utils.STARUtils import STARUtils
@@ -134,13 +135,13 @@ class STAR_Aligner(object):
                 else:
                     ret_val['report_name'] = None
                     ret_val['report_ref'] = None
-
-            if ret_fwd is not None:
-                os.remove(ret_fwd)
-                if reads_info.get('file_rev', None) is not None:
-                    os.remove(reads_info["file_rev"])
+            finally:
+                if ret_fwd is not None:
+                    os.remove(ret_fwd)
+                    if reads_info.get('file_rev', None) is not None:
+                        os.remove(reads_info["file_rev"])
         else:
-            raise RuntimeError("Failed to get reads info from STAR_Aligner._star_run_single() call.")
+            raise RuntimeError("Failed to get reads info.")
 
         return ret_val
 
@@ -164,7 +165,7 @@ class STAR_Aligner(object):
             try:
                 single_ret = self._star_run_single(single_input_params)
             except RuntimeError as rer:
-                log("Error from STAR_Aligner._star_run_single():")
+                log("Error from STAR_Aligner._star_run_single().")
                 raise
             else:
                 item = single_ret['alignment_objs'][0]
@@ -454,6 +455,7 @@ class STAR_Aligner(object):
         except RuntimeError as eidx:
             log('STAR genome indexing raised error:\n')
             pprint(eidx)
+            raise
         else:
             ret = 0
 
@@ -475,7 +477,6 @@ class STAR_Aligner(object):
                 time.sleep(1)
         except RuntimeError as emp:
             log('STAR mapping raised error!\n')
-            pprint(emp)
             raise
         else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
@@ -496,9 +497,11 @@ class STAR_Aligner(object):
             input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
                                                                     gnm_ref)
             # generate the indices
-            (idx_ret, idx_dir) = self._run_star_indexing(input_params)
-            if idx_ret != 0:
-                raise RuntimeError("Failed to generate genome indices, exit code=" + str(idx_ret))
+            try:
+                (idx_ret, idx_dir) = self._run_star_indexing(input_params)
+            except RuntimeError rerr:
+                log("Failed to generate genome indices.")
+                raise
 
     def run_align(self, params):
         # 0. create the star folders
@@ -512,27 +515,33 @@ class STAR_Aligner(object):
         # 2. convert the input parameters (from refs to file paths, especially)
         input_params = self.star_utils.convert_params(validated_params)
 
-        # 3. generate index
-        self._get_index(input_params)
-
         ret = {
             "report_ref": None,
             "report_name": None
         }
+
+        # 3. generate index
         try:
-            if input_obj_info['run_mode'] == 'single_library':
-                print("aligning a single_library...")
-                ret = self._star_run_single(input_params)
+            self._get_index(input_params)
+        except RuntimeError as idx_err:
+            log('STAR indexing failed...\n')
+            traceback.print_exc()
+        else:
+            try:
+                if input_obj_info['run_mode'] == 'single_library':
+                    print("aligning a single_library...")
+                    ret = self._star_run_single(input_params)
 
-            if input_obj_info['run_mode'] == 'sample_set':
-                print("aligning a sample_set...")
-                # ret = self._star_run_batch_parallel(input_params)
-                ret = self._star_run_batch_sequential(input_params)
+                if input_obj_info['run_mode'] == 'sample_set':
+                    print("aligning a sample_set...")
+                    # ret = self._star_run_batch_parallel(input_params)
+                    ret = self._star_run_batch_sequential(input_params)
 
-        except RuntimeError as star_err:
-            log('STAR aligning errorerd...\n')
-
-        return ret
+            except RuntimeError as map_err:
+                log('STAR aligning failed...\n')
+                traceback.print_exc()
+        finally:
+            return ret
 
 
 

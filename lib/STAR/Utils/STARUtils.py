@@ -307,7 +307,7 @@ class STARUtils:
                 ret = self.exec_mapping(params_mp)
                 while(ret != 0):
                     time.sleep(1)
-            except ValueError as emp:
+            except RuntimeError as emp:
                 log('STAR mapping raised error:\n')
                 pprint(emp)
             else:  # no exception raised by STAR mapping and returns 0, move to saving and reporting
