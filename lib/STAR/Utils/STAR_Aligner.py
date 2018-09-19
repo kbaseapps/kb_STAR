@@ -85,12 +85,13 @@ class STAR_Aligner(object):
 
         # 2. After all is set, perform the alignment and upload the output.
         if reads_info:
-            star_mp_ret = self._run_star_mapping(
-                        single_input_params, rds_files, rds_name)
-
-            if star_mp_ret.get('star_output', None) is None:
-                raise RuntimeError("Error from STAR mapping: " +
-                                   star_mp_ret.get('mapping_error'))
+            try:
+                star_mp_ret = self._run_star_mapping(
+                            single_input_params, rds_files, rds_name)
+            except RuntimeError rerr:
+                log("Error from STAR mapping:\n")
+                pprint(rerr)
+                raise
             else:
                 bam_sort = ''
                 if single_input_params.get('outSAMtype', None) == 'BAM':
@@ -134,13 +135,13 @@ class STAR_Aligner(object):
                 else:
                     ret_val['report_name'] = None
                     ret_val['report_ref'] = None
-        else:
-            raise RuntimeError("Error from STAR_Aligner._star_run_single() call.")
 
-        if ret_fwd is not None:
-            os.remove(ret_fwd)
-            if reads_info.get('file_rev', None) is not None:
-                os.remove(reads_info["file_rev"])
+            if ret_fwd is not None:
+                os.remove(ret_fwd)
+                if reads_info.get('file_rev', None) is not None:
+                    os.remove(reads_info["file_rev"])
+        else:
+            raise RuntimeError("Failed to get reads info from STAR_Aligner._star_run_single() call.")
 
         return ret_val
 
@@ -165,7 +166,7 @@ class STAR_Aligner(object):
                 single_ret = self._star_run_single(single_input_params)
             except RuntimeError as rer:
                 log("Error from STAR_Aligner._star_run_single():")
-                pprint(rer)
+                raise
             else:
                 item = single_ret['alignment_objs'][0]
                 a_obj = item['AlignmentObj']
@@ -474,9 +475,9 @@ class STAR_Aligner(object):
             while(ret != 0):
                 time.sleep(1)
         except RuntimeError as emp:
-            emp_str = 'STAR mapping raised error!\n'
+            log('STAR mapping raised error!\n')
             pprint(emp)
-            retVal = {'star_idx': self.star_idx_dir, 'star_output': None, 'mapping_error': emp_str}
+            raise
         else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 

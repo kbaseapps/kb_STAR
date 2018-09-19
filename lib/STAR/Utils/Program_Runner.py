@@ -1,4 +1,5 @@
-from subprocess import Popen, PIPE, STDOUT
+
+import subprocess
 
 
 class Program_Runner:
@@ -8,14 +9,14 @@ class Program_Runner:
         self.executableName = cmd
 
     def run(self, command, cwd_dir=None):
-        ''' options is an array of command-line parameters passed to the RQCFilter App '''
         cmmd = command
 
         if not cwd_dir:
             cwd_dir = self.scratch_dir
 
         # print('\nRunning: ' + ' '.join(cmmd))
-        p = Popen(cmmd, cwd=cwd_dir, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+        p = subprocess.Popen(cmmd, cwd=cwd_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, close_fds=True)
         exitCode = p.wait()
 
         if (exitCode == 0):
@@ -26,8 +27,7 @@ class Program_Runner:
             for line in p.stdout:
                 line = line.rstrip() + '\n'
                 star_msg += line
-            raise RuntimeError('Error running command: ' + ' '.join(cmmd) + '\n' +
-                               'Exit Code: ' + str(exitCode) +
-                               '\n\n******STAR run report******\n' + star_msg)
+            raise RuntimeError('Error running command: ' + ' '.join(cmmd) + '\nExit Code: ' +
+                               str(exitCode) + '\n\n******STAR run report******\n' + star_msg)
         return exitCode
 
