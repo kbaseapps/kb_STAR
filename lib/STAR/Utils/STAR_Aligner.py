@@ -89,7 +89,7 @@ class STAR_Aligner(object):
                         single_input_params, rds_files, rds_name)
 
             if star_mp_ret.get('star_output', None) is None:
-                raise RuntimeError("Error from STAR mapping: " + 
+                raise RuntimeError("Error from STAR mapping: " +
                                    star_mp_ret.get('mapping_error'))
             else:
                 bam_sort = ''
@@ -474,8 +474,9 @@ class STAR_Aligner(object):
             while(ret != 0):
                 time.sleep(1)
         except RuntimeError as emp:
-            log('STAR mapping raised error!\n')
-            retVal = {'star_idx': self.star_idx_dir, 'star_output': None, 'mapping_error': emp}
+            emp_str = 'STAR mapping raised error!\n'
+            pprint(emp)
+            retVal = {'star_idx': self.star_idx_dir, 'star_output': None, 'mapping_error': emp_str}
         else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 
