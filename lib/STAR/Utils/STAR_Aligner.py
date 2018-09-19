@@ -56,7 +56,7 @@ class STAR_Aligner(object):
         log('--->\nrunning STAR_Aligner._star_run_single\n' +
             'params:\n{}'.format(json.dumps(single_input_params, indent=1)))
 
-        ret_val = {'report_name': None, 'report_ref': None}
+        ret_val = None
         alignment_objs = list()
         alignment_ref = None
         singlerun_output_info = {}
@@ -88,7 +88,10 @@ class STAR_Aligner(object):
             star_mp_ret = self._run_star_mapping(
                         single_input_params, rds_files, rds_name)
 
-            if star_mp_ret.get('star_output', None) is not None:
+            if star_mp_ret.get('star_output', None) is None:
+                raise RuntimeError("Error from STAR mapping: " + 
+                                   star_mp_ret.get('mapping_error'))
+            else:
                 bam_sort = ''
                 if single_input_params.get('outSAMtype', None) == 'BAM':
                     bam_sort = 'sortedByCoord'
@@ -128,13 +131,16 @@ class STAR_Aligner(object):
                         singlerun_output_info, single_input_params)
                     ret_val['report_name'] = report_info['name']
                     ret_val['report_ref'] = report_info['ref']
-
-            if ret_fwd is not None:
-                os.remove(ret_fwd)
-                if reads_info.get('file_rev', None) is not None:
-                    os.remove(reads_info["file_rev"])
+                else:
+                    ret_val['report_name'] = None
+                    ret_val['report_ref'] = None
         else:
             raise RuntimeError("Error from STAR_Aligner._star_run_single() call.")
+
+        if ret_fwd is not None:
+            os.remove(ret_fwd)
+            if reads_info.get('file_rev', None) is not None:
+                os.remove(reads_info["file_rev"])
 
         return ret_val
 
@@ -468,9 +474,8 @@ class STAR_Aligner(object):
             while(ret != 0):
                 time.sleep(1)
         except RuntimeError as emp:
-            log('STAR mapping raised error:\n')
-            pprint(emp)
-            retVal = {'star_idx': self.star_idx_dir, 'star_output': None}
+            log('STAR mapping raised error!\n')
+            retVal = {'star_idx': self.star_idx_dir, 'star_output': None, 'mapping_error': emp}
         else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 

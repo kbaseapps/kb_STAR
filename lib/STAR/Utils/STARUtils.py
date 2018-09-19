@@ -220,7 +220,7 @@ class STARUtils:
                 mp_cmd.append("GeneCounts")
             else:
                 mp_cmd.append(params['quantMode'])
-            # Count genes option requires the annotations GTF file used
+            # Count genes option requires the annotations (GTF/GFF with -sjdbGTFfile option) file
             if ((params['quantMode'] == 'Both' or
                 params['quantMode'] == 'GeneCounts') and
                     '--sjdbGTFfile' not in mp_cmd):
