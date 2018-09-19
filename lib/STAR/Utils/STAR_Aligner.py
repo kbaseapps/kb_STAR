@@ -88,9 +88,8 @@ class STAR_Aligner(object):
             try:
                 star_mp_ret = self._run_star_mapping(
                             single_input_params, rds_files, rds_name)
-            except RuntimeError rerr:
-                log("Error from STAR mapping:\n")
-                pprint(rerr)
+            except RuntimeError as rerr:
+                log("Caught error from STAR mapping!\n")
                 raise
             else:
                 bam_sort = ''
@@ -531,8 +530,7 @@ class STAR_Aligner(object):
                 ret = self._star_run_batch_sequential(input_params)
 
         except RuntimeError as star_err:
-            log('STAR aligning raised error:\n')
-            pprint(star_err)
+            log('STAR aligning errorerd...\n')
 
         return ret
 
