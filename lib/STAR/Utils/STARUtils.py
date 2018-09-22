@@ -108,11 +108,9 @@ class STARUtils:
         idx_cmd.append('genomeGenerate')
         idx_cmd.append('--' + self.PARAM_IN_THREADN)
         idx_cmd.append(str(params[self.PARAM_IN_THREADN]))
-
-        if params.get(self.PARAM_IN_FASTA_FILES, None) is not None:
-            idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
-            for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
-                idx_cmd.append(fasta_file)
+        idx_cmd.append('--' + self.PARAM_IN_FASTA_FILES)
+        for fasta_file in params[self.PARAM_IN_FASTA_FILES]:
+            idx_cmd.append(fasta_file)
 
         # STEP 2: append the standard optional inputs
         if params.get('sjdbGTFfile', None) is not None:
@@ -431,6 +429,7 @@ class STARUtils:
         return genome_fasta_files
 
     def get_indexing_params(self, params, star_idx_dir):
+        ''' build the indexing parameters'''
         params_idx = {
                 'runMode': 'genomeGenerate',
                 'runThreadN': params[self.PARAM_IN_THREADN],
@@ -526,6 +525,10 @@ class STARUtils:
             params['sjdbGTFfile'] = self.get_genome_gtf_file(
                                         params[self.PARAM_IN_GENOME],
                                         os.path.join(self.scratch, self.STAR_IDX_DIR))
+
+        if params.get(self.PARAM_IN_FASTA_FILES, None) is None:
+            params[self.PARAM_IN_FASTA_FILES] = self.get_genome_fasta(
+                                                    params.get(self.PARAM_IN_GENOME))
 
         # Add advanced options from validated_params to params
         quant_modes = ["TranscriptomeSAM", "GeneCounts", "Both"]

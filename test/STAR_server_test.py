@@ -17,6 +17,7 @@ from pprint import pprint, pformat # noqa: F401
 from biokbase.workspace.client import Workspace as workspaceService
 from Workspace.WorkspaceClient import Workspace
 from STAR.STARImpl import STAR
+from STAR.Utils.STAR_Aligner import STAR_Aligner
 from STAR.Utils.STARUtils import STARUtils
 from STAR.STARServer import MethodContext
 from STAR.authclient import KBaseAuth as _KBaseAuth
@@ -209,8 +210,8 @@ class STARTest(unittest.TestCase):
 
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_run_star_single")
-    def test_run_star_single(self):
+    # @unittest.skip("skipped test_STARImpl_run_star_single")
+    def test_STARImpl_run_star_single(self):
         # get the test data
         genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
         se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
@@ -249,8 +250,8 @@ class STARTest(unittest.TestCase):
         '''
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_run_star_batch")
-    def test_run_star_batch(self):
+    @unittest.skip("skipped test_STARImpl_run_star_batch")
+    def test_STARImpl_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
         ss_ref = self.loadReadsSet()
@@ -279,10 +280,10 @@ class STARTest(unittest.TestCase):
         self.assertNotEqual(res['output_info'], None)
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_index_map")
-    def test_index_map(self):
+    # @unittest.skip("skipped test_STARUtils_exec_index_map")
+    def test_STARUtils_exec_index_map(self):
         """
-        STAR indexing/mapping without 'sjdbGTFfile' explicitly given,
+        STAR indexing/mapping without 'sjdbGTFfile' explicitly given
         """
 
         # 1) upload files to shock
@@ -372,22 +373,16 @@ class STARTest(unittest.TestCase):
                                                    'smallFWD_SE.reads__STARtmp')))
 
     # Uncomment to skip this test
-    # @unittest.skip("skipped test_index_map_2")
-    def test_index_map_2(self):
+    # @unittest.skip("skipped test_STARUtils_exec_index_map_2")
+    def test_STARUtils_exec_index_map_2(self):
         """
         Testing with Both quaniMode
-        STAR indexing/mapping with 'sjdbGTFfile' explicitly given
+        STAR indexing/mapping with 'sjdbGTFfile' explicitly given or
+        by using the GTF file from the genome ref
         """
 
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file1 = './testReads/test_long.fa'
-        genome_file1 = os.path.join(shared_dir, os.path.basename(genome_fasta_file1))
-        shutil.copy(genome_fasta_file1, genome_file1)
-        genome_fasta_file2 = './testReads/test_reference.fa'
-        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
-        shutil.copy(genome_fasta_file2, genome_file2)
-
         forward_data_file = './testReads/small.forward.fq'
         forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
         shutil.copy(forward_data_file, forward_file)
@@ -482,181 +477,45 @@ class STARTest(unittest.TestCase):
         Solution: check the formatting of the GTF file. Most likely cause is the difference in
         chromosome naming between GTF and FASTA file.'
         '''
-        params_idx1 = {
-            'output_workspace': self.getWsName(),
-            'runMode': 'generateGenome',
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
-            'genomeFastaFiles': [genome_file1]}
-
-        exit_code11 = star_util.exec_indexing(params_idx1)
-        print(exit_code11)
-        self.assertEqual(exit_code11, 104)
-
-        params_idx2 = {
-            'output_workspace': self.getWsName(),
-            'runMode': 'generateGenome',
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
-            'genomeFastaFiles': [genome_file2]}
-
-        exit_code12 = star_util.exec_indexing(params_idx2)
-        print(exit_code12)
-        self.assertEqual(exit_code12, 104)
-
-        # STAR indexing/mapping with input parameters that sans 'sjdbGTFfile'
-        # without 'sjdbGTFfile' explicitly given, it should be generated using the genome file
-        gnm_ref1 = self.loadAssembly(genome_file1)
-        sjdbGTFfile = star_util.get_genome_gtf_file(gnm_ref1, idx_dir)
-
-        params_idx1 = {
-            'output_workspace': self.getWsName(),
-            'runMode': 'generateGenome',
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'sjdbGTFfile': sjdbGTFfile,
-            'genomeFastaFiles': [genome_file1]}
-
-        exit_code11 = star_util.exec_indexing(params_idx1)
-        self.assertEqual(exit_code11, 0)
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
-        # The following would pass if all exon lines in the GTF file are valid
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbInfo.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.fromGTF.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
-
-        # STAR mapping input parameters
-        params_mp1 = {
-            'output_workspace': self.getWsName(),
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'align_output': out_dir,
-            'outFileNamePrefix': 'STAR_',
-            'quantMode': 'Both',
-            'sjdbGTFfile': sjdbGTFfile,
-            'readFilesIn': [forward_file, reverse_file]
-        }
-        exit_code21 = star_util.exec_mapping(params_mp1)
-        self.assertEqual(exit_code21, 0)
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
-
-        output_dir1 = os.path.join(out_dir, 'smallFWD_SE.reads')
-        self.assertTrue(os.path.isdir(output_dir1))
-        outputcontents1 = os.listdir(output_dir1)
-        print(outputcontents1)
-
-        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
-        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
-                                                   'smallFWD_SE.reads__STARgenome')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
-                                                   'smallFWD_SE.reads__STARtmp')))
-
-        params_idx2 = {
-            'output_workspace': self.getWsName(),
-            'runMode': 'generateGenome',
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'genomeFastaFiles': [genome_file2]}
-
-        # without 'sjdbGTFfile' explicitly given, it should be generated using the genome file
-        gnm_ref2 = self.loadAssembly(genome_file2)
-        sjdbGTFfile = star_util.get_genome_gtf_file(gnm_ref2, idx_dir)
-
-        exit_code12 = star_util.exec_indexing(params_idx2)
-        self.assertEqual(exit_code12, 0)
-        idx_contents = os.listdir(idx_dir)
-        print(idx_contents)
-
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
-        # The following would pass if all exon lines in the GTF file are valid
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbInfo.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.fromGTF.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
-
-        # STAR mapping input parameters
-        params_mp2 = {
-            'output_workspace': self.getWsName(),
-            'runThreadN': 4,
-            STARUtils.STAR_IDX_DIR: idx_dir,
-            'align_output': out_dir,
-            'outFileNamePrefix': 'STAR_',
-            'quantMode': 'Both',
-            'sjdbGTFfile': sjdbGTFfile,
-            'readFilesIn': [forward_file, reverse_file]
-        }
-        exit_code22 = star_util.exec_mapping(params_mp2)
-        print(exit_code22)
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
-
-        output_dir2 = os.path.join(out_dir, 'smallFWD_SE.reads')
-        self.assertTrue(os.path.isdir(output_dir2))
-        outputcontents2 = os.listdir(output_dir2)
-        print(outputcontents2)
-
-        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
-        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
-        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
-                                                   'smallFWD_SE.reads__STARgenome')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
-                                                   'smallFWD_SE.reads__STARtmp')))
-
-
-    # Uncomment to skip this test
-    @unittest.skip("skipped test_exec_star_pipeline")
-    def test_exec_star_pipeline(self):
-        # 1) upload files to shock
-        shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = './testReads/test_long.fa'
-        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
-        shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file1 = './testReads/test_long.fa'
+        genome_file1 = os.path.join(shared_dir, os.path.basename(genome_fasta_file1))
+        shutil.copy(genome_fasta_file1, genome_file1)
         genome_fasta_file2 = './testReads/test_reference.fa'
         genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
         shutil.copy(genome_fasta_file2, genome_file2)
+
+        params_idx11 = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'genomeFastaFiles': [genome_file1]}
+
+        exit_code11 = star_util.exec_indexing(params_idx11)
+        print(exit_code11)
+        self.assertEqual(exit_code11, 104)
+
+        params_idx12 = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'genomeFastaFiles': [genome_file2]}
+
+        exit_code12 = star_util.exec_indexing(params_idx12)
+        print(exit_code12)
+        self.assertEqual(exit_code12, 104)
+
+    # Uncomment to skip this test
+    # @unittest.skip("skipped test_STARUtils_exec_star_pipeline")
+    def test_STARUtils_exec_star_pipeline(self):
+        """
+        Testing the _exec_star_pipeline without sjdbGTFfile
+        """
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
         rnaseq_data_file = './testReads/testreads.fastq'  # 'Ath_Hy5_R1.fastq'
         rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
         shutil.copy(rnaseq_data_file, rnaseq_file)
@@ -667,6 +526,7 @@ class STARTest(unittest.TestCase):
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
+        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
         # 2) The STAR index and output directories have to be created first!
         star_util = STARUtils(self.scratch,
                               self.wsURL,
@@ -680,15 +540,17 @@ class STARTest(unittest.TestCase):
             'output_workspace': self.getWsName(),
             'runMode': 'genomeGenerate',
             'runThreadN': 4,
-            'genomeFastaFiles': [genome_file, genome_file2],
+            'genome_ref': gnm_ref,
+            'readsset_ref': self.loadSEReads(rnaseq_data_file),
             'align_output': out_dir,
             'readFilesIn': [forward_file, reverse_file],
-            'outFileNamePrefix': 'STAR_'}
+            'outFileNamePrefix': 'STAR_',
+            'alignment_suffix': 'starAlign_'}
 
         # 4) test running star directly from files (w/o sjdbGTFfile parameter)
         print("Align reads file: {} without sjdbGTFfile...".format(rnaseq_file))
         result1 = star_util._exec_star_pipeline(params, [rnaseq_file],
-                                               'testreads', idx_dir, out_dir)
+                                                'testreads', idx_dir, out_dir)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -707,16 +569,13 @@ class STARTest(unittest.TestCase):
         pprint(result1)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_exec_star_pipeline_2")
-    def test_exec_star_pipeline_2(self):
+    # @unittest.skip("skipped test_STARUtils_exec_star_pipeline_2")
+    def test_STARUtils_exec_star_pipeline_2(self):
+        """
+        Testing the _exec_star_pipeline with and w/o sjdbGTFfile
+        """
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = './testReads/test_long.fa'
-        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
-        shutil.copy(genome_fasta_file, genome_file)
-        genome_fasta_file2 = './testReads/test_reference.fa'
-        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
-        shutil.copy(genome_fasta_file2, genome_file2)
         rds_data_file = './testReads/rhodobacter_artq50SEreads.fastq'
         rds_file = os.path.join(shared_dir, os.path.basename(rds_data_file))
         shutil.copy(rds_data_file, rds_file)
@@ -733,20 +592,24 @@ class STARTest(unittest.TestCase):
         (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
 
         # 3) compose the input parameters
+        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
         params = { 
             'output_workspace': self.getWsName(),
             'runMode': 'genomeGenerate',
             'runThreadN': 4,
-            'genomeFastaFiles': [genome_file, genome_file2],
+            'genome_ref': gnm_ref,
+            'readsset_ref': self.loadReadsSet(),
             'align_output': out_dir,
             'readFilesIn': [rnaseq_file],
-            'outFileNamePrefix': 'STAR_'}
+            'outFileNamePrefix': 'STAR_',
+            'alignment_suffix': 'starAlign_'}
 
         # 4) test running star directly from files (without sjdbGTFfile parameter)
         # # Note: Segmentation fault may occur if you run in an environment with not enough space/mem
         print("Align reads file: {} without sjdbGTFfile...".format(rds_file))
         result2 = star_util._exec_star_pipeline(params, [rds_file],
                                                 'rhodobacter', idx_dir, out_dir)
+        pprint(result2)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -761,17 +624,16 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
-
-        pprint(result2)
 
         # 5) test running star directly from files (with sjdbGTFfile parameter)
         # # Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
         print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
-        gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
         params['sjdbGTFfile'] = star_util.get_genome_gtf_file(gnm_ref, idx_dir)
+        params['genomeFastaFiles'] = star_util.get_genome_fasta(gnm_ref)
 
         result3 = star_util._exec_star_pipeline(params, [rds_file],
                                                 'rhodobacter', idx_dir, out_dir)
+        pprint(result3)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -787,5 +649,81 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
-        pprint(result3)
+    # Uncomment to skip this test
+    @unittest.skip("skipped test_STAR_Aligner_run_align")
+    def test_STAR_Aligner_run_align(self):
+        """
+        STAR run_align for both single library and readsSet
+        """
+
+        # 1) upload files to shock
+        shared_dir = "/kb/module/work/tmp"
+        genome_fasta_file1 = './testReads/test_long.fa'
+        genome_file1 = os.path.join(shared_dir, os.path.basename(genome_fasta_file1))
+        shutil.copy(genome_fasta_file1, genome_file1)
+        genome_fasta_file2 = './testReads/test_reference.fa'
+        genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
+        shutil.copy(genome_fasta_file2, genome_file2)
+
+        genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+
+        # 2) aligning a single library reads file
+        se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
+        # se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
+        # pe_reads_ref = self.loadPairedEndReads()
+
+        # STAR input parameters
+        params = {'readsset_ref': se_lib_ref,
+                  'genome_ref': genome_ref,
+                  'output_name': 'readsAlignment1',
+                  'output_workspace': self.getWsName(),
+                  'runMode': 'genomeGenerate',
+                  'quantMode': 'Both',
+                  'alignmentset_suffix': '_alignment_set',
+                  'alignment_suffix': '_alignment',
+                  'expression_suffix': '_expression',
+                  'condition': 'wt',
+                  'concurrent_njsw_tasks': 0,
+                  'concurrent_local_tasks': 1,
+                  'outSAMtype': 'BAM',
+                  'create_report': 1
+                  }
+
+        print('Aligning with a single reads')
+        star_aligner = STAR_Aligner(self.config, self.getContext())
+        res = star_aligner.run_align(params)
+        pprint(res)
+        '''
+        self.assertNotEqual(res['report_ref'], None)
+        self.assertNotEqual(res['report_name'], None)
+        self.assertNotEqual(res['alignment_objs'], None)
+        self.assertNotEqual(res['alignmentset_ref'], None)
+        self.assertNotEqual(res['output_directory'], None)
+        self.assertNotEqual(res['output_info'], None)
+        '''
+
+        # 3) get the test data
+        ss_ref = self.loadReadsSet()
+        params = {'readsset_ref': ss_ref,
+                  'genome_ref': genome_ref,
+                  'output_name': 'readsAlignment2',
+                  'output_workspace': self.getWsName(),
+                  'quantMode': 'Both',  # 'GeneCounts',
+                  'alignmentset_suffix': '_alignment_set',
+                  'alignment_suffix': '_alignment',
+                  'expression_suffix': '_expression',
+                  'expression_set_suffix': '_expression_set',
+                  'condition': 'wt',
+                  'concurrent_njsw_tasks': 0,
+                  'concurrent_local_tasks': 1,
+                  'outSAMtype': 'BAM',
+                  'create_report': 1}
+        print('Running with a SampleSet')
+        res = star_aligner.run_align(params)
+        self.assertNotEqual(res['report_ref'], None)
+        self.assertNotEqual(res['report_name'], None)
+        self.assertNotEqual(res['alignment_objs'], None)
+        self.assertNotEqual(res['alignmentset_ref'], None)
+        self.assertNotEqual(res['output_directory'], None)
+        self.assertNotEqual(res['output_info'], None)
 
