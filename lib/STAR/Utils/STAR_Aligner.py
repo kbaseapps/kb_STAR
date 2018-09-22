@@ -486,15 +486,6 @@ class STAR_Aligner(object):
         '''
         _get_index: generate the index if not yet existing
         '''
-        gnm_ref = input_params.get([STARUtils.PARAM_IN_GENOME], None)
-        if gnm_ref:
-            if input_params.get('sjdbGTFfile', None) is None:
-                # fetch genome GTF from refs to file location(s)
-                input_params['sjdbGTFfile'] = self.star_utils.get_genome_gtf_file(
-                                                    gnm_ref, self.star_idx_dir)
-            # fetch genome fasta from refs to file location(s)
-            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
-                                                                    gnm_ref)
         # generate the indices
         try:
             (idx_ret, idx_dir) = self._run_star_indexing(input_params)

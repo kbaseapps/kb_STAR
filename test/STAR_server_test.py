@@ -239,15 +239,13 @@ class STARTest(unittest.TestCase):
 
         pprint('Running with a single reads')
         res = self.getImpl().run_star(self.getContext(), params)
-        pprint(res)
-        '''
+
         self.assertNotEqual(res['report_ref'], None)
         self.assertNotEqual(res['report_name'], None)
         self.assertNotEqual(res['alignment_objs'], None)
         self.assertNotEqual(res['alignmentset_ref'], None)
         self.assertNotEqual(res['output_directory'], None)
         self.assertNotEqual(res['output_info'], None)
-        '''
 
     # Uncomment to skip this test
     # @unittest.skip("skipped test_STARImpl_run_star_batch")
@@ -666,7 +664,7 @@ class STARTest(unittest.TestCase):
         # 2) aligning single library reads file
         se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
         # se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
-        pe_reads_ref = self.loadPairedEndReads()
+        # pe_reads_ref = self.loadPairedEndReads()
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -686,7 +684,7 @@ class STARTest(unittest.TestCase):
                   }
 
         print('Aligning with a single reads')
-        star_aligner = STAR_Aligner(self.config, self.getContext())
+        star_aligner = STAR_Aligner(self.cfg, self.getContext().provenance())
         res = star_aligner.run_align(params)
         pprint(res)
 
