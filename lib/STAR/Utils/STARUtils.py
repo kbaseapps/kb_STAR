@@ -298,18 +298,16 @@ class STARUtils:
                 ret = 0
             while(ret != 0):
                 time.sleep(1)
-        except ValueError as eidx:
-            log('STAR genome indexing raised error:\n')
-            pprint(eidx)
+        except Exception as eidx:
+            raise RuntimeError('STAR genome indexing raised error:\n' + repr(eidx))
         else:  # no exception raised by genome indexing and returns 0, then run mapping
             params_mp[self.PARAM_IN_STARMODE] = 'alignReads'
             try:
                 ret = self.exec_mapping(params_mp)
                 while(ret != 0):
                     time.sleep(1)
-            except RuntimeError as emp:
-                log('STAR mapping raised error:\n')
-                pprint(emp)
+            except Exception as emp:
+                raise RuntimeError('STAR mapping raised error:\n' + repr(emp))
             else:  # no exception raised by STAR mapping and returns 0, move to saving and reporting
                 ret = {'star_idx': idx_dir, 'star_output': params_mp.get('align_output')}
 

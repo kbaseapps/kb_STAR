@@ -129,12 +129,16 @@ class STARTest(unittest.TestCase):
         # return new_obj_info[0]
         return pe_reads_ref
 
-    def loadAssembly(self):
-        if hasattr(self.__class__, 'assembly_ref'):
-            return self.__class__.assembly_ref
+    def loadAssembly(self, gn_fasta_file=None):
+        # if hasattr(self.__class__, 'assembly_ref'):
+        # return self.__class__.assembly_ref
         fasta_path = os.path.join(self.scratch, 'star_test_assembly.fa')
-        shutil.copy(os.path.join('./testReads', 'test_reference.fa'), fasta_path)
-        # shutil.copy(os.path.join('./testReads', 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
+        if gn_fasta_file:
+            shutil.copy(gn_fasta_file, fasta_path)
+        else:
+            shutil.copy(os.path.join('./testReads', 'test_reference.fa'), fasta_path)
+        # shutil.copy(os.path.join('./testReads',
+        # 'Arabidopsis_thaliana.TAIR10.dna.toplevel.fa'), fasta_path)
         au = AssemblyUtil(self.callback_url)
         assembly_ref = au.save_assembly_from_fasta({'file': {'path': fasta_path},
                                                     'workspace_name': self.getWsName(),
@@ -275,14 +279,17 @@ class STARTest(unittest.TestCase):
         self.assertNotEqual(res['output_info'], None)
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_index_map")
+    # @unittest.skip("skipped test_index_map")
     def test_index_map(self):
+        """
+        STAR indexing/mapping without 'sjdbGTFfile' explicitly given,
+        """
 
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = './testReads/test_long.fa'
-        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
-        shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file1 = './testReads/test_long.fa'
+        genome_file1 = os.path.join(shared_dir, os.path.basename(genome_fasta_file1))
+        shutil.copy(genome_fasta_file1, genome_file1)
         genome_fasta_file2 = './testReads/test_reference.fa'
         genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
         shutil.copy(genome_fasta_file2, genome_file2)
@@ -308,11 +315,11 @@ class STARTest(unittest.TestCase):
             'runMode': 'generateGenome',
             'runThreadN': 4,
             STARUtils.STAR_IDX_DIR: idx_dir,
-            'genomeFastaFiles': [genome_file, genome_file2]}
+            'genomeFastaFiles': [genome_file1, genome_file2]}
 
         exit_code1 = star_util.exec_indexing(params_idx)
         print(exit_code1)
-
+        self.assertEqual(exit_code1, 0)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -321,6 +328,14 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
+        # The following would pass if all exon lines in the GTF file are valid
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbInfo.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.fromGTF.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
 
         # STAR mapping input parameters
         params_mp = {
@@ -332,7 +347,7 @@ class STARTest(unittest.TestCase):
             'readFilesIn': [forward_file, reverse_file]
         }
         exit_code2 = star_util.exec_mapping(params_mp)
-        print(exit_code2)
+        self.assertEqual(exit_code2, 0)
 
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
@@ -340,15 +355,35 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
+        output_dir = os.path.join(out_dir, 'smallFWD_SE.reads')
+        self.assertTrue(os.path.isdir(output_dir))
+        outputcontents = os.listdir(output_dir)
+
+        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
+        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARtmp')))
+
     # Uncomment to skip this test
-    @unittest.skip("skipped test_index_map_2")
+    # @unittest.skip("skipped test_index_map_2")
     def test_index_map_2(self):
-        '''Testing with Both quaniMode'''
+        """
+        Testing with Both quaniMode
+        STAR indexing/mapping with 'sjdbGTFfile' explicitly given
+        """
+
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
-        genome_fasta_file = './testReads/test_long.fa'
-        genome_file = os.path.join(shared_dir, os.path.basename(genome_fasta_file))
-        shutil.copy(genome_fasta_file, genome_file)
+        genome_fasta_file1 = './testReads/test_long.fa'
+        genome_file1 = os.path.join(shared_dir, os.path.basename(genome_fasta_file1))
+        shutil.copy(genome_fasta_file1, genome_file1)
         genome_fasta_file2 = './testReads/test_reference.fa'
         genome_file2 = os.path.join(shared_dir, os.path.basename(genome_fasta_file2))
         shutil.copy(genome_fasta_file2, genome_file2)
@@ -360,7 +395,9 @@ class STARTest(unittest.TestCase):
         reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
         shutil.copy(reverse_data_file, reverse_file)
 
-        # The STAR index and output directories have to be created first!
+        gnm_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
+
+        # 2) The STAR index and output directories have to be created first!
         star_util = STARUtils(self.scratch,
                               self.wsURL,
                               self.callback_url,
@@ -368,18 +405,21 @@ class STARTest(unittest.TestCase):
                               self.getContext().provenance())
         (idx_dir, out_dir) = star_util.create_star_dirs(self.scratch)
 
-        gnm_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
-
-        # STAR indexing input parameters without 'sjdbGTFfile'
+        '''***************************************************************************
+        By explicitly adding the sjdbGTFfile parameter, if the given gtf file IS a good
+        match to the reads file in terms of formatting......
+        '''
+        # 3) STAR indexing input parameters with 'sjdbGTFfile'
         params_idx = {
             'output_workspace': self.getWsName(),
             'runMode': 'generateGenome',
             'runThreadN': 4,
             STARUtils.STAR_IDX_DIR: idx_dir,
-            'genomeFastaFiles': [genome_file, genome_file2]}
+            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'genomeFastaFiles': star_util.get_genome_fasta(gnm_ref)}
 
-        exit_code0 = star_util.exec_indexing(params_idx)
-        print(exit_code0)
+        exit_code1 = star_util.exec_indexing(params_idx)
+        self.assertEqual(exit_code1, 0)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -388,7 +428,53 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
-        '''
+        # The following would pass if all exon lines in the GTF file are valid
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbInfo.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.fromGTF.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
+
+        # 4) STAR mapping input parameters
+        params_mp = {
+            'output_workspace': self.getWsName(),
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'align_output': out_dir,
+            'outFileNamePrefix': 'STAR_',
+            'quantMode': 'Both',
+            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'readFilesIn': [forward_file, reverse_file]
+        }
+        exit_code2 = star_util.exec_mapping(params_mp)
+        self.assertEqual(exit_code2, 0)
+
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+
+        output_dir = os.path.join(out_dir, 'smallFWD_SE.reads')
+        self.assertTrue(os.path.isdir(output_dir))
+        outputcontents = os.listdir(output_dir)
+
+        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
+        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARtmp')))
+
+        '''***************************************************************************
         By adding the sjdbGTFfile parameter, if the given gtf file is not a good match to the
         reads file in terms of formatting, very likely an error will be thrown that says--
         'Fatal INPUT FILE error, no valid exon lines in the GTF file:
@@ -396,18 +482,45 @@ class STARTest(unittest.TestCase):
         Solution: check the formatting of the GTF file. Most likely cause is the difference in
         chromosome naming between GTF and FASTA file.'
         '''
-        # STAR indexing input parameters with 'sjdbGTFfile'
-        params_idx = {
+        params_idx1 = {
             'output_workspace': self.getWsName(),
             'runMode': 'generateGenome',
             'runThreadN': 4,
             STARUtils.STAR_IDX_DIR: idx_dir,
             'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
-            'genomeFastaFiles': [genome_file, genome_file2]}
+            'genomeFastaFiles': [genome_file1]}
 
-        exit_code1 = star_util.exec_indexing(params_idx)
-        print(exit_code1)
+        exit_code11 = star_util.exec_indexing(params_idx1)
+        print(exit_code11)
+        self.assertEqual(exit_code11, 104)
 
+        params_idx2 = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'genomeFastaFiles': [genome_file2]}
+
+        exit_code12 = star_util.exec_indexing(params_idx2)
+        print(exit_code12)
+        self.assertEqual(exit_code12, 104)
+
+        # STAR indexing/mapping with input parameters that sans 'sjdbGTFfile'
+        # without 'sjdbGTFfile' explicitly given, it should be generated using the genome file
+        gnm_ref1 = self.loadAssembly(genome_file1)
+        sjdbGTFfile = star_util.get_genome_gtf_file(gnm_ref1, idx_dir)
+
+        params_idx1 = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'sjdbGTFfile': sjdbGTFfile,
+            'genomeFastaFiles': [genome_file1]}
+
+        exit_code11 = star_util.exec_indexing(params_idx1)
+        self.assertEqual(exit_code11, 0)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
@@ -416,7 +529,6 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'ecoli_genomic.gtf')))
         # The following would pass if all exon lines in the GTF file are valid
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
@@ -428,46 +540,111 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
 
         # STAR mapping input parameters
-        params_mp = {
+        params_mp1 = {
             'output_workspace': self.getWsName(),
             'runThreadN': 4,
             STARUtils.STAR_IDX_DIR: idx_dir,
             'align_output': out_dir,
             'outFileNamePrefix': 'STAR_',
             'quantMode': 'Both',
-            'sjdbGTFfile': star_util.get_genome_gtf_file(gnm_ref, idx_dir),
+            'sjdbGTFfile': sjdbGTFfile,
             'readFilesIn': [forward_file, reverse_file]
         }
-        '''
-        By adding the sjdbGTFfile parameter, if the given gtf file is not a good match to the
-        reads file in terms of formatting, very likely during the stage of STAR's 'processing
-        annotations GTF' an error will be thrown that says--
-        'Fatal INPUT FILE error, no valid exon lines in the GTF file:
-        /kb/module/work/tmp/STAR_Genome_index/ecoli_genomic.gtf
-        Solution: check the formatting of the GTF file. Most likely cause is the difference in
-        chromosome naming between GTF and FASTA file.'
-        '''
-        exit_code2 = star_util.exec_mapping(params_mp)
-        print(exit_code2)
-
+        exit_code21 = star_util.exec_mapping(params_mp1)
+        self.assertEqual(exit_code21, 0)
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir, 'small')))
 
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
-                                                    'small_Aligned.sortedByCoord.bam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small',
-                                                    'small_Aligned.toTranscriptome.out.bam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_ReadsPerGene.out.tab')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir + 'small', 'small_SJ.out.tab')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + 'small', 'small__STARgenome')))
-        self.assertTrue(os.path.isdir(os.path.join(out_dir + 'small', 'small__STARtmp')))
+        output_dir1 = os.path.join(out_dir, 'smallFWD_SE.reads')
+        self.assertTrue(os.path.isdir(output_dir1))
+        outputcontents1 = os.listdir(output_dir1)
+        print(outputcontents1)
+
+        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
+        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARtmp')))
+
+        params_idx2 = {
+            'output_workspace': self.getWsName(),
+            'runMode': 'generateGenome',
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'genomeFastaFiles': [genome_file2]}
+
+        # without 'sjdbGTFfile' explicitly given, it should be generated using the genome file
+        gnm_ref2 = self.loadAssembly(genome_file2)
+        sjdbGTFfile = star_util.get_genome_gtf_file(gnm_ref2, idx_dir)
+
+        exit_code12 = star_util.exec_indexing(params_idx2)
+        self.assertEqual(exit_code12, 0)
+        idx_contents = os.listdir(idx_dir)
+        print(idx_contents)
+
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
+        # The following would pass if all exon lines in the GTF file are valid
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonGeTrInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'exonInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbInfo.txt')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.fromGTF.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'sjdbList.out.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'geneInfo.tab')))
+        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'transcriptInfo.tab')))
+
+        # STAR mapping input parameters
+        params_mp2 = {
+            'output_workspace': self.getWsName(),
+            'runThreadN': 4,
+            STARUtils.STAR_IDX_DIR: idx_dir,
+            'align_output': out_dir,
+            'outFileNamePrefix': 'STAR_',
+            'quantMode': 'Both',
+            'sjdbGTFfile': sjdbGTFfile,
+            'readFilesIn': [forward_file, reverse_file]
+        }
+        exit_code22 = star_util.exec_mapping(params_mp2)
+        print(exit_code22)
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
+        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+
+        output_dir2 = os.path.join(out_dir, 'smallFWD_SE.reads')
+        self.assertTrue(os.path.isdir(output_dir2))
+        outputcontents2 = os.listdir(output_dir2)
+        print(outputcontents2)
+
+        self.assertIn('smallFWD_SE.reads_Aligned.sortedByCoord.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Aligned.toTranscriptome.out.bam', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.final.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_Log.progress.out', outputcontents)
+        self.assertIn('smallFWD_SE.reads_ReadsPerGene.out.tab', outputcontents)
+        self.assertIn('smallFWD_SE.reads_SJ.out.tab', outputcontents)
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARgenome')))
+        self.assertTrue(os.path.isdir(os.path.join(out_dir + '/smallFWD_SE.reads',
+                                                   'smallFWD_SE.reads__STARtmp')))
+
 
     # Uncomment to skip this test
     @unittest.skip("skipped test_exec_star_pipeline")

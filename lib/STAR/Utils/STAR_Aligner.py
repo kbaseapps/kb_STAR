@@ -452,10 +452,8 @@ class STAR_Aligner(object):
             while(ret != 0 or not os.path.isfile(
                     os.path.join(self.star_idx_dir, 'genomeParameters.txt'))):
                 time.sleep(1)
-        except RuntimeError as eidx:
-            log('STAR genome indexing raised error:\n')
-            pprint(eidx)
-            raise
+        except Exception as eidx:
+            raise RuntimeError('STAR genome indexing raised error:\n' + repr(eidx))
         else:
             ret = 0
 
@@ -475,9 +473,8 @@ class STAR_Aligner(object):
             ret = self.star_utils.exec_mapping(params_mp)
             while(ret != 0):
                 time.sleep(1)
-        except RuntimeError as emp:
-            log('STAR mapping raised error!\n')
-            raise
+        except Exception as emp:
+            raise RuntimeError('STAR mapping raised error:\n' + repr(emp))
         else:  # no exception raised and STAR returns 0, then move to saving and reporting
             retVal = {'star_idx': self.star_idx_dir, 'star_output': params_mp.get('align_output')}
 
@@ -492,16 +489,15 @@ class STAR_Aligner(object):
             # fetch genome GTF from refs to file location(s)
             input_params['sjdbGTFfile'] = self.star_utils.get_genome_gtf_file(
                                             gnm_ref, self.star_idx_dir)
-        if not os.path.isfile(os.path.join(self.star_idx_dir, 'genomeParameters.txt')):
-            # fetch genome fasta from refs to file location(s)
-            input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
-                                                                    gnm_ref)
-            # generate the indices
-            try:
-                (idx_ret, idx_dir) = self._run_star_indexing(input_params)
-            except RuntimeError as rerr:
-                log("Failed to generate genome indices.")
-                raise
+        # fetch genome fasta from refs to file location(s)
+        input_params[STARUtils.PARAM_IN_FASTA_FILES] = self.star_utils.get_genome_fasta(
+                                                                gnm_ref)
+        # generate the indices
+        try:
+            (idx_ret, idx_dir) = self._run_star_indexing(input_params)
+        except RuntimeError as rerr:
+            log("Failed to generate genome indices.")
+            raise
 
     def run_align(self, params):
         # 0. create the star folders
@@ -527,7 +523,7 @@ class STAR_Aligner(object):
             log('STAR indexing failed...\n')
             traceback.print_exc()
         else:
-            try:
+            try:  # 4. aligning reads
                 if input_obj_info['run_mode'] == 'single_library':
                     print("aligning a single_library...")
                     ret = self._star_run_single(input_params)

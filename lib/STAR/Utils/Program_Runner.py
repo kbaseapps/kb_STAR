@@ -27,7 +27,7 @@ class Program_Runner:
             for line in p.stdout:
                 line = line.rstrip() + '\n'
                 star_msg += line
-            raise RuntimeError('Error running command: ' + ' '.join(cmmd) + '\nExit Code: ' +
-                               str(exitCode) + '\n\n******STAR run report******\n' + star_msg)
+            print('Error running command: ' + ' '.join(cmmd) + 'Exit Code: ' +
+                  str(exitCode) + '\n\n******STAR run report******\n' + star_msg)
         return exitCode
 
