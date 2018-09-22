@@ -45,6 +45,7 @@ class STARUtils:
     PARAM_IN_READS_FILES = 'readFilesIn'
     PARAM_IN_READS = 'readsset_ref'
     PARAM_IN_GENOME = 'genome_ref'
+    # holding a list of all reads objects that are a part of a sample/reads set object
     SET_READS = 'set_reads_refs'
 
     def __init__(self, scratch_dir, workspace_url, callback_url, srv_wiz_url, provenance):

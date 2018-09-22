@@ -250,7 +250,7 @@ class STARTest(unittest.TestCase):
         '''
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_STARImpl_run_star_batch")
+    # @unittest.skip("skipped test_STARImpl_run_star_batch")
     def test_STARImpl_run_star_batch(self):
         # get the test data
         genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
@@ -512,19 +512,17 @@ class STARTest(unittest.TestCase):
     # @unittest.skip("skipped test_STARUtils_exec_star_pipeline")
     def test_STARUtils_exec_star_pipeline(self):
         """
-        Testing the _exec_star_pipeline without sjdbGTFfile
+        Testing the _exec_star_pipeline with single reads (without sjdbGTFfile)
         """
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
         rnaseq_data_file = './testReads/testreads.fastq'  # 'Ath_Hy5_R1.fastq'
         rnaseq_file = os.path.join(shared_dir, os.path.basename(rnaseq_data_file))
         shutil.copy(rnaseq_data_file, rnaseq_file)
-        forward_data_file = './testReads/small.forward.fq'
-        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
-        shutil.copy(forward_data_file, forward_file)
-        reverse_data_file = './testReads/small.reverse.fq'
-        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
-        shutil.copy(reverse_data_file, reverse_file)
+
+        se_lib_ref = self.loadSEReads(rnaseq_data_file)
+        # se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
+        pe_reads_ref = self.loadPairedEndReads()
 
         gnm_ref = self.loadGenome('./testReads/GCF_000739855.gbff')
         # 2) The STAR index and output directories have to be created first!
@@ -541,9 +539,8 @@ class STARTest(unittest.TestCase):
             'runMode': 'genomeGenerate',
             'runThreadN': 4,
             'genome_ref': gnm_ref,
-            'readsset_ref': self.loadSEReads(rnaseq_data_file),
+            'readsset_ref': se_lib_ref,
             'align_output': out_dir,
-            'readFilesIn': [forward_file, reverse_file],
             'outFileNamePrefix': 'STAR_',
             'alignment_suffix': 'starAlign_'}
 
@@ -567,12 +564,31 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
         pprint(result1)
+        self.assertTrue(os.path.isdir(out_dir))
+        print('STAR_Output directory:\n')
+        pprint(os.listdir(out_dir))
+
+        # 5) test running star for a paired reads (w/o sjdbGTFfile parameter)
+        forward_data_file = '../work/testReads/small.forward.fq'
+        forward_file = os.path.join(shared_dir, os.path.basename(forward_data_file))
+        shutil.copy(forward_data_file, forward_file)
+        reverse_data_file = '../work/testReads/small.reverse.fq'
+        reverse_file = os.path.join(shared_dir, os.path.basename(reverse_data_file))
+        shutil.copy(reverse_data_file, reverse_file)
+
+        print("Align reads file: without sjdbGTFfile...")
+        params['readsset_ref'] = pe_reads_ref
+        result2 = star_util._exec_star_pipeline(params, [forward_file, reverse_file],
+                                                'smallPEreads', idx_dir, out_dir)
+        pprint(result2)
+        print('STAR_Output directory:\n')
+        pprint(os.listdir(out_dir))
 
     # Uncomment to skip this test
     # @unittest.skip("skipped test_STARUtils_exec_star_pipeline_2")
     def test_STARUtils_exec_star_pipeline_2(self):
         """
-        Testing the _exec_star_pipeline with and w/o sjdbGTFfile
+        Testing the _exec_star_pipeline for readsSet with and w/o sjdbGTFfile
         """
         # 1) upload files to shock
         shared_dir = "/kb/module/work/tmp"
@@ -600,15 +616,15 @@ class STARTest(unittest.TestCase):
             'genome_ref': gnm_ref,
             'readsset_ref': self.loadReadsSet(),
             'align_output': out_dir,
-            'readFilesIn': [rnaseq_file],
             'outFileNamePrefix': 'STAR_',
             'alignment_suffix': 'starAlign_'}
 
         # 4) test running star directly from files (without sjdbGTFfile parameter)
-        # # Note: Segmentation fault may occur if you run in an environment with not enough space/mem
-        print("Align reads file: {} without sjdbGTFfile...".format(rds_file))
+        # # Note: Segmentation fault may occur if you run in an environment with not enough space
+        # # Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
+        print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
         result2 = star_util._exec_star_pipeline(params, [rds_file],
-                                                'rhodobacter', idx_dir, out_dir)
+                                                'test_small_reads', idx_dir, out_dir)
         pprint(result2)
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
         self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
@@ -625,32 +641,12 @@ class STARTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
         self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
 
-        # 5) test running star directly from files (with sjdbGTFfile parameter)
-        # # Note: 'Fatal INPUT FILE error, no valid exon lines in the GTF file' may occur
-        print("Align reads file: {} with sjdbGTFfile...".format(rds_file))
-        params['sjdbGTFfile'] = star_util.get_genome_gtf_file(gnm_ref, idx_dir)
-        params['genomeFastaFiles'] = star_util.get_genome_fasta(gnm_ref)
-
-        result3 = star_util._exec_star_pipeline(params, [rds_file],
-                                                'rhodobacter', idx_dir, out_dir)
-        pprint(result3)
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'Genome')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'genomeParameters.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SAindex')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'SA')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrName.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrNameLength.txt')))
-        self.assertTrue(os.path.isfile(os.path.join(idx_dir, 'chrStart.txt')))
-
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Aligned.out.sam')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.final.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_Log.progress.out')))
-        self.assertTrue(os.path.isfile(os.path.join(out_dir, 'STAR_SJ.out.tab')))
+        self.assertTrue(os.path.isdir(out_dir))
+        print('STAR_Output directory:\n')
+        pprint(os.listdir(out_dir))
 
     # Uncomment to skip this test
-    @unittest.skip("skipped test_STAR_Aligner_run_align")
+    # @unittest.skip("skipped test_STAR_Aligner_run_align")
     def test_STAR_Aligner_run_align(self):
         """
         STAR run_align for both single library and readsSet
@@ -667,10 +663,10 @@ class STARTest(unittest.TestCase):
 
         genome_ref = self.loadGenome('./testReads/ecoli_genomic.gbff')
 
-        # 2) aligning a single library reads file
+        # 2) aligning single library reads file
         se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'small.forward.fq'))
         # se_lib_ref = self.loadSEReads(os.path.join('./testReads', 'Ath_Hy5_R1.fastq'))
-        # pe_reads_ref = self.loadPairedEndReads()
+        pe_reads_ref = self.loadPairedEndReads()
 
         # STAR input parameters
         params = {'readsset_ref': se_lib_ref,
@@ -693,16 +689,15 @@ class STARTest(unittest.TestCase):
         star_aligner = STAR_Aligner(self.config, self.getContext())
         res = star_aligner.run_align(params)
         pprint(res)
-        '''
+
         self.assertNotEqual(res['report_ref'], None)
         self.assertNotEqual(res['report_name'], None)
         self.assertNotEqual(res['alignment_objs'], None)
         self.assertNotEqual(res['alignmentset_ref'], None)
         self.assertNotEqual(res['output_directory'], None)
         self.assertNotEqual(res['output_info'], None)
-        '''
 
-        # 3) get the test data
+        # 3) get the readsSet data
         ss_ref = self.loadReadsSet()
         params = {'readsset_ref': ss_ref,
                   'genome_ref': genome_ref,
@@ -718,6 +713,7 @@ class STARTest(unittest.TestCase):
                   'concurrent_local_tasks': 1,
                   'outSAMtype': 'BAM',
                   'create_report': 1}
+
         print('Running with a SampleSet')
         res = star_aligner.run_align(params)
         self.assertNotEqual(res['report_ref'], None)
